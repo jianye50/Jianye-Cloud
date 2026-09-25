@@ -1,0 +1,1759 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>鉴业的主页 · JianYe Cloud</title>
+<style>
+/* ===================== 基础与主题变量 ===================== */
+:root{
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
+          "PingFang SC", "HarmonyOS Sans SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+  --radius-lg: 24px;
+  --radius-md: 18px;
+  --nav-h: 56px;
+}
+html[data-theme="dark"]{
+  --text-1:#ffffff;
+  --text-2:rgba(232,238,255,.72);
+  --text-3:rgba(220,228,255,.46);
+  --card-bg:rgba(30,44,86,.52);
+  --card-bg-strong:rgba(22,36,74,.72);
+  --card-inner:rgba(5,11,30,.72);
+  --card-inner-soft:rgba(255,255,255,.05);
+  --card-border:rgba(255,255,255,.12);
+  --card-border-hover:rgba(255,255,255,.28);
+  --nav-bg:rgba(16,27,60,.55);
+  --scrim:rgba(4,9,26,.62);
+  --scrim-solid:rgba(10,17,42,.92);
+  --shadow:0 18px 50px rgba(2,6,22,.5);
+  --shadow-hover:0 26px 70px rgba(2,6,22,.62);
+  --scrim-overlay:linear-gradient(rgba(4,10,30,.55),rgba(4,10,30,.62));
+  --blob-1:rgba(76,120,255,.34);
+  --blob-2:rgba(126,84,255,.28);
+  --blob-3:rgba(44,140,255,.22);
+  --accent:#4d8dff;
+  --track:rgba(255,255,255,.14);
+  --chip:rgba(255,255,255,.09);
+  --wp-opacity:.34;
+  color-scheme:dark;
+}
+html[data-theme="light"]{
+  --text-1:#16233f;
+  --text-2:rgba(22,35,63,.68);
+  --text-3:rgba(22,35,63,.45);
+  --card-bg:rgba(255,255,255,.66);
+  --card-bg-strong:rgba(255,255,255,.82);
+  --card-inner:rgba(244,247,255,.85);
+  --card-inner-soft:rgba(20,40,90,.05);
+  --card-border:rgba(255,255,255,.75);
+  --card-border-hover:rgba(255,255,255,.95);
+  --nav-bg:rgba(238,243,255,.55);
+  --scrim:rgba(120,140,190,.38);
+  --scrim-solid:rgba(238,242,252,.94);
+  --shadow:0 18px 50px rgba(40,60,120,.22);
+  --shadow-hover:0 26px 70px rgba(40,60,120,.3);
+  --scrim-overlay:linear-gradient(rgba(225,235,255,.42),rgba(220,232,255,.5));
+  --blob-1:rgba(110,150,255,.4);
+  --blob-2:rgba(150,120,255,.32);
+  --blob-3:rgba(90,170,255,.28);
+  --accent:#1a6cff;
+  --track:rgba(20,40,90,.12);
+  --chip:rgba(20,40,90,.07);
+  --wp-opacity:.16;
+  color-scheme:light;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  font-family:var(--font);
+  color:var(--text-1);
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+body[data-motion="off"] *{animation:none!important;transition:none!important}
+button{font-family:inherit;color:inherit;border:none;background:none;cursor:pointer}
+img{display:block;max-width:100%}
+::selection{background:rgba(77,141,255,.4)}
+
+/* ===================== 动态背景 ===================== */
+.bg{position:fixed;inset:0;z-index:-2;overflow:hidden}
+.bg-gradient{
+  position:absolute;inset:0;
+  background:
+    radial-gradient(120% 90% at 18% -10%, #2f5cc4 0%, transparent 55%),
+    radial-gradient(100% 80% at 95% 0%, #27206e 0%, transparent 50%),
+    linear-gradient(150deg,#0a1f52 0%,#16327e 38%,#1d2f78 68%,#0c1a48 100%);
+}
+html[data-theme="light"] .bg-gradient{
+  background:
+    radial-gradient(120% 90% at 18% -10%, #a9c6ff 0%, transparent 55%),
+    radial-gradient(100% 80% at 95% 0%, #c9bdff 0%, transparent 55%),
+    linear-gradient(150deg,#9fb9ee 0%,#c2d3f7 45%,#aebfe9 75%,#93a8d8 100%);
+}
+.bg-blob{position:absolute;border-radius:50%;filter:blur(90px)}
+.bg-blob.b1{width:55vw;height:55vw;left:-14vw;top:6vh;background:var(--blob-1)}
+.bg-blob.b2{width:46vw;height:46vw;right:-12vw;top:26vh;background:var(--blob-2)}
+.bg-blob.b3{width:40vw;height:40vw;left:26vw;bottom:-18vh;background:var(--blob-3)}
+.bg-wp{
+  position:absolute;inset:0;
+  background-image:url("%E5%A3%81%E7%BA%B8.png");
+  background-size:cover;background-position:center;
+  opacity:var(--wp-opacity);
+  transition:opacity .5s ease;
+}
+.bg-wp::after{content:"";position:absolute;inset:0;background:var(--scrim-overlay)}
+body[data-wp="off"] .bg-wp{opacity:0}
+
+/* ===================== 顶部导航 ===================== */
+.nav{
+  position:fixed;top:0;left:0;right:0;z-index:50;height:var(--nav-h);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 22px;
+  background:var(--nav-bg);
+  backdrop-filter:blur(28px) saturate(180%);
+  -webkit-backdrop-filter:blur(28px) saturate(180%);
+  border-bottom:1px solid var(--card-border);
+}
+.brand{display:flex;align-items:center;gap:11px;font-weight:650;letter-spacing:.2px}
+.brand-mark{
+  width:30px;height:30px;border-radius:9px;
+  display:grid;place-items:center;
+  background:linear-gradient(145deg,#6ea4ff,#2b5ce0 55%,#1d3fb0);
+  box-shadow:0 4px 12px rgba(40,90,220,.5), inset 0 1px 0 rgba(255,255,255,.35);
+  font-size:15px;color:#fff;font-weight:700;
+}
+.brand small{display:block;font-size:11px;font-weight:500;color:var(--text-3);letter-spacing:1.5px}
+.brand strong{font-size:15px;line-height:1.1}
+.nav-actions{display:flex;align-items:center;gap:10px}
+.icon-btn{
+  width:38px;height:38px;border-radius:50%;
+  display:grid;place-items:center;color:var(--text-1);
+  transition:background .2s, transform .2s;
+}
+.icon-btn:hover{background:var(--chip)}
+.icon-btn:active{transform:scale(.9)}
+.icon-btn svg{width:19px;height:19px}
+.nav-avatar{
+  width:38px;height:38px;border-radius:50%;overflow:hidden;
+  border:2px solid var(--card-border-hover);
+  box-shadow:0 2px 10px rgba(0,0,0,.3);
+}
+.nav-avatar img{width:100%;height:100%;object-fit:cover}
+.popover{
+  position:fixed;top:calc(var(--nav-h) + 8px);right:18px;z-index:60;
+  width:230px;padding:8px;border-radius:16px;
+  background:var(--card-bg-strong);
+  backdrop-filter:blur(30px) saturate(180%);
+  -webkit-backdrop-filter:blur(30px) saturate(180%);
+  border:1px solid var(--card-border);
+  box-shadow:var(--shadow);
+  display:none;
+}
+.popover.open{display:block;animation:pop .18s ease}
+@keyframes pop{from{opacity:0;transform:translateY(-6px) scale(.97)}to{opacity:1;transform:none}}
+.pop-item{
+  display:flex;align-items:center;gap:11px;width:100%;
+  padding:10px 12px;border-radius:11px;font-size:14px;text-align:left;
+  color:var(--text-1);
+}
+.pop-item:hover{background:var(--chip)}
+.pop-item svg{width:17px;height:17px;color:var(--text-2)}
+
+/* ===================== 布局 ===================== */
+.wrap{max-width:1140px;margin:0 auto;padding:calc(var(--nav-h) + 26px) 22px 50px}
+
+.banner{
+  position:relative;border-radius:var(--radius-lg);
+  padding:22px 26px;margin-bottom:22px;
+  display:flex;align-items:center;gap:18px;
+  background:var(--card-bg);
+  backdrop-filter:blur(30px) saturate(180%);
+  -webkit-backdrop-filter:blur(30px) saturate(180%);
+  border:1px solid var(--card-border);
+  box-shadow:var(--shadow);
+  cursor:pointer;overflow:hidden;
+  transition:transform .35s cubic-bezier(.2,.7,.2,1),border-color .35s;
+}
+.banner:hover{transform:translateY(-3px);border-color:var(--card-border-hover)}
+.banner-ic{
+  flex:none;width:46px;height:46px;border-radius:14px;
+  display:grid;place-items:center;
+  background:linear-gradient(145deg,rgba(110,164,255,.25),rgba(60,100,220,.18));
+  border:1px solid var(--card-border);
+}
+.banner-ic svg{width:24px;height:24px;color:#8db6ff}
+.banner h1{font-size:18px;font-weight:650;margin-bottom:3px}
+.banner p{font-size:13.5px;color:var(--text-2);line-height:1.5}
+.banner-arrow{
+  margin-left:auto;flex:none;width:42px;height:42px;border-radius:50%;
+  display:grid;place-items:center;color:var(--text-1);
+  transition:background .25s,transform .25s;
+}
+.banner:hover .banner-arrow{background:var(--chip);transform:translateX(4px)}
+
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:20px}
+
+/* ===================== 卡片通用 ===================== */
+.card{
+  position:relative;border-radius:var(--radius-lg);overflow:hidden;
+  background:var(--card-bg);
+  backdrop-filter:blur(30px) saturate(180%);
+  -webkit-backdrop-filter:blur(30px) saturate(180%);
+  border:1px solid var(--card-border);
+  box-shadow:var(--shadow);
+  cursor:pointer;
+  transition:transform .4s cubic-bezier(.2,.7,.2,1),border-color .35s,box-shadow .4s;
+  opacity:0;transform:translateY(26px);
+}
+.card.in{opacity:1;transform:none}
+.card:hover{transform:translateY(-5px);border-color:var(--card-border-hover);box-shadow:var(--shadow-hover)}
+.card:active{transform:translateY(-2px) scale(.995)}
+.card:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+
+.card-hd{
+  display:flex;align-items:center;gap:13px;
+  padding:18px 20px 14px;
+}
+.card-hd .hd-text h3{font-size:17px;font-weight:650;letter-spacing:.2px}
+.card-hd .hd-text p{font-size:12.5px;color:var(--text-2);margin-top:2px;display:flex;align-items:center;gap:5px}
+.hd-action{margin-left:auto;color:var(--text-2);display:grid;place-items:center}
+.hd-action svg{width:18px;height:18px}
+
+/* App 图标 */
+.app-ic{
+  flex:none;width:44px;height:44px;border-radius:12px;
+  display:grid;place-items:center;
+  box-shadow:0 4px 12px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.28);
+}
+.app-ic svg{width:25px;height:25px}
+.app-ic.tile-ic{width:58px;height:58px;border-radius:16px}
+.app-ic.tile-ic svg{width:32px;height:32px}
+.app-ic.launch-ic{width:62px;height:62px;border-radius:18px}
+.app-ic.launch-ic svg{width:34px;height:34px}
+.ic-photos{background:conic-gradient(from 12deg,#ff9f0a,#ff375f,#bf5af2,#5e5ce6,#0a84ff,#30d158,#ffd60a,#ff9f0a)}
+.ic-photos svg{filter:drop-shadow(0 1px 2px rgba(0,0,0,.25))}
+.ic-mail{background:linear-gradient(160deg,#3aa7ff,#126fe0)}
+.ic-drive{background:linear-gradient(160deg,#57b1ff,#1f6fd6)}
+.ic-notes{background:linear-gradient(160deg,#ffe27a,#ffb300)}
+.ic-remind{background:#fff}
+.ic-cal{background:#fff}
+.ic-skills{background:linear-gradient(160deg,#8e7bff,#5b44d6)}
+.ic-timeline{background:linear-gradient(160deg,#4cc8ff,#1f6fe0)}
+.ic-music{background:linear-gradient(160deg,#ff6a8e,#f02e5e)}
+.ic-games{background:linear-gradient(160deg,#3a3f66,#12172e)}
+.ic-fav{background:linear-gradient(160deg,#ffb64d,#ff7a1a)}
+.ic-settings{background:linear-gradient(160deg,#b7bed4,#7a849e)}
+.ic-about{background:linear-gradient(160deg,#6ea4ff,#2b5ce0)}
+.ic-mail svg,.ic-drive svg,.ic-skills svg,.ic-timeline svg,.ic-music svg,
+.ic-games svg,.ic-fav svg,.ic-settings svg,.ic-about svg{color:#fff}
+.ic-notes svg{color:#7a4e00}
+.ic-remind svg,.ic-cal svg{color:#1d2438}
+
+/* ===================== 各卡片 ===================== */
+.card-profile{grid-column:span 4;min-height:392px;padding:34px 30px 28px;display:flex;flex-direction:column}
+.prof-ring{
+  width:128px;height:128px;border-radius:50%;padding:4px;margin-bottom:26px;
+  background:linear-gradient(150deg,rgba(255,255,255,.5),rgba(255,255,255,.04) 45%,rgba(255,255,255,.22));
+}
+.prof-ring img{width:100%;height:100%;border-radius:50%;object-fit:cover;
+  box-shadow:0 10px 30px rgba(0,0,0,.45)}
+.card-profile h2{font-size:27px;font-weight:700;letter-spacing:.5px}
+.card-profile .prof-mail{color:var(--text-2);font-size:14.5px;margin-top:7px}
+.card-profile .prof-plan{
+  margin-top:auto;font-size:12.5px;color:var(--text-3);
+  display:flex;align-items:center;gap:7px;
+}
+.prof-dot{width:7px;height:7px;border-radius:50%;background:#30d158;box-shadow:0 0 8px #30d158}
+
+.card-photos{grid-column:span 8;min-height:392px;display:flex;flex-direction:column}
+.tile-grid{
+  flex:1;display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:1fr;
+  gap:4px;padding:4px 4px 0;
+}
+.tile{position:relative;overflow:hidden;background:var(--card-inner-soft)}
+.tile img{width:100%;height:100%;object-fit:cover;transition:transform .5s ease}
+.card-photos:hover .tile img{transform:none}
+.tile:hover img{transform:scale(1.07)}
+.tile.ph::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(135deg,var(--p1,#3a5bbf),var(--p2,#17265e));
+}
+.more-mask{
+  position:absolute;inset:0;z-index:2;display:grid;place-items:center;
+  background:rgba(4,9,26,.55);color:#fff;font-size:26px;font-weight:700;
+  backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);
+}
+.tile-grid.is-empty{display:flex;align-items:center;justify-content:center}
+.tile-empty{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;
+  text-align:center;padding:20px;color:var(--text-2);
+}
+.tile-empty svg{width:38px;height:38px;color:var(--text-3)}
+.tile-empty p{font-size:14px;color:var(--text-1)}
+.tile-empty span{font-size:12.5px;color:var(--text-3);line-height:1.6;max-width:240px}
+.photos-empty{
+  padding:60px 24px;text-align:center;color:var(--text-2);
+  font-size:14px;line-height:2;background:var(--card-inner);border-radius:16px;
+}
+.tile-grid-wrap{flex:1;margin:0 14px 14px;border-radius:12px;overflow:hidden;background:var(--card-inner)}
+.tile-grid{height:100%;min-height:230px}
+.card-photos .tile-grid-wrap{margin:0 16px 16px}
+
+.card-contact{grid-column:span 5;min-height:318px;display:flex;flex-direction:column}
+.card-projects{grid-column:span 4;min-height:318px;display:flex;flex-direction:column}
+.card-skills{grid-column:span 3;min-height:318px;display:flex;flex-direction:column}
+.dark-body{
+  flex:1;margin:4px 16px 16px;border-radius:14px;
+  background:var(--card-inner);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:24px;gap:10px;
+}
+.dark-body .big-ic{
+  width:66px;height:66px;border-radius:50%;display:grid;place-items:center;
+  background:var(--card-inner-soft);margin-bottom:4px;
+}
+.dark-body .big-ic svg{width:32px;height:32px;color:#7fb0ff}
+.dark-body h4{font-size:16.5px;font-weight:630}
+.dark-body p{font-size:13px;color:var(--text-2);line-height:1.6;max-width:240px}
+.dark-body .mini-link{
+  margin-top:8px;font-size:13px;color:#7fb0ff;font-weight:600;
+  display:inline-flex;align-items:center;gap:5px;
+}
+.skills-preview{width:100%;display:flex;flex-direction:column;gap:14px;padding:6px 4px 0}
+.sk-row{display:flex;align-items:center;gap:10px;font-size:12.5px}
+.sk-row span{width:52px;flex:none;color:var(--text-2);text-align:left}
+.sk-bar{flex:1;height:6px;border-radius:3px;background:var(--track);overflow:hidden}
+.sk-bar i{display:block;height:100%;border-radius:3px;
+  background:linear-gradient(90deg,#6ea4ff,#9d7bff);width:0;
+  transition:width 1s cubic-bezier(.2,.7,.2,.1)}
+.card.in .sk-bar i{width:var(--v)}
+
+.card-notes{grid-column:span 5;min-height:300px;display:flex;flex-direction:column}
+.card-timeline{grid-column:span 4;min-height:300px;display:flex;flex-direction:column}
+.card-remind{grid-column:span 3;min-height:300px;display:flex;flex-direction:column}
+.note-preview{
+  flex:1;margin:2px 16px 16px;padding:18px 20px;border-radius:14px;
+  background:var(--card-inner);overflow:hidden;
+}
+.note-preview h5{font-size:14.5px;font-weight:630;margin-bottom:8px}
+.note-preview p{font-size:12.5px;line-height:1.7;color:var(--text-2);
+  display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.note-preview time{display:block;margin-top:12px;font-size:11.5px;color:var(--text-3)}
+
+.tl-mini{flex:1;margin:2px 16px 16px;padding:20px 8px 8px;border-radius:14px;
+  background:var(--card-inner);display:flex;flex-direction:column;justify-content:center;gap:18px;padding-left:26px}
+.tl-mini .tl-i{position:relative;padding-left:20px;font-size:12.5px;color:var(--text-2)}
+.tl-mini .tl-i::before{content:"";position:absolute;left:0;top:4px;width:9px;height:9px;border-radius:50%;
+  background:linear-gradient(145deg,#6ea4ff,#5b44d6);box-shadow:0 0 0 3px var(--card-inner)}
+.tl-mini .tl-i b{display:block;color:var(--text-1);font-size:13px;margin-bottom:2px}
+
+.todo-mini{flex:1;margin:2px 16px 16px;padding:16px 18px;border-radius:14px;
+  background:var(--card-inner);display:flex;flex-direction:column;gap:6px;justify-content:center}
+.todo-i{display:flex;align-items:center;gap:11px;font-size:13px;padding:7px 2px;color:var(--text-1)}
+.todo-check{width:20px;height:20px;border-radius:50%;border:1.6px solid var(--text-3);flex:none;
+  display:grid;place-items:center;transition:.2s}
+.todo-i.done .todo-check,.todo-line.done .todo-check{background:var(--accent);border-color:var(--accent)}
+.todo-check svg{width:11px;height:11px;color:#fff;opacity:0}
+.todo-i.done .todo-check svg,.todo-line.done .todo-check svg{opacity:1}
+.todo-i.done span,.todo-line.done span{color:var(--text-3);text-decoration:line-through}
+
+/* 小型图标卡片 */
+.compact{
+  grid-column:span 3;min-height:150px;border-radius:var(--radius-lg);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:13px;
+  position:relative;
+}
+.compact .c-label{font-size:13.5px;font-weight:600}
+.compact .c-sub{font-size:11.5px;color:var(--text-3);margin-top:-8px;max-width:100%;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 6px}
+/* 音乐卡片迷你播放按钮 */
+.mini-play{
+  position:absolute;right:12px;bottom:12px;width:34px;height:34px;border-radius:50%;
+  display:grid;place-items:center;color:#fff;
+  background:linear-gradient(150deg,#ff6a8e,#f02e5e);
+  box-shadow:0 4px 12px rgba(240,46,94,.4);transition:.2s;opacity:.92;
+}
+.mini-play:hover{transform:scale(1.1);opacity:1}
+.mini-play svg{width:16px;height:16px}
+.mini-play.playing{animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 4px 12px rgba(240,46,94,.4)}50%{box-shadow:0 4px 18px rgba(240,46,94,.75)}}
+
+.footer{
+  text-align:center;margin-top:34px;font-size:12px;color:var(--text-3);line-height:1.9;
+}
+.footer a{color:var(--text-2);text-decoration:none;border-bottom:1px solid var(--card-border)}
+
+/* ===================== 弹窗 App 窗口 ===================== */
+.scrim{
+  position:fixed;inset:0;z-index:80;display:none;
+  background:var(--scrim);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  align-items:center;justify-content:center;padding:28px 18px;
+}
+.scrim.open{display:flex;animation:fadeIn .25s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.window{
+  width:100%;max-width:720px;max-height:86vh;
+  border-radius:26px;overflow:hidden;display:flex;flex-direction:column;
+  background:var(--card-bg-strong);
+  backdrop-filter:blur(40px) saturate(180%);
+  -webkit-backdrop-filter:blur(40px) saturate(180%);
+  border:1px solid var(--card-border);
+  box-shadow:0 40px 100px rgba(0,0,0,.5);
+  animation:winIn .32s cubic-bezier(.2,.8,.25,1);
+}
+@keyframes winIn{from{opacity:0;transform:translateY(18px) scale(.965)}to{opacity:1;transform:none}}
+.window.wide{max-width:960px}
+.win-hd{
+  display:flex;align-items:center;gap:14px;padding:18px 22px;
+  border-bottom:1px solid var(--card-border);flex:none;
+}
+.win-hd h3{font-size:18px;font-weight:650}
+.win-hd p{font-size:12.5px;color:var(--text-2);margin-top:2px}
+.win-close{margin-left:auto;width:34px;height:34px;border-radius:50%;
+  display:grid;place-items:center;color:var(--text-2);transition:.2s}
+.win-close:hover{background:var(--chip);color:var(--text-1)}
+.win-close svg{width:16px;height:16px}
+.win-body{padding:22px 24px 26px;overflow-y:auto}
+.win-body::-webkit-scrollbar{width:8px}
+.win-body::-webkit-scrollbar-thumb{background:var(--track);border-radius:4px}
+
+/* 关于我 */
+.about-hero{display:flex;align-items:center;gap:22px;margin-bottom:22px;flex-wrap:wrap}
+.about-hero img{width:96px;height:96px;border-radius:50%;object-fit:cover;
+  box-shadow:0 10px 28px rgba(0,0,0,.35);border:3px solid var(--card-border-hover)}
+.about-hero h4{font-size:23px;font-weight:700}
+.about-hero .tagline{color:var(--accent);font-size:13.5px;font-weight:600;margin-top:5px}
+.about-bio{font-size:14px;line-height:1.9;color:var(--text-2)}
+.about-bio p{margin-bottom:12px}
+.chip-row{display:flex;flex-wrap:wrap;gap:9px;margin-top:18px}
+.chip{
+  font-size:12.5px;padding:7px 14px;border-radius:999px;
+  background:var(--chip);border:1px solid var(--card-border);
+  display:inline-flex;align-items:center;gap:7px;color:var(--text-1);
+}
+.about-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:20px}
+.about-stat{
+  background:var(--card-inner);border-radius:16px;padding:18px 14px;text-align:center;
+}
+.about-stat b{font-size:24px;font-weight:700;display:block}
+.about-stat span{font-size:12px;color:var(--text-2)}
+
+/* 相册 */
+.photos-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.photos-grid .tile{aspect-ratio:1;border-radius:12px;cursor:zoom-in}
+.lightbox{
+  position:fixed;inset:0;z-index:100;display:none;
+  background:rgba(3,7,20,.92);backdrop-filter:blur(14px);
+  align-items:center;justify-content:center;
+}
+.lightbox.open{display:flex;animation:fadeIn .2s ease}
+.lightbox img{max-width:86vw;max-height:82vh;border-radius:14px;box-shadow:0 30px 80px rgba(0,0,0,.7);
+  animation:winIn .28s ease}
+.lb-btn{position:absolute;width:48px;height:48px;border-radius:50%;
+  background:rgba(255,255,255,.1);display:grid;place-items:center;color:#fff;transition:.2s}
+.lb-btn:hover{background:rgba(255,255,255,.22)}
+.lb-btn svg{width:22px;height:22px}
+.lb-prev{left:26px;top:50%;transform:translateY(-50%)}
+.lb-next{right:26px;top:50%;transform:translateY(-50%)}
+.lb-close{right:22px;top:22px}
+.lb-count{position:absolute;left:50%;bottom:26px;transform:translateX(-50%);
+  font-size:13px;color:rgba(255,255,255,.75);background:rgba(255,255,255,.1);padding:6px 14px;border-radius:999px}
+
+/* 联系方式 */
+.mail-hero{text-align:center;padding:12px 0 20px}
+.mail-hero .env{width:74px;height:74px;margin:0 auto 16px;border-radius:22px;
+  background:linear-gradient(160deg,#3aa7ff,#126fe0);display:grid;place-items:center;
+  box-shadow:0 14px 34px rgba(30,110,230,.45)}
+.mail-hero .env svg{width:36px;height:36px;color:#fff}
+.mail-hero h4{font-size:20px;font-weight:700;margin-bottom:6px}
+.mail-hero p{color:var(--text-2);font-size:13.5px}
+.mail-addr{
+  margin:16px auto 18px;max-width:420px;display:flex;align-items:center;gap:12px;
+  background:var(--card-inner);border:1px solid var(--card-border);
+  border-radius:14px;padding:14px 18px;font-size:15px;font-weight:600;
+}
+.mail-addr svg{width:18px;height:18px;color:var(--accent)}
+.btn-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.btn{
+  padding:12px 24px;border-radius:14px;font-size:14px;font-weight:630;
+  display:inline-flex;align-items:center;gap:8px;transition:.2s;
+}
+.btn svg{width:16px;height:16px}
+.btn-primary{background:linear-gradient(145deg,#4d92ff,#2b66e6);color:#fff;
+  box-shadow:0 8px 22px rgba(40,100,230,.45)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(40,100,230,.55)}
+.btn-ghost{background:var(--chip);border:1px solid var(--card-border)}
+.btn-ghost:hover{background:var(--card-inner-soft)}
+.social-list{margin-top:22px;display:flex;flex-direction:column;gap:8px}
+.social-i{
+  display:flex;align-items:center;gap:13px;width:100%;padding:13px 16px;
+  border-radius:14px;background:var(--card-inner);font-size:14px;text-align:left;transition:.2s}
+.social-i:hover{background:var(--chip)}
+a.social-i{text-decoration:none;color:var(--text-1)}
+.social-i .arr{width:15px;height:15px;color:var(--text-3);margin-left:8px;flex:none}
+.social-i .s-ic{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;flex:none}
+.social-i .s-ic svg{width:19px;height:19px;color:#fff}
+.social-i small{margin-left:auto;font-size:11.5px;color:var(--text-3)}
+
+/* 项目 */
+.proj-grid{display:flex;flex-direction:column;gap:12px}
+.proj-i{
+  display:flex;gap:16px;padding:17px 18px;border-radius:16px;
+  background:var(--card-inner);border:1px solid transparent;transition:.25s;
+  color:var(--text-1);text-decoration:none;position:relative;
+}
+.proj-i:hover{border-color:var(--card-border-hover);transform:translateX(3px)}
+.proj-i .arr{position:absolute;right:14px;top:14px;width:16px;height:16px;opacity:0;transition:.2s}
+.proj-i:hover .arr{opacity:.6}
+.proj-ic{width:46px;height:46px;border-radius:13px;flex:none;display:grid;place-items:center;
+  background:linear-gradient(150deg,var(--p1,#5b8cff),var(--p2,#3a4fd6))}
+.proj-ic svg{width:23px;height:23px;color:#fff}
+.proj-i h5{font-size:15px;font-weight:630;margin-bottom:4px}
+.proj-i p{font-size:12.8px;color:var(--text-2);line-height:1.6}
+.tag-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.tag{font-size:11px;padding:3px 10px;border-radius:999px;background:var(--chip);color:var(--text-2)}
+
+/* 笔记 */
+.notes-list{display:flex;flex-direction:column;gap:10px}
+.note-i{
+  padding:16px 18px;border-radius:16px;background:var(--card-inner);
+  cursor:pointer;transition:.2s;text-align:left;width:100%;
+}
+.note-i:hover{background:var(--chip)}
+.note-i h5{font-size:14.5px;font-weight:630;display:flex;justify-content:space-between;gap:10px}
+.note-i h5 time{font-size:11.5px;color:var(--text-3);font-weight:400;flex:none}
+.note-i p{font-size:13px;color:var(--text-2);line-height:1.7;margin-top:7px;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.note-full{font-size:14px;line-height:1.95;color:var(--text-2)}
+.note-full h5{font-size:18px;color:var(--text-1);margin-bottom:5px}
+.note-full time{font-size:12px;color:var(--text-3);display:block;margin-bottom:16px}
+.note-full p{margin-bottom:12px}
+
+/* 技能 */
+.skill-group{margin-bottom:20px}
+.skill-group>h5{font-size:13px;color:var(--text-2);font-weight:600;margin:0 0 11px 2px;
+  text-transform:uppercase;letter-spacing:1.5px}
+.skill-bars{display:flex;flex-direction:column;gap:12px}
+.skill-line{display:flex;align-items:center;gap:14px;font-size:13.5px}
+.skill-line span{width:92px;flex:none}
+.skill-line .sk-bar{height:8px}
+.skill-line em{font-style:normal;font-size:11.5px;color:var(--text-3);width:38px;flex:none;text-align:right}
+
+/* 时间线 */
+.timeline{position:relative;margin-left:10px;padding-left:26px}
+.timeline::before{content:"";position:absolute;left:7px;top:8px;bottom:8px;width:2px;
+  background:linear-gradient(var(--accent),rgba(120,90,255,.3))}
+.tl-item{position:relative;padding:0 0 26px 6px}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{content:"";position:absolute;left:-26px;top:5px;width:14px;height:14px;border-radius:50%;
+  background:linear-gradient(145deg,#6ea4ff,#7d5cff);
+  box-shadow:0 0 0 4px var(--card-inner),0 0 12px rgba(110,140,255,.7)}
+.tl-item time{font-size:12px;color:var(--accent);font-weight:600}
+.tl-item h5{font-size:15px;margin:5px 0 4px}
+.tl-item p{font-size:13px;color:var(--text-2);line-height:1.6}
+
+/* 日历卡片迷你预览 */
+.cal-mini{flex:1;margin:2px 16px 16px;padding:16px;border-radius:14px;
+  background:var(--card-inner);border:1px solid var(--card-border);
+  display:flex;flex-direction:column;gap:12px}
+.cal-mini-date{display:flex;align-items:baseline;gap:10px}
+.cal-mini-date b{font-size:42px;font-weight:650;line-height:1;letter-spacing:-1px;
+  background:linear-gradient(135deg,var(--text-1),var(--accent));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.cal-mini-date span{font-size:13px;color:var(--text-2)}
+.cal-mini-f p{font-size:13px;color:var(--text-2);line-height:1.55;margin:8px 0 8px}
+.cal-mini-meta{font-size:11.5px;color:var(--text-3);letter-spacing:.5px}
+.cap-badge{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:650;
+  color:#fff;background:linear-gradient(135deg,#7d5cff,#4a36c4);padding:4px 11px;border-radius:99px;
+  box-shadow:0 2px 8px rgba(125,92,255,.35)}
+
+/* 日历弹窗 */
+.cal-bar{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.cal-nav{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;
+  background:var(--chip);color:var(--text-2);transition:.2s}
+.cal-nav:hover{background:var(--accent);color:#fff}
+.cal-nav svg{width:17px;height:17px}
+.cal-title{flex:1;text-align:center;font-size:16px;font-weight:650;letter-spacing:.5px}
+.cal-today{padding:7px 15px;font-size:12.5px;border-radius:99px}
+.cal-panel{background:var(--card-inner);border:1px solid var(--card-border);border-radius:18px;padding:16px}
+.cal-wk{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:8px}
+.cal-wk span{text-align:center;font-size:11.5px;color:var(--text-3);font-weight:600}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-d{aspect-ratio:1;display:grid;place-items:center;font-size:13.5px;border-radius:50%;
+  color:var(--text-1);transition:.15s}
+.cal-d:not(.empty):hover{background:var(--chip)}
+.cal-d.today{background:linear-gradient(145deg,#6ea4ff,#7d5cff);color:#fff;font-weight:700;
+  box-shadow:0 3px 10px rgba(110,140,255,.5)}
+.cal-d.empty{pointer-events:none}
+
+/* 摩羯座运势卡 */
+.fortune-card{margin-top:14px;background:linear-gradient(160deg,rgba(125,92,255,.14),rgba(74,54,196,.08));
+  border:1px solid rgba(125,92,255,.28);border-radius:18px;padding:18px 20px}
+.f-hd{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.f-date{font-size:12px;color:var(--text-3)}
+.f-line{font-size:14.5px;line-height:1.65;color:var(--text-1);margin:13px 0 15px;font-weight:500}
+.f-stars{display:grid;grid-template-columns:repeat(2,1fr);gap:9px 20px;margin-bottom:13px}
+.f-stars div{display:flex;align-items:center;justify-content:space-between;
+  background:var(--card-inner);border-radius:11px;padding:8px 13px}
+.f-stars span{font-size:12.5px;color:var(--text-2)}
+.f-stars em{font-style:normal;font-size:12.5px;color:#ffb64d;letter-spacing:1.5px}
+.f-meta{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:12.5px;color:var(--text-2);margin-bottom:13px}
+.f-meta b{color:var(--text-1);font-weight:600}
+.f-dos{display:flex;gap:10px}
+.f-dos span{flex:1;font-size:12.5px;padding:8px 12px;border-radius:11px;font-weight:550}
+.dos-yi{background:rgba(48,209,88,.13);color:#30d158;border:1px solid rgba(48,209,88,.25)}
+.dos-ji{background:rgba(255,69,58,.11);color:#ff6b62;border:1px solid rgba(255,69,58,.22)}
+[data-theme="light"] .dos-yi{color:#1a8a3e}
+[data-theme="light"] .dos-ji{color:#d12d22}
+.f-tip{font-size:11px;color:var(--text-3);margin:13px 0 0;text-align:center}
+
+/* 愿望清单 */
+.todo-list{display:flex;flex-direction:column;gap:6px}
+.todo-group{margin-bottom:14px}
+.todo-group-title{
+  font-size:12px;font-weight:650;color:var(--text-2);letter-spacing:1px;
+  padding:2px 4px 10px;text-transform:uppercase;
+}
+.done-title{margin-top:18px;color:var(--text-3)}
+.todo-none{padding:14px;font-size:13px;color:var(--text-3);text-align:center}
+#todoList{margin-bottom:0}
+.todo-line{display:flex;align-items:center;gap:13px;padding:11px 13px;border-radius:13px;
+  font-size:14px;transition:.2s;width:100%;text-align:left}
+.todo-line:hover{background:var(--chip)}
+.todo-line .todo-check{width:23px;height:23px}
+.todo-add{display:flex;gap:10px;margin-top:6px}
+.todo-add input{
+  flex:1;background:var(--card-inner);border:1px solid var(--card-border);
+  border-radius:13px;padding:12px 16px;font-size:14px;color:var(--text-1);outline:none;font-family:inherit;
+}
+.todo-add input:focus{border-color:var(--accent)}
+.todo-add .btn{padding:0 20px}
+
+/* 音乐 / 游戏 / 收藏 */
+.media-i{
+  display:flex;align-items:center;gap:15px;padding:13px 16px;border-radius:15px;
+  background:var(--card-inner);margin-bottom:10px;
+}
+.media-cover{width:46px;height:46px;border-radius:11px;flex:none;display:grid;place-items:center;
+  background:linear-gradient(150deg,var(--p1,#ff6a8e),var(--p2,#c01e52))}
+.media-cover svg{width:22px;height:22px;color:#fff}
+.media-i h5{font-size:14px;font-weight:630}
+.media-i p{font-size:12px;color:var(--text-2);margin-top:2px}
+.stars{margin-left:auto;font-size:12px;letter-spacing:2px;color:#ffb300;white-space:nowrap}
+.fav-i{
+  display:flex;align-items:center;gap:14px;width:100%;padding:14px 16px;margin-bottom:9px;
+  border-radius:14px;background:var(--card-inner);text-align:left;font-size:14px;transition:.2s;
+}
+.fav-i:hover{background:var(--chip);transform:translateX(3px)}
+.fav-i .fav-ic{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;flex:none;
+  background:linear-gradient(150deg,var(--p1,#ffb64d),var(--p2,#ff7a1a))}
+.fav-i .fav-ic svg{width:19px;height:19px;color:#fff}
+.fav-i small{margin-left:auto;color:var(--text-3);font-size:11.5px}
+.fav-i svg.arr{width:15px;height:15px;color:var(--text-3);margin-left:8px}
+
+/* 音乐播放器 */
+.player{
+  position:sticky;top:0;z-index:5;margin-bottom:14px;padding:16px;border-radius:18px;
+  background:linear-gradient(150deg,rgba(255,106,142,.16),rgba(240,46,94,.08));
+  border:1px solid rgba(255,106,142,.28);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+}
+.pl-now{display:flex;align-items:center;gap:13px}
+.pl-cover{width:48px;height:48px;border-radius:13px;flex:none;display:grid;place-items:center;
+  background:linear-gradient(150deg,#ff6a8e,#c01e52);box-shadow:0 4px 14px rgba(240,46,94,.35)}
+.pl-cover svg{width:23px;height:23px;color:#fff}
+.pl-info{flex:1;min-width:0}
+.pl-info h5{font-size:14.5px;font-weight:630;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pl-info p{font-size:11.5px;color:var(--text-3);margin-top:3px;font-variant-numeric:tabular-nums}
+.pl-ctrls{display:flex;align-items:center;gap:6px}
+.pl-btn{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;
+  color:var(--text-1);transition:.2s}
+.pl-btn:hover{background:var(--chip)}
+.pl-btn svg{width:19px;height:19px}
+.pl-play{width:44px;height:44px;background:linear-gradient(150deg,#ff6a8e,#f02e5e);color:#fff;
+  box-shadow:0 4px 12px rgba(240,46,94,.4)}
+.pl-play:hover{transform:scale(1.06);background:linear-gradient(150deg,#ff6a8e,#f02e5e)}
+.pl-play svg{width:20px;height:20px}
+.pl-bar{height:5px;border-radius:3px;background:var(--track);margin-top:14px;cursor:pointer;overflow:hidden}
+.pl-bar i{display:block;height:100%;width:0;border-radius:3px;
+  background:linear-gradient(90deg,#ff6a8e,#f02e5e);transition:width .15s linear}
+.song-list{display:flex;flex-direction:column;gap:6px}
+.song-i{display:flex;align-items:center;gap:13px;width:100%;padding:11px 13px;border-radius:13px;
+  font-size:14px;color:var(--text-1);text-align:left;transition:.2s}
+.song-i:hover{background:var(--chip)}
+.song-ic{width:36px;height:36px;border-radius:10px;flex:none;display:grid;place-items:center;
+  background:linear-gradient(150deg,#ff6a8e,#c01e52)}
+.song-ic svg{width:17px;height:17px;color:#fff}
+.song-name{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.song-i.playing{background:linear-gradient(150deg,rgba(255,106,142,.15),rgba(240,46,94,.07))}
+.song-i.playing .song-name{color:#ff6a8e;font-weight:630}
+.song-eq{display:none;align-items:flex-end;gap:2.5px;height:14px}
+.song-i.playing .song-eq{display:flex}
+.song-eq i{width:3px;border-radius:2px;background:#ff6a8e;animation:eq .8s ease-in-out infinite}
+.song-eq i:nth-child(1){height:60%}
+.song-eq i:nth-child(2){height:100%;animation-delay:.2s}
+.song-eq i:nth-child(3){height:40%;animation-delay:.4s}
+@keyframes eq{0%,100%{transform:scaleY(.4)}50%{transform:scaleY(1)}}
+.music-empty{text-align:center;padding:34px 10px;color:var(--text-2)}
+.music-empty p{font-size:14.5px;margin-bottom:6px}
+.music-empty span{font-size:12.5px;color:var(--text-3)}
+
+/* 设置 */
+.setting-i{
+  display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:15px;
+  background:var(--card-inner);margin-bottom:10px;
+}
+.setting-i .s-ic{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;
+  background:linear-gradient(150deg,#8e7bff,#5b44d6)}
+.setting-i .s-ic svg{width:20px;height:20px;color:#fff}
+.setting-i h5{font-size:14.5px;font-weight:630}
+.setting-i p{font-size:12px;color:var(--text-2);margin-top:2px}
+.switch{margin-left:auto;position:relative;width:50px;height:29px;border-radius:999px;
+  background:var(--track);transition:.25s;flex:none}
+.switch::after{content:"";position:absolute;top:2.5px;left:3px;width:24px;height:24px;border-radius:50%;
+  background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.3);transition:.25s}
+.switch.on{background:linear-gradient(145deg,#4d92ff,#2b66e6)}
+.switch.on::after{left:23px}
+.seg{margin-left:auto;display:flex;background:var(--card-inner);border-radius:11px;padding:3px;gap:2px}
+.seg button{padding:7px 14px;border-radius:9px;font-size:12.5px;color:var(--text-2)}
+.seg button.on{background:var(--accent);color:#fff;font-weight:600}
+
+/* App 启动器 */
+.launcher{
+  position:fixed;inset:0;z-index:90;display:none;
+  background:var(--scrim);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  align-items:center;justify-content:center;padding:30px;
+}
+.launcher.open{display:flex;animation:fadeIn .22s ease}
+.launch-panel{
+  background:var(--card-bg-strong);border:1px solid var(--card-border);
+  border-radius:30px;padding:34px 30px;box-shadow:var(--shadow);
+  display:grid;grid-template-columns:repeat(6,1fr);gap:26px 22px;
+  max-width:720px;animation:winIn .3s ease;
+}
+.launch-i{display:flex;flex-direction:column;align-items:center;gap:9px;
+  font-size:12px;color:var(--text-1);width:78px;transition:transform .2s}
+.launch-i:hover{transform:scale(1.08)}
+.launch-close{position:absolute;top:26px;right:28px}
+
+/* Toast */
+.toast{
+  position:fixed;left:50%;bottom:34px;transform:translateX(-50%) translateY(20px);
+  background:var(--scrim-solid);color:#fff;font-size:13.5px;padding:12px 22px;
+  border-radius:999px;border:1px solid var(--card-border);
+  box-shadow:var(--shadow);z-index:120;opacity:0;pointer-events:none;
+  transition:.3s cubic-bezier(.2,.8,.2,1);display:flex;align-items:center;gap:8px;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast svg{width:16px;height:16px;color:#30d158}
+
+/* ===================== 响应式 ===================== */
+@media (max-width:980px){
+  .card-profile{grid-column:span 5}
+  .card-photos{grid-column:span 7}
+  .card-contact{grid-column:span 7}
+  .card-projects{grid-column:span 5}
+  .card-skills{grid-column:span 12;min-height:0}
+  .card-skills .skills-preview{padding-bottom:22px}
+  .card-notes{grid-column:span 7}
+  .card-timeline{grid-column:span 5}
+  .card-remind{grid-column:span 12;min-height:0}
+  .card-remind .todo-mini{padding:22px}
+  .compact{grid-column:span 4}
+  .photos-grid{grid-template-columns:repeat(3,1fr)}
+  .launch-panel{grid-template-columns:repeat(4,1fr)}
+  .about-grid{grid-template-columns:repeat(3,1fr)}
+}
+@media (max-width:640px){
+  .wrap{padding:calc(var(--nav-h) + 16px) 14px 36px}
+  .grid{gap:14px}
+  .card-profile,.card-photos,.card-contact,.card-projects,.card-skills,
+  .card-notes,.card-timeline,.card-remind{grid-column:span 12;min-height:0}
+  .card-profile{min-height:340px;align-items:center;text-align:center}
+  .card-profile .prof-plan{margin-left:auto;margin-right:auto}
+  .tile-grid{min-height:0}
+  .tile-grid-wrap{min-height:220px}
+  .compact{grid-column:span 6}
+  .banner{padding:18px 18px;gap:14px}
+  .banner h1{font-size:15.5px}
+  .banner p{font-size:12.5px}
+  .banner-ic{width:40px;height:40px}
+  .photos-grid{grid-template-columns:repeat(2,1fr)}
+  .launch-panel{grid-template-columns:repeat(3,1fr);gap:22px 14px;padding:28px 20px}
+  .about-grid{grid-template-columns:1fr}
+  .brand small{display:none}
+  .lb-prev{left:8px}.lb-next{right:8px}
+  .win-body{padding:18px 16px 22px}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
+</style>
+</head>
+<body data-wp="on" data-motion="on">
+
+<div class="bg">
+  <div class="bg-gradient"></div>
+  <div class="bg-blob b1"></div>
+  <div class="bg-blob b2"></div>
+  <div class="bg-blob b3"></div>
+  <div class="bg-wp"></div>
+</div>
+
+<!-- 顶部导航 -->
+<header class="nav">
+  <div class="brand">
+    <span class="brand-mark">鉴</span>
+    <span><strong>鉴业</strong><small>JIANYE CLOUD</small></span>
+  </div>
+  <div class="nav-actions">
+    <button class="icon-btn" id="plusBtn" aria-label="快捷操作" title="快捷操作">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+    </button>
+    <button class="icon-btn" id="launchBtn" aria-label="应用启动器" title="全部应用">
+      <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="6" cy="6" r="2"/><circle cx="12" cy="6" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="6" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="18" cy="12" r="2"/><circle cx="6" cy="18" r="2"/><circle cx="12" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></svg>
+    </button>
+    <button class="nav-avatar" data-open="about" aria-label="关于我" title="关于我">
+      <img src="%E5%A4%B4%E5%83%8F.png" alt="鉴业的头像">
+    </button>
+  </div>
+</header>
+
+<!-- 加号弹出菜单 -->
+<div class="popover" id="popover">
+  <button class="pop-item" data-action="mail">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m4 7 8 6 8-6"/></svg>
+    给我发邮件
+  </button>
+  <button class="pop-item" data-action="copy">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="12" height="12" rx="2.5"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+    复制邮箱地址
+  </button>
+  <button class="pop-item" data-action="top">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+    回到顶部
+  </button>
+</div>
+
+<main class="wrap">
+  <!-- 欢迎横幅 -->
+  <div class="banner" id="banner" role="button" tabindex="0" aria-label="开始浏览">
+    <span class="banner-ic">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.2 5 5.3.5-4 3.6 1.2 5.2L12 14.8 7.3 17.3l1.2-5.2-4-3.6 5.3-.5z"/></svg>
+    </span>
+    <div>
+      <h1>欢迎来到鉴业的数字主页</h1>
+      <p>这里收藏着我的项目、笔记、相册和日常 —— 像使用 App 一样，点开任意一张卡片开始探索。</p>
+    </div>
+    <span class="banner-arrow">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+    </span>
+  </div>
+
+  <div class="grid" id="apps">
+    <!-- 账户卡 -->
+    <article class="card card-profile" data-open="about" tabindex="0">
+      <div class="prof-ring"><img src="%E5%A4%B4%E5%83%8F.png" alt="头像"></div>
+      <h2>鉴业</h2>
+      <p class="prof-mail">aimjianye@outlook.com</p>
+      <p class="prof-plan"><span class="prof-dot"></span>个人主页 · 数字空间</p>
+    </article>
+
+    <!-- 照片 -->
+    <article class="card card-photos" data-open="photos" tabindex="0">
+      <header class="card-hd">
+        <span class="app-ic ic-photos" data-icon="photos"></span>
+        <div class="hd-text"><h3>照片</h3><p>图库 · <span id="photoCount">…</span> 张照片</p></div>
+        <span class="hd-action"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="6" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="18" cy="12" r="1.8"/></svg></span>
+      </header>
+      <div class="tile-grid-wrap"><div class="tile-grid" id="tileGrid"></div></div>
+    </article>
+
+    <!-- 联系（邮件） -->
+    <article class="card card-contact" data-open="contact" tabindex="0">
+      <header class="card-hd">
+        <span class="app-ic ic-mail" data-icon="mail"></span>
+        <div class="hd-text"><h3>邮件</h3><p>联系我</p></div>
+        <span class="hd-action"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></span>
+      </header>
+      <div class="dark-body">
+        <span class="big-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m4 7 8 6 8-6"/></svg></span>
+        <h4>给我写封邮件吧</h4>
+        <p>合作、交流，或者只是打个招呼，我通常会在 24 小时内回复。</p>
+        <span class="mini-link">aimjianye@outlook.com →</span>
+      </div>
+    </article>
+
+    <!-- 项目作品（云盘） -->
+    <article class="card card-projects" data-open="projects" tabindex="0">
+      <header class="card-hd">
+        <span class="app-ic ic-drive" data-icon="drive"></span>
+        <div class="hd-text"><h3>云盘</h3><p>精选项目</p></div>
+      </header>
+      <div class="dark-body">
+        <span class="big-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M3 10a4 4 0 0 1 4-4 5 5 0 0 1 9.6-1.5A4.5 4.5 0 0 1 21 13.5 4.5 4.5 0 0 1 16.5 18H7a4 4 0 0 1-4-8z"/></svg></span>
+        <h4>项目作品库</h4>
+        <p>这里存放着我写过的代码、做过的设计与实验。</p>
+        <span class="mini-link" id="projCount">5 个项目 →</span>
+      </div>
+    </article>
+
+    <!-- 技能 -->
+    <article class="card card-skills" data-open="skills" tabindex="0">
+      <header class="card-hd">
+        <span class="app-ic ic-skills" data-icon="skills"></span>
+        <div class="hd-text"><h3>技能</h3><p>能力图谱</p></div>
+      </header>
+      <div class="dark-body" style="justify-content:flex-start;padding-top:26px">
+        <div class="skills-preview" id="skillsPreview"></div>
+      </div>
+    </article>
+
+    <!-- 笔记（备忘录） -->
+    <article class="card card-notes" data-open="notes" tabindex="0">
+      <header class="card-hd">
+        <span class="app-ic ic-notes" data-icon="notes"></span>
+        <div class="hd-text"><h3>备忘录</h3><p>最新笔记</p></div>
+        <span class="hd-action"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></span>
+      </header>
+      <div class="note-preview" id="notePreview"></div>
+    </article>
+
+    <!-- 日历 + 摩羯座运势 -->
+    <article class="card card-timeline" data-open="calendar" tabindex="0">
+      <header class="card-hd">
+        <span class="app-ic ic-cal" data-icon="calendar"></span>
+        <div class="hd-text"><h3>日历</h3><p>日期 · 摩羯座运势</p></div>
+      </header>
+      <div class="cal-mini" id="calendarPreview"></div>
+    </article>
+
+    <!-- 愿望清单（提醒事项） -->
+    <article class="card card-remind" data-open="reminders" tabindex="0">
+      <header class="card-hd">
+        <span class="app-ic ic-remind" data-icon="remind"></span>
+        <div class="hd-text"><h3>提醒事项</h3><p>愿望清单</p></div>
+      </header>
+      <div class="todo-mini" id="todoMini"></div>
+    </article>
+
+    <!-- 小型图标卡 -->
+    <article class="card compact" data-open="music" tabindex="0">
+      <span class="app-ic tile-ic ic-music" data-icon="music"></span>
+      <span class="c-label">音乐</span><span class="c-sub" id="musicSub">我的循环歌单</span>
+      <button class="mini-play" id="musicMiniPlay" aria-label="快捷播放 / 暂停"></button>
+    </article>
+    <article class="card compact" data-open="games" tabindex="0">
+      <span class="app-ic tile-ic ic-games" data-icon="games"></span>
+      <span class="c-label">游戏</span><span class="c-sub">在玩与通关</span>
+    </article>
+    <article class="card compact" data-open="favorites" tabindex="0">
+      <span class="app-ic tile-ic ic-fav" data-icon="fav"></span>
+      <span class="c-label">收藏</span><span class="c-sub">常用工具集</span>
+    </article>
+    <article class="card compact" data-open="settings" tabindex="0">
+      <span class="app-ic tile-ic ic-settings" data-icon="settings"></span>
+      <span class="c-label">设置</span><span class="c-sub">个性化此页</span>
+    </article>
+  </div>
+
+  <footer class="footer">
+    © 2026 鉴业 · 以 iCloud 的方式收藏我的一切<br>
+    灵感来自 Apple iCloud · 由原生 HTML / CSS / JavaScript 手工打造<br>
+    <a href="https://my.feishu.cn/share/base/form/shrcnZomfA2kKrY311TeM2OaRpe" target="_blank" rel="noopener">📝 意见反馈</a>
+  </footer>
+</main>
+
+<!-- 通用弹窗 -->
+<div class="scrim" id="scrim">
+  <div class="window" id="window" role="dialog" aria-modal="true" aria-labelledby="winTitle"></div>
+</div>
+
+<!-- App 启动器 -->
+<div class="launcher" id="launcher">
+  <button class="icon-btn lb-btn launch-close" id="launchClose" style="position:fixed">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+  </button>
+  <div class="launch-panel" id="launchPanel"></div>
+</div>
+
+<!-- 灯箱 -->
+<div class="lightbox" id="lightbox">
+  <button class="lb-btn lb-close" id="lbClose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+  <button class="lb-btn lb-prev" id="lbPrev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+  <img id="lbImg" src="" alt="照片大图">
+  <button class="lb-btn lb-next" id="lbNext"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+  <span class="lb-count" id="lbCount"></span>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ========================= 图标库 ========================= */
+const ICONS = {
+  photos:'<svg viewBox="0 0 48 48"><g fill="#fff"><path d="M24 12a13 13 0 0 0-9.6 21.6A13 13 0 0 0 33 35.4 13 13 0 0 0 24 12z" opacity=".95"/><g fill="#ff375f"><circle cx="24" cy="11" r="6.2"/><circle cx="36" cy="18" r="6.2"/></g><circle cx="38" cy="30" r="6.2" fill="#ff9f0a"/><circle cx="31" cy="40" r="6.2" fill="#bf5af2"/><circle cx="17" cy="40" r="6.2" fill="#5e5ce6"/><circle cx="10" cy="30" r="6.2" fill="#0a84ff"/><circle cx="12" cy="18" r="6.2" fill="#30d158"/><circle cx="24" cy="25.5" r="7.6" fill="#fff"/></g></svg>',
+  mail:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2.5" y="4.5" width="19" height="15" rx="3"/><path d="m3.5 6.5 8.5 6.5 8.5-6.5"/></svg>',
+  drive:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M3 10a4 4 0 0 1 4-4 5 5 0 0 1 9.6-1.5A4.5 4.5 0 0 1 21 13.5 4.5 4.5 0 0 1 16.5 18H7a4 4 0 0 1-4-8z"/></svg>',
+  notes:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 4h14a1 1 0 0 1 1 1v3H4V5a1 1 0 0 1 1-1zM4 9h16v10a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/><path d="M8 13h8M8 17h5"/></svg>',
+  remind:'<svg viewBox="0 0 24 24"><circle cx="8.5" cy="8" r="4.2" fill="#ff453a"/><circle cx="15.5" cy="8" r="4.2" fill="#ff9f0a"/><circle cx="12" cy="15.5" r="4.2" fill="#0a84ff"/><circle cx="12" cy="15.5" r="4.2" fill="#0a84ff"/><circle cx="12" cy="15.5" r="4.2" fill="#0a84ff"/></svg>',
+  calendar:(function(){
+    const d=new Date();
+    const wk=['日','一','二','三','四','五','六'][d.getDay()];
+    return `<svg viewBox="0 0 44 44"><rect width="44" height="44" rx="10" fill="#fff"/><text x="22" y="15" text-anchor="middle" font-size="11" font-weight="700" fill="#ff3b30" font-family="sans-serif">周${wk}</text><text x="22" y="35" text-anchor="middle" font-size="20" font-weight="600" fill="#1d2438" font-family="sans-serif">${d.getDate()}</text></svg>`;
+  })(),
+  skills:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m8 8-4 4 4 4M16 8l4 4-4 4M13 5l-2 14"/></svg>',
+  timeline:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3.5 2"/></svg>',
+  music:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V6l11-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/></svg>',
+  games:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M7 9h4M9 7v4"/><circle cx="15.5" cy="10.5" r="1.2" fill="currentColor"/><circle cx="17.5" cy="13" r="1.2" fill="currentColor"/><path d="M4 9a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v2a4 4 0 0 1-7 2.6L12 15l-1 1A4 4 0 0 1 4 11z"/></svg>',
+  fav:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="m12 3 2.6 5.7 6.2.7-4.6 4.2 1.3 6.1L12 16.7 6.5 19.7l1.3-6.1L3.2 9.4l6.2-.7z"/></svg>',
+  settings:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 13.5a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1v.2a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-2.7-1.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1.1-2.7H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.2-2.7l-.1-.1A2 2 0 1 1 7 4.6l.1.1a1.6 1.6 0 0 0 1.8.3 1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8 1.6 1.6 0 0 0 1.5 1h.2a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.3 1z"/></svg>',
+  about:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8.5" r="4"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>',
+  github:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-3.2 19.5c.5.1.7-.2.7-.5v-1.7c-2.8.6-3.4-1.3-3.4-1.3-.5-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.6 2.4 1.1 3 .9.1-.7.4-1.1.6-1.4-2.2-.300000000000001-4.6-1.1-4.6-5a4 4 0 0 1 1-2.7c-.1-.3-.5-1.3.1-2.7 0 0 .8-.3 2.7 1a9.3 9.3 0 0 1 5 0c1.9-1.3 2.7-1 2.7-1 .6 1.4.2 2.4.1 2.7a4 4 0 0 1 1 2.7c0 3.9-2.4 4.7-4.6 5 .4.3.7.9.7 1.9v2.8c0 .3.2.6.7.5A10 10 0 0 0 12 2z"/></svg>',
+  video:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 8.5V7a3 3 0 0 0-3-3H5a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h9a3 3 0 0 0 3-3v-1.5l4 2.8v-12.6z"/></svg>',
+  book:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19a2 2 0 0 1 2-2h13"/></svg>',
+  weibo:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M10.4 20c-4 .4-7.5-1.4-7.8-4-.3-2.7 2.7-5.1 6.8-5.5 4-.4 7.5 1.4 7.8 4 .3 2.7-2.7 5.1-6.8 5.5zm.4-2.4c1.7-.2 2.9-1.3 2.7-2.5-.2-1.1-1.7-1.9-3.4-1.7-1.7.2-2.9 1.3-2.7 2.4.2 1.2 1.7 1.9 3.4 1.8zm8.9-8.1c.4 1.2.1 2.6-.7 3.3-.3.2-.6.2-.8-.1s-.1-.7.1-.9c.4-.4.5-1.1.3-1.7-.2-.7-.8-1.2-1.5-1.3-.4-.1-.6-.4-.5-.8s.4-.6.8-.5c1.3.2 2.3 1.1 2.5 2.4zm-2-1.9c1.9.5 3.2 2.1 3.5 4 .1.4-.1.8-.5.9s-.8-.1-.9-.5c-.2-1.3-1.1-2.4-2.4-2.8-.4-.1-.6-.5-.5-.9s.5-.6.8-.7z"/></svg>',
+  douyin:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.5 8.5a6 6 0 0 1-3.5-1.13v8.3a5.8 5.8 0 1 1-5.8-5.8c.28 0 .55.02.82.07v3.1a2.7 2.7 0 0 0-.82-.13 2.76 2.76 0 1 0 2.76 2.76V2h3.04a6 6 0 0 0 3.5 5.44z"/></svg>',
+  feishu:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.2 7.7L3 21l1.9-5.4A8.5 8.5 0 1 1 21 11.5z"/><path d="M8 10.5h8M8 13.5h5" stroke-linecap="round"/></svg>',
+  steam:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-9.9 11.45l5.5 2.27a2.83 2.83 0 0 1 1.66-.51l2.44-3.55V11.3a3.83 3.83 0 1 1 3.83-3.83A3.8 3.8 0 0 1 15.5 11.2h-.43l-3.55 2.44c0 .05.01.11.01.16a2.85 2.85 0 0 1-2.85 2.85c-.28 0-.54-.05-.79-.13l-5.17-2.14A10 10 0 1 0 12 2zM9.33 13.5a1.9 1.9 0 1 1-.37 3.76l1.15.48a1.42 1.42 0 1 0-.78-4.24zm4.3-8.44a2.55 2.55 0 1 1 0 5.1 2.55 2.55 0 0 1 0-5.1zm0 1.2a1.35 1.35 0 1 0 0 2.7 1.35 1.35 0 0 0 0-2.7z"/></svg>'
+};
+document.querySelectorAll('[data-icon]').forEach(el=>{
+  el.innerHTML = ICONS[el.dataset.icon]||'';
+});
+
+/* ========================= 数据 ========================= */
+const EMAIL = 'aimjianye@outlook.com';
+const av = encodeURIComponent('头像.png');
+/* 照片来自站点根目录下的「图片」文件夹：自动扫描，增删图片后刷新即可 */
+const PHOTO_DIR = '图片/';
+const IMG_RE = /\.(jpe?g|png|gif|webp|bmp|avif|heic|heif)$/i;
+let photos = [];        // [{src, name}]
+let photosStatus='loading';
+/* 音乐来自站点根目录下的「音乐」文件夹：自动扫描，增删歌曲后刷新即可 */
+const MUSIC_DIR = '音乐/';
+const AUDIO_RE = /\.(mp3|m4a|flac|wav|ogg|opus|aac|wma)$/i;
+let songs = [];         // [{src, name}]
+let musicStatus='loading';
+
+const PROJECTS = [
+  {t:'一键系统重装',d:'让系统重装变得像点一下按钮那样简单的工具站。',tags:['系统工具','Windows'],u:'https://jianyeos.mysxl.cn/',ic:'drive',c1:'#5b8cff',c2:'#3a4fd6'},
+  {t:'Jianye File Encryptor',d:'本地文件加密工具，保护你的重要文件安全。',tags:['文件加密','安全工具'],u:'https://jye.mysxl.cn/',ic:'fav',c1:'#ffc24d',c2:'#ff8a1a'},
+  {t:'Jianye PE',d:'自维护的 PE 系统，装机维护的好帮手。',tags:['PE 系统','装机维护'],u:'https://jianyepe.mysxl.cn/',ic:'settings',c1:'#8e7bff',c2:'#4a36c4'},
+  {t:'鉴业浏览器主页插件',d:'发布在 Edge 扩展商店的浏览器主页插件。',tags:['浏览器扩展','Edge'],u:'https://microsoftedge.microsoft.com/addons/detail/dgejdcchpcbiojhbiebfbpikeejipfbd',ic:'skills',c1:'#4cc8ff',c2:'#1f6fe0'},
+  {t:'Jianye AI 智能助手',d:'接入大模型的智能对话助手。',tags:['AI','智能助手'],u:'https://jianye-ai.mysxl.cn/',ic:'games',c1:'#ff6a8e',c2:'#c01e52'}
+];
+
+const NOTES = [
+  {d:'2026-09-20',t:'我的三条设计原则',p:['一、克制：先拿掉多余的东西，再谈加什么。','二、留白：内容之间需要呼吸，拥挤是焦虑的来源。','三、动效只为表达层级与反馈，炫技是最不重要的理由。','这个主页就是按这三条做的：毛玻璃、柔光、轻动画。']},
+  {d:'2026-09-12',t:'关于效率的思考',p:['工具不会带来效率，清晰的目标才会。','最近把待办从五个 App 收敛回一个清单，每天只写三件最重要的事，完成率反而提高了。','少即是多，这句话在任何时代都成立。']},
+  {d:'2026-08-30',t:'下半年想做的事',p:['把编译原理的小玩具语言写完解释器；独立做一个完整的全栈项目并部署上线；','读五本非技术书；去一个没去过的城市拍照。','慢一点没关系，持续在走就好。']}
+];
+
+const SKILLS = [
+  {g:'前端开发',items:[['HTML / CSS',92],['JavaScript',88],['Vue / React',80],['动效与交互',85]]},
+  {g:'后端与数据',items:[['Python',82],['Node.js',75],['SQL',72],['FastAPI',70]]},
+  {g:'设计与工具',items:[['Figma',78],['Git / 工程化',84],['摄影 / 后期',76]]}
+];
+
+const TIMELINE = [
+  {d:'2026',t:'持续建造中',p:'专注全栈开发与交互设计，维护个人项目与这本「数字备忘录」。'},
+  {d:'2024 — 2025',t:'深入前端与工程化',p:'系统学习现代前端框架，开始独立完成从设计到部署的完整项目。'},
+  {d:'2023',t:'写下第一行网页',p:'用 HTML 和 CSS 做出了第一个页面，从此掉进了创造数字世界的兔子洞。'}
+];
+
+const MUSIC = [
+  {t:'深夜 Coding Lofi',a:'Lofi Girl · 循环白噪音',s:5,c1:'#ff6a8e',c2:'#c01e52'},
+  {t:'城市夜行',a:'华语独立 · 后摇合辑',s:5,c1:'#5b8cff',c2:'#3a4fd6'},
+  {t:'Sunday Acoustic',a:'木吉他与阳光',s:4,c1:'#ffb64d',c2:'#ff7a1a'},
+  {t:'Synthwave Drive',a:'复古合成器浪潮',s:4,c1:'#8e7bff',c2:'#4a36c4'}
+];
+const GAMES = [
+  {t:'猛兽派对',a:'多人乱斗 · 萌兽互殴',s:5,c1:'#ffb64d',c2:'#b25a00'},
+  {t:'胡闹厨房',a:'合作烹饪 · 友情粉碎机',s:5,c1:'#ff6a8e',c2:'#c01e52'},
+  {t:'双人成行',a:'双人合作 · 冒险之旅',s:5,c1:'#4cc8ff',c2:'#1f6fe0'},
+  {t:'Among Us',a:'太空狼人杀 · 谁是内鬼',s:4,c1:'#bf5af2',c2:'#6e2ec0'}
+];
+const FAVS = [
+  {t:'资源主页',u:'https://yqni5us2ntq.feishu.cn/docx/IJy6dJ3H6oI0L4x2El2cHln8n0f',d:'飞书资源文档',c1:'#4cc8ff',c2:'#1f6fe0'},
+  {t:'远程控制',u:'https://jrc.mysxl.cn/',d:'远程协助工具',c1:'#ff6a8e',c2:'#c01e52'},
+  {t:'小刚PE 系统维护',u:'https://www.xgpe.top/',d:'PE 系统维护站',c1:'#30d158',c2:'#1a8a3e'}
+];
+const DEFAULT_TODOS=[];
+
+/* ========================= 工具函数 ========================= */
+const $=s=>document.querySelector(s), $$=s=>document.querySelectorAll(s);
+function toast(msg,ok=true){
+  const t=$('#toast');
+  t.innerHTML=(ok?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>':'')+msg;
+  t.classList.add('show');
+  clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),2200);
+}
+function esc(s){return s.replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));}
+
+/* ========================= 卡片预览渲染 ========================= */
+// 照片墙
+const PH_PALETTES=[['#3a5bbf','#17265e'],['#4a3fb0','#1b1746'],['#2f6fb0','#102a4a']];
+function makeTile(ph,i){
+  const d=document.createElement('div');
+  d.className='tile';
+  const pal=PH_PALETTES[i%3];
+  d.style.setProperty('--p1',pal[0]); d.style.setProperty('--p2',pal[1]);
+  if(ph){
+    const img=new Image();
+    img.loading='lazy'; img.alt=ph.name||'照片';
+    img.onerror=()=>{d.classList.add('ph');img.remove();};
+    img.src=ph.src; d.appendChild(img);
+  }else{
+    d.classList.add('ph');  // 加载 / 失败占位
+  }
+  return d;
+}
+function tileHint(icon,title,sub){
+  return `<div class="tile-empty">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="9" cy="10" r="1.6"/><path d="m4 17 5-4 4 3 3-2.5L21 17"/></svg>
+    <p><b>${title}</b></p><span>${sub}</span></div>`;
+}
+/* 首页卡片只展示前 8 张，超出显示 +N 角标 */
+function renderHomeTiles(){
+  const grid=$('#tileGrid'); grid.innerHTML='';
+  grid.classList.toggle('is-empty',false);
+  if(photosStatus==='loading'){
+    for(let i=0;i<8;i++)grid.appendChild(makeTile(null,i));
+    return;
+  }
+  if(!photos.length){
+    grid.classList.add('is-empty');
+    grid.innerHTML=tileHint('','图片 文件夹还是空的',
+      photosStatus==='error'?'通过本地服务器打开本页即可自动读取':'把照片放进去后刷新页面');
+    return;
+  }
+  photos.slice(0,8).forEach((p,i)=>{
+    const t=makeTile(p,i);
+    if(i===7 && photos.length>8){
+      const m=document.createElement('div');
+      m.className='more-mask'; m.textContent='+'+(photos.length-8);
+      t.appendChild(m);
+    }
+    grid.appendChild(t);
+  });
+}
+renderHomeTiles();
+
+/* 扫描「图片」文件夹（依赖静态服务器的目录列表，如 python -m http.server） */
+async function loadPhotos(){
+  try{
+    const base=new URL(encodeURIComponent(PHOTO_DIR.replace(/\/+$/,''))+'/',location.href);
+    const res=await fetch(base.href);
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const html=await res.text();
+    const doc=new DOMParser().parseFromString(html,'text/html');
+    const urls=new Set();
+    doc.querySelectorAll('a[href]').forEach(a=>{
+      let h=a.getAttribute('href');
+      if(!h)return;
+      h=h.split('#')[0];
+      if(!IMG_RE.test(h.split('?')[0]))return;
+      urls.add(new URL(h,base.href).href);
+    });
+    photos=Array.from(urls).map(src=>{
+      const file=decodeURIComponent(src.split('/').pop().split('?')[0]);
+      return {src,name:file.replace(/\.[^.]+$/,'')};
+    }).sort((a,b)=>b.name.localeCompare(a.name,'zh-Hans-CN',{numeric:true}));
+    photosStatus='ready';
+  }catch(err){
+    photosStatus='error'; photos=[];
+  }
+  $('#photoCount').textContent=photos.length;
+  META.photos[3]='图库 · '+photos.length+' 张照片';
+  renderHomeTiles();
+  if(currentApp==='photos'){ $('#window .win-body').innerHTML=T.photos(); bindWindow('photos'); }
+}
+
+/* ========================= 全局音乐播放器 ========================= */
+const SVG_PLAY='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.5.87l11-6.5a1 1 0 0 0 0-1.74l-11-6.5A1 1 0 0 0 8 5.5z"/></svg>';
+const SVG_PAUSE='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 5h3.4v14H7zM13.6 5H17v14h-3.4z"/></svg>';
+const gAudio=new Audio();
+gAudio.preload='metadata';
+let gCur=-1;
+const fmtT=t=>{ if(!isFinite(t))return '--:--'; t=Math.floor(t); return Math.floor(t/60)+':'+String(t%60).padStart(2,'0'); };
+function syncMusicUI(){
+  const mp=$('#musicMiniPlay'); if(mp){ mp.innerHTML=gAudio.paused?SVG_PLAY:SVG_PAUSE; mp.classList.toggle('playing',!gAudio.paused); }
+  const sub=$('#musicSub'); if(sub){ sub.textContent=gCur>=0&&!gAudio.paused?songs[gCur].name:'我的循环歌单'; }
+  if(currentApp==='music'){
+    const playBtn=$('#plPlay'); if(playBtn){ playBtn.innerHTML=gAudio.paused?SVG_PLAY:SVG_PAUSE; }
+    $('#plTitle') && ($('#plTitle').textContent=gCur>=0?songs[gCur].name:'未在播放');
+    $$('#window .song-i').forEach((b,i)=>b.classList.toggle('playing',i===gCur&&!gAudio.paused));
+  }
+}
+function musicPlayIdx(i){
+  if(i<0||i>=songs.length)return;
+  if(i===gCur&&!gAudio.paused){ gAudio.pause(); return; }
+  if(i!==gCur){ gCur=i; gAudio.src=songs[i].src; }
+  gAudio.play().catch(()=>toast('浏览器阻止了自动播放，再点一次'));
+}
+gAudio.addEventListener('play',syncMusicUI);
+gAudio.addEventListener('pause',syncMusicUI);
+gAudio.addEventListener('ended',()=>musicPlayIdx((gCur+1)%songs.length));
+gAudio.addEventListener('loadedmetadata',()=>{ if(currentApp==='music'){ $('#plTime') && ($('#plTime').textContent=fmtT(gAudio.currentTime)+' / '+fmtT(gAudio.duration)); } });
+gAudio.addEventListener('timeupdate',()=>{
+  if(currentApp!=='music')return;
+  $('#plTime') && ($('#plTime').textContent=fmtT(gAudio.currentTime)+' / '+fmtT(gAudio.duration));
+  if(isFinite(gAudio.duration)&&gAudio.duration)$('#plProg') && ($('#plProg').style.width=(gAudio.currentTime/gAudio.duration*100)+'%');
+});
+
+/* 扫描「音乐」文件夹 */
+async function loadMusic(){
+  try{
+    const base=new URL(encodeURIComponent(MUSIC_DIR.replace(/\/+$/,''))+'/',location.href);
+    const res=await fetch(base.href);
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const html=await res.text();
+    const doc=new DOMParser().parseFromString(html,'text/html');
+    const urls=new Set();
+    doc.querySelectorAll('a[href]').forEach(a=>{
+      let h=a.getAttribute('href');
+      if(!h)return;
+      h=h.split('#')[0];
+      if(!AUDIO_RE.test(h.split('?')[0]))return;
+      urls.add(new URL(h,base.href).href);
+    });
+    songs=Array.from(urls).map(src=>{
+      const file=decodeURIComponent(src.split('/').pop().split('?')[0]);
+      return {src,name:file.replace(/\.[^.]+$/,'')};
+    }).sort((a,b)=>a.name.localeCompare(b.name,'zh-Hans-CN',{numeric:true}));
+    musicStatus='ready';
+  }catch(err){
+    musicStatus='error'; songs=[];
+  }
+  META.music[3]='音乐文件夹 · '+songs.length+' 首';
+  if(currentApp==='music'){ $('#window .win-body').innerHTML=T.music(); bindWindow('music'); }
+}
+
+// 技能预览
+$('#skillsPreview').innerHTML = SKILLS[0].items.slice(0,4).map(it=>
+  `<div class="sk-row"><span>${it[0].split(' / ')[0]}</span><div class="sk-bar"><i style="--v:${it[1]}%"></i></div></div>`).join('');
+
+// 笔记预览
+{
+  const n=NOTES[0];
+  $('#notePreview').innerHTML=`<h5>${n.t}</h5><p>${n.p.join('')}</p><time>${n.d}</time>`;
+}
+/* ========================= 日历 & 摩羯座每日运势 ========================= */
+// 以日期为种子的伪随机数（同一天结果固定，次日变化）
+function dayRng(y,m,d){
+  let s=y*10000+m*100+d; s=(s^(s>>>13))*1274126177; s=s>>>0;
+  return ()=>{ s=(s+0x6D2B79F5)>>>0; let t=Math.imul(s^(s>>>15),1|s);
+    t=(t+Math.imul(t^(t>>>7),61|t))^t; return ((t^(t>>>14))>>>0)/4294967296; };
+}
+const LUCKY_COLORS=['深邃蓝','雾霾灰','炭黑色','米白色','酒红色','墨绿色','燕麦色','藏青色','焦糖棕','香芋紫'];
+const MATCH_SIGNS=['金牛座','处女座','天蝎座','双鱼座','巨蟹座','摩羯座'];
+const FORTUNE_LINES=[
+  '稳中求进的一天，把手头的小事做完就是胜利。',
+  '今天适合制定计划，你的条理性会帮你事半功倍。',
+  '耐心是今天的关键词，好消息正在路上。',
+  '适合深耕一项技能，投入会有看得见的回报。',
+  '别给自己太大压力，偶尔放慢脚步也没关系。',
+  '今天判断力在线，适合做出重要决定。',
+  '和朋友的交流可能带来意想不到的启发。',
+  '适合整理与断舍离，清爽的环境带来清爽的思路。',
+  '财运小有起色，理性消费即可。',
+  '坚持已久的事情，今天可能看到阶段性成果。',
+  '工作中保持低调务实，成果自然会说话。',
+  '适合独处充电，读几页书或听听音乐。',
+  '今天贵人运不错，主动一点会有收获。',
+  '别想太多，先行动起来，答案在路上。',
+  '情绪稳定的一天，适合处理复杂任务。',
+  '给生活加一点仪式感，心情会亮起来。'
+];
+const YI_LIST=['制定周计划','早起喝一杯温水','整理桌面','运动半小时','写日记','联系老朋友','学习新技能','复盘本周'];
+const JI_LIST=['熬夜刷手机','冲动消费','拖延回复','临时改变计划','过度内耗','久坐不动','空腹喝咖啡','情绪化决定'];
+function capricornFortune(date){
+  const r=dayRng(date.getFullYear(),date.getMonth()+1,date.getDate());
+  const pick=arr=>arr[Math.floor(r()*arr.length)];
+  const stars=()=>1+Math.floor(r()*5);
+  return {
+    overall:stars(),love:stars(),career:stars(),wealth:stars(),
+    color:pick(LUCKY_COLORS),num:1+Math.floor(r()*99),match:pick(MATCH_SIGNS),
+    line:pick(FORTUNE_LINES),yi:pick(YI_LIST),ji:pick(JI_LIST)
+  };
+}
+const starStr=n=>'★'.repeat(n)+'☆'.repeat(5-n);
+let calView=(()=>{const t=new Date();return{y:t.getFullYear(),m:t.getMonth()};})();
+function calGridHTML(y,m){
+  const today=new Date(),first=new Date(y,m,1),startDow=first.getDay(),days=new Date(y,m+1,0).getDate();
+  let cells='';
+  for(let i=0;i<startDow;i++)cells+='<span class="cal-d empty"></span>';
+  for(let d=1;d<=days;d++){
+    const isToday=y===today.getFullYear()&&m===today.getMonth()&&d===today.getDate();
+    cells+=`<span class="cal-d ${isToday?'today':''}">${d}</span>`;
+  }
+  return `<div class="cal-wk">${['日','一','二','三','四','五','六'].map(w=>`<span>${w}</span>`).join('')}</div>
+    <div class="cal-grid">${cells}</div>`;
+}
+function calMiniHTML(){
+  const t=new Date(),f=capricornFortune(t);
+  const wk=['日','一','二','三','四','五','六'][t.getDay()];
+  return `<div class="cal-mini-date"><b>${t.getDate()}</b><span>${t.getMonth()+1}月 · 周${wk}</span></div>
+    <div class="cal-mini-f"><span class="cap-badge">♑ 摩羯座</span><p>${f.line}</p>
+    <div class="cal-mini-meta">综合 ${starStr(f.overall)} · 幸运色 ${f.color}</div></div>`;
+}
+$('#calendarPreview').innerHTML=calMiniHTML();
+
+/* ========================= 愿望清单（持久化） ========================= */
+let todos = JSON.parse(localStorage.getItem('jy-todos')||'null') || DEFAULT_TODOS.map(t=>({t,done:false}));
+if(!Array.isArray(todos)) todos=DEFAULT_TODOS.map(t=>({t,done:false}));
+function saveTodos(){localStorage.setItem('jy-todos',JSON.stringify(todos));}
+function renderTodoMini(){
+  $('#todoMini').innerHTML=todos.slice(0,3).map((x,i)=>`
+    <div class="todo-i ${x.done?'done':''}" data-i="${i}">
+      <span class="todo-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+      <span>${esc(x.t)}</span>
+    </div>`).join('') || '<p style="color:var(--text-3);font-size:13px;text-align:center;padding:14px">还没有待办，去「提醒事项」添加吧</p>';
+}
+renderTodoMini();
+
+/* ========================= 弹窗内容模板 ========================= */
+const T = {
+  about:()=>`
+    <div class="about-hero">
+      <img src="${av}" alt="鉴业">
+      <div><h4>鉴业</h4><div class="tagline">开发者 · 设计爱好者 · 生活记录者</div></div>
+    </div>
+    <div class="about-bio">
+      <p>你好，我是鉴业。喜欢写代码，也喜欢把东西做得好看又好用；白天在屏幕前构建数字世界，其余时间用照片、音乐和游戏给生活调色。</p>
+      <p>这个主页模仿 iCloud 的样子，把我的<b>项目、笔记、相册、技能和日常清单</b>收进同一个空间。每一张卡片都是一个「App」，随便点开看看。</p>
+    </div>
+    <div class="chip-row">
+      <span class="chip">📍 中国</span>
+      <span class="chip">💻 全栈开发</span>
+      <span class="chip">🎨 交互设计</span>
+      <span class="chip">📷 摄影</span>
+      <span class="chip">🎮 游戏</span>
+      <span class="chip">🎸 音乐</span>
+    </div>
+    <div class="about-grid">
+      <div class="about-stat"><b>${PROJECTS.length}</b><span>个代表项目</span></div>
+      <div class="about-stat"><b>${photos.length||'—'}</b><span>张相册照片</span></div>
+      <div class="about-stat"><b>24h</b><span>内回复邮件</span></div>
+    </div>`,
+  photos:()=>{
+    if(photosStatus==='loading')
+      return '<div class="photos-empty">正在读取「图片」文件夹…</div>';
+    if(!photos.length)
+      return `<div class="photos-empty">${photosStatus==='error'
+        ? '无法读取「图片」文件夹。<br>请使用本地服务器打开本页（如 python -m http.server）。'
+        : '「图片」文件夹里还没有照片，把图片放进去后刷新页面试试。'}</div>`;
+    return `<div class="photos-grid">${photos.map((p,i)=>`
+      <div class="tile" data-photo="${i}"><img src="${p.src}" alt="${esc(p.name)}" loading="lazy"
+        onerror="this.parentElement.classList.add('ph')"></div>`).join('')}</div>`;
+  },
+  contact:()=>`
+    <div class="mail-hero">
+      <div class="env">${ICONS.mail}</div>
+      <h4>与我联系</h4>
+      <p>无论是项目合作、技术交流，还是单纯想打个招呼</p>
+      <div class="mail-addr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2.5" y="4.5" width="19" height="15" rx="3"/><path d="m3.5 6.5 8.5 6.5 8.5-6.5"/></svg>${EMAIL}</div>
+      <div class="btn-row">
+        <a class="btn btn-primary" href="mailto:${EMAIL}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z" stroke-linejoin="round"/></svg>发送邮件</a>
+        <button class="btn btn-ghost" id="copyMail">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="12" height="12" rx="2.5"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>复制邮箱</button>
+      </div>
+    </div>
+    <div class="social-list">
+      ${[
+        {n:'抖音',ic:'douyin',u:'https://v.douyin.com/oW7O6rh_geg/',d:'我的短视频主页',bg:'linear-gradient(145deg,#3a3f52,#0d0f16)'},
+        {n:'意见反馈',ic:'feishu',u:'https://my.feishu.cn/share/base/form/shrcnZomfA2kKrY311TeM2OaRpe',d:'飞书表单 · 欢迎提建议',bg:'linear-gradient(145deg,#4d8dff,#1a56db)'},
+        {n:'Steam',ic:'steam',u:'https://steamcommunity.com/id/aimjianye/',d:'我的游戏主页',bg:'linear-gradient(145deg,#2a475e,#171a21)'},
+        {n:'GitHub',ic:'github',u:'https://github.com/jianye50',d:'我的开源代码',bg:'linear-gradient(145deg,#5b6474,#2b313c)'},
+        {n:'哔哩哔哩',ic:'video',u:'https://b23.tv/pel3LeM',d:'鉴业的个人空间',bg:'linear-gradient(145deg,#ff7aa2,#e3486c)'},
+        {n:'微博',ic:'weibo',u:'https://weibo.com/u/7953312650',d:'我的微博主页',bg:'linear-gradient(145deg,#ffb64d,#ff7a1a)'},
+        {n:'知乎',ic:'book',u:'https://www.zhihu.com/people/5-84-88-98',d:'我的知乎主页',bg:'linear-gradient(145deg,#5b8cff,#3a4fd6)'}
+      ].map(s=> s.u ? `
+      <a class="social-i" href="${s.u}" target="_blank" rel="noopener">
+        <span class="s-ic" style="background:${s.bg}">${ICONS[s.ic]}</span>${s.n}
+        <small>${s.d||'前往主页'}</small>
+        <svg class="arr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 17 17 7M9 7h8v8"/></svg>
+      </a>` : `
+      <button class="social-i" data-soon="${s.n}">
+        <span class="s-ic" style="background:${s.bg}">${ICONS[s.ic]}</span>${s.n}
+        <small>即将开通</small>
+      </button>`).join('')}
+    </div>`,
+  projects:()=>`<div class="proj-grid">${PROJECTS.map(p=>`
+    <a class="proj-i" href="${p.u}" target="_blank" rel="noopener">
+      <span class="proj-ic" style="--p1:${p.c1};--p2:${p.c2}">${ICONS[p.ic]}</span>
+      <div><h5>${p.t}</h5><p>${p.d}</p>
+        <div class="tag-row">${p.tags.map(x=>`<span class="tag">${x}</span>`).join('')}</div>
+      </div>
+      <svg class="arr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 17 17 7M9 7h8v8"/></svg>
+    </a>`).join('')}</div>`,
+  notes:()=>`<div class="notes-list">${NOTES.map((n,i)=>`
+    <button class="note-i" data-note="${i}">
+      <h5>${n.t}<time>${n.d}</time></h5><p>${n.p.join('')}</p>
+    </button>`).join('')}</div>`,
+  skills:()=>SKILLS.map(g=>`
+    <div class="skill-group"><h5>${g.g}</h5>
+      <div class="skill-bars">${g.items.map(it=>`
+        <div class="skill-line"><span>${it[0]}</span>
+          <div class="sk-bar"><i style="--v:${it[1]}%;width:${it[1]}%;background:linear-gradient(90deg,#6ea4ff,#9d7bff)"></i></div>
+          <em>${it[1]}%</em></div>`).join('')}</div>
+    </div>`).join(''),
+  calendar:()=>{
+    const now=new Date(),f=capricornFortune(now);
+    const wk=['日','一','二','三','四','五','六'][now.getDay()];
+    return `
+    <div class="cal-bar">
+      <button class="cal-nav" id="calPrev" aria-label="上个月"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg></button>
+      <div class="cal-title">${calView.y} 年 ${calView.m+1} 月</div>
+      <button class="cal-nav" id="calNext" aria-label="下个月"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></button>
+      <button class="btn btn-ghost cal-today" id="calToday">今天</button>
+    </div>
+    <div class="cal-panel">${calGridHTML(calView.y,calView.m)}</div>
+    <div class="fortune-card">
+      <div class="f-hd"><span class="cap-badge">♑ 摩羯座</span><span class="f-date">${now.getMonth()+1}月${now.getDate()}日 · 周${wk}</span></div>
+      <p class="f-line">${f.line}</p>
+      <div class="f-stars">
+        <div><span>综合</span><em>${starStr(f.overall)}</em></div>
+        <div><span>爱情</span><em>${starStr(f.love)}</em></div>
+        <div><span>事业</span><em>${starStr(f.career)}</em></div>
+        <div><span>财富</span><em>${starStr(f.wealth)}</em></div>
+      </div>
+      <div class="f-meta">
+        <span>幸运色 <b>${f.color}</b></span>
+        <span>幸运数字 <b>${f.num}</b></span>
+        <span>速配星座 <b>${f.match}</b></span>
+      </div>
+      <div class="f-dos"><span class="dos-yi">宜 ${f.yi}</span><span class="dos-ji">忌 ${f.ji}</span></div>
+      <p class="f-tip">运势按日期生成，每天自动更新，仅供娱乐</p>
+    </div>`;
+  },
+  timeline:()=>`<div class="timeline">${TIMELINE.map(t=>`
+    <div class="tl-item"><time>${t.d}</time><h5>${t.t}</h5><p>${t.p}</p></div>`).join('')}</div>`,
+  reminders:()=>{
+    const renderItem=(x,i)=>`
+      <button class="todo-line ${x.done?'done':''}" data-toggle="${i}">
+        <span class="todo-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+        <span>${esc(x.t)}</span>
+      </button>`;
+    const pending=todos.map((x,i)=>({x,i})).filter(o=>!o.x.done);
+    const done=todos.map((x,i)=>({x,i})).filter(o=>o.x.done);
+    return `
+    <div class="todo-group">
+      <div class="todo-group-title">未完成 · ${pending.length}</div>
+      <div class="todo-list" id="todoList">
+        ${pending.map(o=>renderItem(o.x,o.i)).join('')||(todos.length?'<p class="todo-none">都完成了 🎉</p>':'<p class="todo-none">还没有待办，在下面添加你的第一个愿望吧</p>')}
+      </div>
+      ${done.length?`
+      <div class="todo-group-title done-title">已完成 · ${done.length}</div>
+      <div class="todo-list">
+        ${done.map(o=>renderItem(o.x,o.i)).join('')}
+      </div>`:''}
+    </div>
+    <div class="todo-add">
+      <input id="newTodo" placeholder="添加一个新愿望或待办…" maxlength="40">
+      <button class="btn btn-primary" id="addTodo">添加</button>
+    </div>
+    <p style="font-size:12px;color:var(--text-3);margin-top:14px">清单保存在你的浏览器本地（localStorage），刷新也不会丢失。</p>`;
+  },
+  music:()=>{
+    if(musicStatus==='loading')return '<p style="text-align:center;color:var(--text-3);padding:30px">正在扫描音乐文件夹…</p>';
+    if(!songs.length)return `<div class="music-empty">
+      <p><b>「音乐」文件夹${musicStatus==='error'?'无法读取':'还是空的'}</b></p>
+      <span>${musicStatus==='error'?'通过本地服务器打开本页即可自动读取':'把歌曲放进去后刷新页面'}</span></div>`;
+    return `
+    <div class="player" id="player">
+      <div class="pl-now">
+        <span class="pl-cover">${ICONS.music}</span>
+        <div class="pl-info"><h5 id="plTitle">未在播放</h5><p id="plTime">--:-- / --:--</p></div>
+        <div class="pl-ctrls">
+          <button class="pl-btn" id="plPrev" aria-label="上一首"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h2.2v14H6zM19 5.9v12.2a1 1 0 0 1-1.6.8L9 13.2v-2.4l8.4-5.7a1 1 0 0 1 1.6.8z"/></svg></button>
+          <button class="pl-btn pl-play" id="plPlay" aria-label="播放 / 暂停"></button>
+          <button class="pl-btn" id="plNext" aria-label="下一首"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M15.8 5H18v14h-2.2zM5 5.9v12.2a1 1 0 0 0 1.6.8l8.4-5.7v-2.4L6.6 5.1a1 1 0 0 0-1.6.8z"/></svg></button>
+        </div>
+      </div>
+      <div class="pl-bar" id="plBar"><i id="plProg"></i></div>
+    </div>
+    <div class="song-list">${songs.map((s,i)=>`
+      <button class="song-i" data-song="${i}">
+        <span class="song-ic">${ICONS.music}</span>
+        <span class="song-name">${esc(s.name)}</span>
+        <span class="song-eq"><i></i><i></i><i></i></span>
+      </button>`).join('')}</div>
+    <p style="font-size:12px;color:var(--text-3);margin-top:12px;text-align:center">来自「音乐」文件夹 · 共 ${songs.length} 首</p>`;
+  },
+  games:()=>T.media(GAMES,ICONS.games,'玩过的、在玩的、想玩的'),
+  favorites:()=>FAVS.map(f=>`
+    <a class="fav-i" href="${f.u}" target="_blank" rel="noopener">
+      <span class="fav-ic" style="--p1:${f.c1};--p2:${f.c2}">${ICONS.fav}</span>
+      ${f.t}<small>${f.d}</small>
+      <svg class="arr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 17 17 7M9 7h8v8"/></svg>
+    </a>`).join(''),
+  settings:()=>`
+    <div class="setting-i">
+      <span class="s-ic">${ICONS.fav}</span>
+      <div><h5>壁纸背景</h5><p>在蓝色渐变上叠加我的夜景壁纸</p></div>
+      <span class="switch ${document.body.dataset.wp!=='off'?'on':''}" id="swWp"></span>
+    </div>
+    <div class="setting-i">
+      <span class="s-ic" style="background:linear-gradient(145deg,#4cc8ff,#1f6fe0)">${ICONS.about}</span>
+      <div><h5>外观主题</h5><p>深色是 iCloud 夜的质感，浅色是另一种心情</p></div>
+      <span class="seg">
+        <button data-theme-btn="dark" class="${document.documentElement.dataset.theme==='dark'?'on':''}">深色</button>
+        <button data-theme-btn="light" class="${document.documentElement.dataset.theme==='light'?'on':''}">浅色</button>
+      </span>
+    </div>
+    <div class="setting-i">
+      <span class="s-ic" style="background:linear-gradient(145deg,#ff6a8e,#c01e52)">${ICONS.music}</span>
+      <div><h5>界面动效</h5><p>卡片浮起、弹窗过渡等动画</p></div>
+      <span class="switch ${document.body.dataset.motion!=='off'?'on':''}" id="swMotion"></span>
+    </div>
+    <p style="font-size:12px;color:var(--text-3);margin-top:6px">所有设置仅保存在当前浏览器中。</p>`
+};
+T.media=(list,ic,sub)=>list.map(m=>`
+  <div class="media-i">
+    <span class="media-cover" style="--p1:${m.c1};--p2:${m.c2}">${ic}</span>
+    <div><h5>${m.t}</h5><p>${m.a}</p></div>
+    <span class="stars">${'★'.repeat(m.s)}${'☆'.repeat(5-m.s)}</span>
+  </div>`).join('');
+
+const META={
+  about:['关于我','ic-about','about','鉴业 · 个人档案'],
+  photos:['照片','ic-photos','photos','来自「图片」文件夹'],
+  contact:['联系我','ic-mail','mail','随时欢迎来信'],
+  projects:['项目作品','ic-drive','drive','精选项目 '+PROJECTS.length+' 个'],
+  notes:['备忘录','ic-notes','notes','记录想法与生活'],
+  skills:['技能','ic-skills','skills','我的能力图谱'],
+  calendar:['日历','ic-cal','calendar','日期 · 摩羯座每日运势'],
+  timeline:['时间线','ic-timeline','timeline','走过的路'],
+  reminders:['提醒事项','ic-remind','remind','愿望与待办清单'],
+  music:['音乐','ic-music','music','我的循环歌单'],
+  games:['游戏','ic-games','games','在玩与通关'],
+  favorites:['收藏','ic-fav','fav','常用工具集'],
+  settings:['设置','ic-settings','settings','个性化此页面']
+};
+
+/* ========================= 弹窗逻辑 ========================= */
+let currentApp=null;
+function openApp(id){
+  if(!T[id])return;
+  currentApp=id;
+  const m=META[id];
+  $('#window').className='window'+(id==='photos'?' wide':'');
+  $('#window').innerHTML=`
+    <div class="win-hd">
+      <span class="app-ic ${m[1]}">${ICONS[m[2]]}</span>
+      <div><h3 id="winTitle">${m[0]}</h3><p>${m[3]}</p></div>
+      <button class="win-close" id="winClose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+    </div>
+    <div class="win-body">${T[id]()}</div>`;
+  $('#scrim').classList.add('open');
+  bindWindow(id);
+}
+function closeApp(){$('#scrim').classList.remove('open');currentApp=null;}
+
+function bindWindow(id){
+  $('#winClose').onclick=closeApp;
+  if(id==='contact'){
+    $('#copyMail').onclick=copyEmail;
+    $$('#window [data-soon]').forEach(b=>b.onclick=()=>toast(b.dataset.soon+' 主页即将开通，先发邮件吧'));
+  }
+  if(id==='photos'){
+    $$('[data-photo]').forEach(t=>t.onclick=()=>openLb(+t.dataset.photo));
+  }
+  if(id==='notes'){
+    $$('[data-note]').forEach(b=>b.onclick=()=>{
+      const n=NOTES[+b.dataset.note];
+      $('#window .win-body').innerHTML=`<div class="note-full">
+        <h5>${n.t}</h5><time>${n.d}</time>${n.p.map(x=>'<p>'+x+'</p>').join('')}
+        <button class="btn btn-ghost" style="margin-top:8px" id="noteBack">← 返回笔记列表</button></div>`;
+      $('#noteBack').onclick=()=>{ $('#window .win-body').innerHTML=T.notes();bindWindow('notes'); };
+    });
+  }
+  if(id==='reminders'){
+    const refresh=()=>{ $('#window .win-body').innerHTML=T.reminders();bindWindow('reminders'); };
+    const group=$('#window .todo-group');
+    group.onclick=e=>{
+      const b=e.target.closest('[data-toggle]'); if(!b)return;
+      const i=+b.dataset.toggle; todos[i].done=!todos[i].done; saveTodos();
+      refresh(); renderTodoMini();
+    };
+    const input=$('#newTodo');
+    const add=()=>{
+      const v=input.value.trim(); if(!v)return;
+      todos.unshift({t:v,done:false});saveTodos();input.value='';
+      $('#window .win-body').innerHTML=T.reminders();bindWindow('reminders');renderTodoMini();
+      toast('已添加到愿望清单');
+    };
+    $('#addTodo').onclick=add;
+    input.onkeydown=e=>{if(e.key==='Enter')add();};
+  }
+  if(id==='music'){
+    if(!$('#plPlay'))return;   // 空文件夹 / 加载中
+    $('#plPlay').innerHTML=gAudio.paused?SVG_PLAY:SVG_PAUSE;
+    $('#plPlay').onclick=()=>{ if(gCur<0)musicPlayIdx(0); else gAudio.paused?gAudio.play():gAudio.pause(); };
+    $('#plPrev').onclick=()=>musicPlayIdx((gCur-1+songs.length)%songs.length);
+    $('#plNext').onclick=()=>musicPlayIdx((gCur+1)%songs.length);
+    $('#plBar').onclick=e=>{
+      if(!isFinite(gAudio.duration))return;
+      const r=e.currentTarget.getBoundingClientRect();
+      gAudio.currentTime=gAudio.duration*Math.min(Math.max((e.clientX-r.left)/r.width,0),1);
+    };
+    $$('#window .song-i').forEach(b=>b.onclick=()=>musicPlayIdx(+b.dataset.song));
+    syncMusicUI();
+    if(gAudio.duration)$('#plProg').style.width=(gAudio.currentTime/gAudio.duration*100)+'%';
+    $('#plTime').textContent=fmtT(gAudio.currentTime)+' / '+fmtT(gAudio.duration);
+  }
+  if(id==='calendar'){
+    const refresh=()=>{
+      $('#window .cal-panel').innerHTML=calGridHTML(calView.y,calView.m);
+      $('#window .cal-title').textContent=calView.y+' 年 '+(calView.m+1)+' 月';
+    };
+    $('#calPrev').onclick=()=>{calView.m--;if(calView.m<0){calView.m=11;calView.y--;}refresh();};
+    $('#calNext').onclick=()=>{calView.m++;if(calView.m>11){calView.m=0;calView.y++;}refresh();};
+    $('#calToday').onclick=()=>{const t=new Date();calView={y:t.getFullYear(),m:t.getMonth()};refresh();};
+  }
+  if(id==='settings'){
+    $('#swWp').onclick=function(){
+      const on=document.body.dataset.wp!=='off';
+      document.body.dataset.wp=on?'off':'on';saveSettings();this.classList.toggle('on',!on);
+    };
+    $('#swMotion').onclick=function(){
+      const on=document.body.dataset.motion!=='off';
+      document.body.dataset.motion=on?'off':'on';saveSettings();this.classList.toggle('on',!on);
+    };
+    $$('[data-theme-btn]').forEach(b=>b.onclick=()=>{
+      document.documentElement.dataset.theme=b.dataset.themeBtn;saveSettings();
+      $$('[data-theme-btn]').forEach(x=>x.classList.toggle('on',x===b));
+    });
+  }
+}
+
+$('#scrim').addEventListener('click',e=>{if(e.target.id==='scrim')closeApp();});
+
+/* ========================= 灯箱 ========================= */
+let lbIndex=0;
+function openLb(i){lbIndex=i;showLb();$('#lightbox').classList.add('open');}
+function showLb(){
+  const p=photos[lbIndex];if(!p)return;
+  $('#lbImg').src=p.src;$('#lbImg').alt=p.name;
+  $('#lbCount').textContent=(lbIndex+1)+' / '+photos.length+' · '+p.name;
+}
+function closeLb(){$('#lightbox').classList.remove('open');}
+$('#lbClose').onclick=closeLb;
+$('#lbPrev').onclick=()=>{lbIndex=(lbIndex-1+photos.length)%photos.length;showLb();};
+$('#lbNext').onclick=()=>{lbIndex=(lbIndex+1)%photos.length;showLb();};
+$('#lightbox').addEventListener('click',e=>{if(e.target.id==='lightbox')closeLb();});
+
+/* ========================= 卡片 / 启动器 / 菜单 ========================= */
+document.addEventListener('click',e=>{
+  // 音乐卡片右下角快捷播放按钮：不打开弹窗，直接播放/暂停
+  if(e.target.closest('#musicMiniPlay')){
+    e.stopPropagation();
+    if(!songs.length){toast('音乐文件夹暂无可播放歌曲');return;}
+    if(gCur<0)musicPlayIdx(0); else gAudio.paused?gAudio.play():gAudio.pause();
+    return;
+  }
+  const card=e.target.closest('[data-open]');
+  if(!card)return;
+  // 顶栏仅头像可打开弹窗，九宫格/加号有自己的处理逻辑
+  if(card.closest('.nav') && !card.classList.contains('nav-avatar'))return;
+  openApp(card.dataset.open);
+});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){
+    if($('#lightbox').classList.contains('open'))closeLb();
+    else if($('#launcher').classList.contains('open'))closeLauncher();
+    else if($('#scrim').classList.contains('open'))closeApp();
+    $('#popover').classList.remove('open');
+  }
+  if($('#lightbox').classList.contains('open')){
+    if(e.key==='ArrowLeft')$('#lbPrev').click();
+    if(e.key==='ArrowRight')$('#lbNext').click();
+  }
+  if((e.key==='Enter'||e.key===' ') && e.target.matches('[data-open],.banner')){
+    e.preventDefault();
+    if(e.target.classList.contains('banner'))scrollToApps();
+    else openApp(e.target.dataset.open);
+  }
+});
+
+function buildLauncher(){
+  $('#launchPanel').innerHTML=Object.keys(META).map(id=>`
+    <button class="launch-i" data-open="${id}">
+      <span class="app-ic launch-ic ${META[id][1]}">${ICONS[META[id][2]]}</span>${META[id][0]}
+    </button>`).join('');
+}
+buildLauncher();
+function openLauncher(){$('#launcher').classList.add('open');}
+function closeLauncher(){$('#launcher').classList.remove('open');}
+$('#launchBtn').onclick=openLauncher;
+$('#launchClose').onclick=closeLauncher;
+$('#launcher').addEventListener('click',e=>{
+  if(e.target.id==='launcher')closeLauncher();
+  const b=e.target.closest('.launch-i');
+  if(b){closeLauncher();setTimeout(()=>openApp(b.dataset.open),120);}
+});
+
+function copyEmail(){
+  navigator.clipboard?.writeText(EMAIL).then(
+    ()=>toast('邮箱已复制到剪贴板'),
+    ()=>toast(EMAIL,false)
+  );
+}
+$('#plusBtn').onclick=e=>{e.stopPropagation();$('#popover').classList.toggle('open');};
+document.addEventListener('click',e=>{
+  if(!e.target.closest('#popover')&&!e.target.closest('#plusBtn'))$('#popover').classList.remove('open');
+});
+$('#popover').addEventListener('click',e=>{
+  const b=e.target.closest('[data-action]');if(!b)return;
+  const a=b.dataset.action;
+  if(a==='mail')location.href='mailto:'+EMAIL;
+  if(a==='copy')copyEmail();
+  if(a==='top')window.scrollTo({top:0,behavior:'smooth'});
+  $('#popover').classList.remove('open');
+});
+
+function scrollToApps(){document.getElementById('apps').scrollIntoView({behavior:'smooth'});}
+$('#banner').onclick=scrollToApps;
+
+/* ========================= 设置持久化 ========================= */
+function saveSettings(){
+  localStorage.setItem('jy-settings',JSON.stringify({
+    theme:document.documentElement.dataset.theme,
+    wp:document.body.dataset.wp,motion:document.body.dataset.motion
+  }));
+}
+(function initSettings(){
+  let s={};
+  try{s=JSON.parse(localStorage.getItem('jy-settings'))||{};}catch(e){}
+  document.documentElement.dataset.theme=s.theme||'dark';
+  document.body.dataset.wp=s.wp||'on';
+  document.body.dataset.motion=s.motion||'on';
+})();
+
+/* ========================= 入场动画 ========================= */
+const animEls=$$('.card,.banner');
+animEls.forEach((el,i)=>{el.style.transitionDelay=(i%4*60)+'ms';});
+const revealAll=()=>animEls.forEach(el=>el.classList.add('in'));
+if('IntersectionObserver' in window){
+  const io=new IntersectionObserver(entries=>{
+    entries.forEach(en=>{if(en.isIntersecting){en.target.classList.add('in');io.unobserve(en.target);}});
+  },{threshold:.08});
+  animEls.forEach(el=>io.observe(el));
+  // 兜底：隐藏标签页 / 不触发 IO 的环境下也保证内容可见
+  setTimeout(()=>animEls.forEach(el=>el.classList.add('in')),900);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)revealAll();});
+  window.addEventListener('pageshow',revealAll);
+}else{
+  revealAll();
+}
+
+/* ========================= 读取图片文件夹 ========================= */
+loadPhotos();
+loadMusic();
+syncMusicUI();
+</script>
+</body>
+</html>
