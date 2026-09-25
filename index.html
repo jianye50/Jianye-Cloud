@@ -1140,28 +1140,52 @@ function renderHomeTiles(){
 }
 renderHomeTiles();
 
-/* 扫描「图片」文件夹（依赖静态服务器的目录列表，如 python -m http.server） */
-async function loadPhotos(){
+/* 目录文件清单：优先读本地服务器的目录列表；
+   静态托管（Cloudflare Pages / GitHub Pages 等）没有目录列表时，回退到 GitHub API 列目录 */
+const GH_REPO='jianye50/Jianye-Cloud';
+const GH_BRANCH='main';
+async function listDirFiles(dir,regex){
+  const clean=dir.replace(/\/+$/,'');
+  // 1) 本地目录列表（python -m http.server 等）
   try{
-    const base=new URL(encodeURIComponent(PHOTO_DIR.replace(/\/+$/,''))+'/',location.href);
+    const base=new URL(encodeURIComponent(clean)+'/',location.href);
     const res=await fetch(base.href);
-    if(!res.ok) throw new Error('HTTP '+res.status);
-    const html=await res.text();
-    const doc=new DOMParser().parseFromString(html,'text/html');
-    const urls=new Set();
-    doc.querySelectorAll('a[href]').forEach(a=>{
-      let h=a.getAttribute('href');
-      if(!h)return;
-      h=h.split('#')[0];
-      if(!IMG_RE.test(h.split('?')[0]))return;
-      urls.add(new URL(h,base.href).href);
-    });
-    photos=Array.from(urls).map(src=>{
+    if(res.ok){
+      const html=await res.text();
+      const doc=new DOMParser().parseFromString(html,'text/html');
+      const urls=new Set();
+      doc.querySelectorAll('a[href]').forEach(a=>{
+        let h=a.getAttribute('href');
+        if(!h)return;
+        h=h.split('#')[0];
+        if(!regex.test(h.split('?')[0]))return;
+        urls.add(new URL(h,base.href).href);
+      });
+      if(urls.size)return Array.from(urls);
+    }
+  }catch(e){}
+  // 2) GitHub API 列目录，文件仍从本站（Cloudflare）加载，更快
+  try{
+    const r=await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${encodeURIComponent(clean)}?ref=${GH_BRANCH}`,
+      {headers:{Accept:'application/vnd.github+json'}});
+    if(!r.ok)return null;
+    const arr=await r.json();
+    const base=new URL(encodeURIComponent(clean)+'/',location.href);
+    return arr.filter(x=>x.type==='file'&&regex.test(x.name))
+      .map(x=>new URL(encodeURIComponent(x.name),base).href);
+  }catch(e){ return null; }
+}
+
+/* 扫描「图片」文件夹 */
+async function loadPhotos(){
+  const urls=await listDirFiles(PHOTO_DIR,IMG_RE);
+  if(urls){
+    photos=urls.map(src=>{
       const file=decodeURIComponent(src.split('/').pop().split('?')[0]);
       return {src,name:file.replace(/\.[^.]+$/,'')};
     }).sort((a,b)=>b.name.localeCompare(a.name,'zh-Hans-CN',{numeric:true}));
     photosStatus='ready';
-  }catch(err){
+  }else{
     photosStatus='error'; photos=[];
   }
   $('#photoCount').textContent=photos.length;
@@ -1204,26 +1228,14 @@ gAudio.addEventListener('timeupdate',()=>{
 
 /* 扫描「音乐」文件夹 */
 async function loadMusic(){
-  try{
-    const base=new URL(encodeURIComponent(MUSIC_DIR.replace(/\/+$/,''))+'/',location.href);
-    const res=await fetch(base.href);
-    if(!res.ok) throw new Error('HTTP '+res.status);
-    const html=await res.text();
-    const doc=new DOMParser().parseFromString(html,'text/html');
-    const urls=new Set();
-    doc.querySelectorAll('a[href]').forEach(a=>{
-      let h=a.getAttribute('href');
-      if(!h)return;
-      h=h.split('#')[0];
-      if(!AUDIO_RE.test(h.split('?')[0]))return;
-      urls.add(new URL(h,base.href).href);
-    });
-    songs=Array.from(urls).map(src=>{
+  const urls=await listDirFiles(MUSIC_DIR,AUDIO_RE);
+  if(urls){
+    songs=urls.map(src=>{
       const file=decodeURIComponent(src.split('/').pop().split('?')[0]);
       return {src,name:file.replace(/\.[^.]+$/,'')};
     }).sort((a,b)=>a.name.localeCompare(b.name,'zh-Hans-CN',{numeric:true}));
     musicStatus='ready';
-  }catch(err){
+  }else{
     musicStatus='error'; songs=[];
   }
   META.music[3]='音乐文件夹 · '+songs.length+' 首';
