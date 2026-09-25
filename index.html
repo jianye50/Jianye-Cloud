@@ -357,7 +357,7 @@ body[data-wp="off"] .bg-wp{opacity:0}
 .todo-i.done .todo-check,.todo-line.done .todo-check{background:var(--accent);border-color:var(--accent)}
 .todo-check svg{width:11px;height:11px;color:#fff;opacity:0}
 .todo-i.done .todo-check svg,.todo-line.done .todo-check svg{opacity:1}
-.todo-i.done span,.todo-line.done span{color:var(--text-3);text-decoration:line-through}
+.todo-i.done span,.todo-line.done .todo-text{color:var(--text-3);text-decoration:line-through}
 
 /* 小型图标卡片 */
 .compact{
@@ -620,9 +620,18 @@ a.social-i{text-decoration:none;color:var(--text-1)}
 .todo-none{padding:14px;font-size:13px;color:var(--text-3);text-align:center}
 #todoList{margin-bottom:0}
 .todo-line{display:flex;align-items:center;gap:13px;padding:11px 13px;border-radius:13px;
-  font-size:14px;transition:.2s;width:100%;text-align:left}
+  font-size:14px;transition:.2s;width:100%;text-align:left;cursor:pointer;color:var(--text-1)}
 .todo-line:hover{background:var(--chip)}
-.todo-line .todo-check{width:23px;height:23px}
+.todo-line .todo-check{width:23px;height:23px;flex:none}
+.todo-line .todo-text{flex:1;min-width:0}
+.todo-del{
+  flex:none;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;
+  color:var(--text-3);opacity:0;transition:.2s;
+}
+.todo-line:hover .todo-del{opacity:1}
+.todo-del:hover{background:rgba(255,69,58,.15);color:#ff453a}
+.todo-del svg{width:13px;height:13px}
+@media (hover:none){.todo-del{opacity:.7}}
 .todo-add{display:flex;gap:10px;margin-top:6px}
 .todo-add input{
   flex:1;background:var(--card-inner);border:1px solid var(--card-border);
@@ -1445,10 +1454,13 @@ const T = {
     <div class="tl-item"><time>${t.d}</time><h5>${t.t}</h5><p>${t.p}</p></div>`).join('')}</div>`,
   reminders:()=>{
     const renderItem=(x,i)=>`
-      <button class="todo-line ${x.done?'done':''}" data-toggle="${i}">
+      <div class="todo-line ${x.done?'done':''}" data-toggle="${i}" role="button" tabindex="0">
         <span class="todo-check"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M20 6 9 17l-5-5"/></svg></span>
-        <span>${esc(x.t)}</span>
-      </button>`;
+        <span class="todo-text">${esc(x.t)}</span>
+        <span class="todo-del" data-del="${i}" title="删除" aria-label="删除此项">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </span>
+      </div>`;
     const pending=todos.map((x,i)=>({x,i})).filter(o=>!o.x.done);
     const done=todos.map((x,i)=>({x,i})).filter(o=>o.x.done);
     return `
@@ -1587,6 +1599,13 @@ function bindWindow(id){
     const refresh=()=>{ $('#window .win-body').innerHTML=T.reminders();bindWindow('reminders'); };
     const group=$('#window .todo-group');
     group.onclick=e=>{
+      const del=e.target.closest('[data-del]');
+      if(del){
+        e.stopPropagation();
+        todos.splice(+del.dataset.del,1); saveTodos();
+        refresh(); renderTodoMini(); toast('已删除');
+        return;
+      }
       const b=e.target.closest('[data-toggle]'); if(!b)return;
       const i=+b.dataset.toggle; todos[i].done=!todos[i].done; saveTodos();
       refresh(); renderTodoMini();
