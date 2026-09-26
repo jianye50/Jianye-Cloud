@@ -594,10 +594,12 @@ a.social-i{text-decoration:none;color:var(--text-1)}
   box-shadow:0 3px 10px rgba(110,140,255,.5)}
 .cal-d.empty{pointer-events:none}
 
-/* 摩羯座运势卡 */
+/* 星座运势卡 */
 .fortune-card{margin-top:14px;background:linear-gradient(160deg,rgba(125,92,255,.14),rgba(74,54,196,.08));
   border:1px solid rgba(125,92,255,.28);border-radius:18px;padding:18px 20px}
 .f-hd{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.f-sign{appearance:none;-webkit-appearance:none;border:none;font:inherit;font-size:11.5px;font-weight:650;cursor:pointer;outline:none;text-align:center;text-align-last:center}
+.f-sign option{color:#1c1c28;background:#fff}
 .f-date{font-size:12px;color:var(--text-3)}
 .f-line{font-size:14.5px;line-height:1.65;color:var(--text-1);margin:13px 0 15px;font-weight:500}
 .f-stars{display:grid;grid-template-columns:repeat(2,1fr);gap:9px 20px;margin-bottom:13px}
@@ -881,6 +883,8 @@ a.social-i{text-decoration:none;color:var(--text-1)}
   .grid{gap:14px}
   .card-profile,.card-photos,.card-contact,.card-projects,.card-skills,
   .card-notes,.card-timeline,.card-remind,.card-weather,.card-assistant{grid-column:span 12;min-height:0}
+  /* 天气与 AI 助手两条长条组件保持等高 */
+  .card-weather,.card-assistant{min-height:88px}
   .card-profile{min-height:340px;align-items:center;text-align:center}
   .card-profile .prof-plan{margin-left:auto;margin-right:auto}
   .tile-grid{min-height:0}
@@ -1031,11 +1035,11 @@ a.social-i{text-decoration:none;color:var(--text-1)}
       <div class="note-preview" id="notePreview"></div>
     </article>
 
-    <!-- 日历 + 摩羯座运势 -->
+    <!-- 日历 + 星座运势 -->
     <article class="card card-timeline" data-open="calendar" tabindex="0">
       <header class="card-hd">
         <span class="app-ic ic-cal" data-icon="calendar"></span>
-        <div class="hd-text"><h3>日历</h3><p>日期 · 摩羯座运势</p></div>
+        <div class="hd-text"><h3>日历</h3><p>日期 · 星座运势</p></div>
       </header>
       <div class="cal-mini" id="calendarPreview"></div>
     </article>
@@ -1418,15 +1422,18 @@ function renderNotePreview(){
   $('#notePreview').innerHTML=`<h5>${esc(n.t)}</h5><p>${esc(n.p.join(''))}</p><time>${esc(n.d)}</time>`;
 }
 renderNotePreview();
-/* ========================= 日历 & 摩羯座每日运势 ========================= */
-// 以日期为种子的伪随机数（同一天结果固定，次日变化）
-function dayRng(y,m,d){
-  let s=y*10000+m*100+d; s=(s^(s>>>13))*1274126177; s=s>>>0;
+/* ========================= 日历 & 星座每日运势 ========================= */
+// 以日期+星座为种子的伪随机数（同一天同一星座结果固定，次日/换星座变化）
+function dayRng(y,m,d,sig){
+  let s=y*10000+m*100+d+(sig||0)*131; s=(s^(s>>>13))*1274126177; s=s>>>0;
   return ()=>{ s=(s+0x6D2B79F5)>>>0; let t=Math.imul(s^(s>>>15),1|s);
     t=(t+Math.imul(t^(t>>>7),61|t))^t; return ((t^(t>>>14))>>>0)/4294967296; };
 }
 const LUCKY_COLORS=['深邃蓝','雾霾灰','炭黑色','米白色','酒红色','墨绿色','燕麦色','藏青色','焦糖棕','香芋紫'];
 const MATCH_SIGNS=['金牛座','处女座','天蝎座','双鱼座','巨蟹座','摩羯座'];
+const SIGNS=[['白羊座','♈'],['金牛座','♉'],['双子座','♊'],['巨蟹座','♋'],['狮子座','♌'],['处女座','♍'],['天秤座','♎'],['天蝎座','♏'],['射手座','♐'],['摩羯座','♑'],['水瓶座','♒'],['双鱼座','♓']];
+let mySign=localStorage.getItem('jy-sign');
+if(!SIGNS.some(s=>s[0]===mySign))mySign='摩羯座'; // 默认摩羯座
 const FORTUNE_LINES=[
   '稳中求进的一天，把手头的小事做完就是胜利。',
   '今天适合制定计划，你的条理性会帮你事半功倍。',
@@ -1448,7 +1455,8 @@ const FORTUNE_LINES=[
 const YI_LIST=['制定周计划','早起喝一杯温水','整理桌面','运动半小时','写日记','联系老朋友','学习新技能','复盘本周'];
 const JI_LIST=['熬夜刷手机','冲动消费','拖延回复','临时改变计划','过度内耗','久坐不动','空腹喝咖啡','情绪化决定'];
 function capricornFortune(date){
-  const r=dayRng(date.getFullYear(),date.getMonth()+1,date.getDate());
+  const idx=Math.max(0,SIGNS.findIndex(s=>s[0]===mySign));
+  const r=dayRng(date.getFullYear(),date.getMonth()+1,date.getDate(),idx);
   const pick=arr=>arr[Math.floor(r()*arr.length)];
   const stars=()=>1+Math.floor(r()*5);
   return {
@@ -1472,9 +1480,10 @@ function calGridHTML(y,m){
 }
 function calMiniHTML(){
   const t=new Date(),f=capricornFortune(t);
+  const sg=SIGNS.find(s=>s[0]===mySign);
   const wk=['日','一','二','三','四','五','六'][t.getDay()];
   return `<div class="cal-mini-date"><b>${t.getDate()}</b><span>${t.getMonth()+1}月 · 周${wk}</span></div>
-    <div class="cal-mini-f"><span class="cap-badge">♑ 摩羯座</span><p>${f.line}</p>
+    <div class="cal-mini-f"><span class="cap-badge">${sg[1]} ${mySign}</span><p>${f.line}</p>
     <div class="cal-mini-meta">综合 ${starStr(f.overall)} · 幸运色 ${f.color}</div></div>`;
 }
 $('#calendarPreview').innerHTML=calMiniHTML();
@@ -1587,7 +1596,7 @@ const T = {
           <em>${it[1]}%</em></div>`).join('')}</div>
     </div>`).join(''),
   calendar:()=>{
-    const now=new Date(),f=capricornFortune(now);
+    const now=new Date(),f=capricornFortune(now),sg=SIGNS.find(s=>s[0]===mySign);
     const wk=['日','一','二','三','四','五','六'][now.getDay()];
     return `
     <div class="cal-bar">
@@ -1598,7 +1607,7 @@ const T = {
     </div>
     <div class="cal-panel">${calGridHTML(calView.y,calView.m)}</div>
     <div class="fortune-card">
-      <div class="f-hd"><span class="cap-badge">♑ 摩羯座</span><span class="f-date">${now.getMonth()+1}月${now.getDate()}日 · 周${wk}</span></div>
+      <div class="f-hd"><select id="fSign" class="cap-badge f-sign" title="选择你的星座">${SIGNS.map(s=>`<option value="${s[0]}" ${s[0]===mySign?'selected':''}>${s[1]} ${s[0]}</option>`).join('')}</select><span class="f-date">${now.getMonth()+1}月${now.getDate()}日 · 周${wk}</span></div>
       <p class="f-line">${f.line}</p>
       <div class="f-stars">
         <div><span>综合</span><em>${starStr(f.overall)}</em></div>
@@ -1761,7 +1770,7 @@ const META={
   projects:['项目作品','ic-drive','drive','精选项目 '+PROJECTS.length+' 个'],
   notes:['备忘录','ic-notes','notes','记录想法与生活'],
   skills:['技能','ic-skills','skills','我的能力图谱'],
-  calendar:['日历','ic-cal','calendar','日期 · 摩羯座每日运势'],
+  calendar:['日历','ic-cal','calendar','日期 · 星座每日运势'],
   timeline:['时间线','ic-timeline','timeline','走过的路'],
   reminders:['提醒事项','ic-remind','remind','愿望与待办清单'],
   music:['音乐','ic-music','music','我的循环歌单'],
@@ -2048,13 +2057,14 @@ function bindWindow(id){
         const match=CN_REGIONS[prov.value].find(x=>savedCity&&(x[0]===savedCity||x[0]===savedCity.replace(/市$/,'')));
         if(match){ fillCities(prov.value,match[0]); fillDists(match,wxLoc&&wxLoc.name); }
       }
-      prov.onchange=()=>{ fillCities(prov.value); distSel.innerHTML='<option value="">区县…</option>'; distSel.disabled=true; };
+      // 选省后城市下拉默认选中第一个市，但不会再触发 change，需自动应用（含直辖市/单城市省份）
+      prov.onchange=()=>{ fillCities(prov.value); distSel.innerHTML='<option value="">区县…</option>'; distSel.disabled=true; if(prov.value&&citySel.value)applyCity(prov.value,citySel.value); };
       // 城市名显示用全称：地级市统一补"市"（如"常州"→"常州市"），已带"市"或港澳台则不重复
       const cityFull=n=>(/市$/.test(n)||['香港','澳门','台北','高雄','台中','台南'].includes(n)?n:n+'市');
-      citySel.onchange=()=>{
-        const p=prov.value, n=citySel.value;
+      const applyCity=(p,n)=>{
         if(!p||!n)return;
         const city=CN_REGIONS[p].find(x=>x[0]===n);
+        if(!city)return;
         fillDists(city);
         if(city[3]&&city[3].length){
           const d=city[3][0];
@@ -2063,8 +2073,9 @@ function bindWindow(id){
           wxLoc={name:n,cityName:cityFull(n),prov:p,lat:city[1],lon:city[2],manual:true};
         }
         localStorage.setItem('jy-weather-city',JSON.stringify(wxLoc));
-        fetchWeather(); toast('已切换到 '+p+cityFull(n));
+        fetchWeather(); toast('已切换到 '+(cityFull(n)===p?p:p+cityFull(n)));
       };
+      citySel.onchange=()=>applyCity(prov.value,citySel.value);
       distSel.onchange=()=>{
         const p=prov.value, n=citySel.value, d0=distSel.value;
         if(!p||!n||!d0)return;
@@ -2084,6 +2095,13 @@ function bindWindow(id){
     $('#calPrev').onclick=()=>{calView.m--;if(calView.m<0){calView.m=11;calView.y--;}refresh();};
     $('#calNext').onclick=()=>{calView.m++;if(calView.m>11){calView.m=0;calView.y++;}refresh();};
     $('#calToday').onclick=()=>{const t=new Date();calView={y:t.getFullYear(),m:t.getMonth()};refresh();};
+    // 星座切换：保存选择并刷新运势卡与主页小卡
+    const fs=$('#fSign');
+    if(fs)fs.onchange=()=>{
+      mySign=fs.value; localStorage.setItem('jy-sign',mySign);
+      $('#window .win-body').innerHTML=T.calendar(); bindWindow('calendar');
+      $('#calendarPreview').innerHTML=calMiniHTML();
+    };
   }
   if(id==='settings'){
     $('#swWp').onclick=function(){
