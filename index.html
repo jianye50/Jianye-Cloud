@@ -1056,11 +1056,12 @@ const PROJECTS = [
   {t:'Jianye AI 智能助手',d:'接入大模型的智能对话助手。',tags:['AI','智能助手'],u:'https://jianye-ai.mysxl.cn/',ic:'games',c1:'#ff6a8e',c2:'#c01e52'}
 ];
 
-const NOTES = [
-  {d:'2026-09-20',t:'我的三条设计原则',p:['一、克制：先拿掉多余的东西，再谈加什么。','二、留白：内容之间需要呼吸，拥挤是焦虑的来源。','三、动效只为表达层级与反馈，炫技是最不重要的理由。','这个主页就是按这三条做的：毛玻璃、柔光、轻动画。']},
-  {d:'2026-09-12',t:'关于效率的思考',p:['工具不会带来效率，清晰的目标才会。','最近把待办从五个 App 收敛回一个清单，每天只写三件最重要的事，完成率反而提高了。','少即是多，这句话在任何时代都成立。']},
-  {d:'2026-08-30',t:'下半年想做的事',p:['把编译原理的小玩具语言写完解释器；独立做一个完整的全栈项目并部署上线；','读五本非技术书；去一个没去过的城市拍照。','慢一点没关系，持续在走就好。']}
-];
+/* 备忘录来自「备忘录」文件夹内的 .txt 文件（Markdown 语法排版），
+   文件第一行 `# 标题`、含 `日期：YYYY-MM-DD` 行会被识别，其余每段为正文 */
+const NOTE_DIR = '备忘录/';
+const TXT_RE = /\.txt$/i;
+let NOTES = [];
+let notesStatus = 'loading';
 
 const SKILLS = [
   {g:'前端开发',items:[['HTML / CSS',92],['JavaScript',88],['Vue / React',80],['动效与交互',85]]},
@@ -1255,15 +1256,47 @@ async function loadMusic(){
   if(currentApp==='music'){ $('#window .win-body').innerHTML=T.music(); bindWindow('music'); }
 }
 
+/* 扫描「备忘录」文件夹，读取每个 .txt 笔记 */
+async function loadNotes(){
+  const urls=await listDirFiles(NOTE_DIR,TXT_RE);
+  if(!urls){ notesStatus='error'; NOTES=[]; }
+  else{
+    const list=await Promise.all(urls.map(async src=>{
+      try{
+        const txt=await (await fetch(src)).text();
+        const file=decodeURIComponent(src.split('/').pop().split('?')[0]);
+        // 解析：# 标题、日期：YYYY-MM-DD、其余段落为正文
+        let title=file.replace(/\.txt$/i,''), date='', paras=[];
+        txt.split(/\r?\n/).forEach(line=>{
+          const l=line.trim();
+          if(!l)return;
+          const mH=l.match(/^#\s+(.+)/), mD=l.match(/^日期[：:]\s*(.+)/);
+          if(mH)title=mH[1].trim();
+          else if(mD)date=mD[1].trim();
+          else if(l!=='---')paras.push(l);
+        });
+        if(!date){ const m=file.match(/(\d{4}-\d{2}-\d{2})/); date=m?m[1]:''; }
+        return {d:date,t:title,p:paras};
+      }catch(e){ return null; }
+    }));
+    NOTES=list.filter(Boolean).sort((a,b)=>(b.d||'').localeCompare(a.d||''));
+    notesStatus='ready';
+  }
+  renderNotePreview();
+  if(currentApp==='notes'){ $('#window .win-body').innerHTML=T.notes(); bindWindow('notes'); }
+}
+
 // 技能预览
 $('#skillsPreview').innerHTML = SKILLS[0].items.slice(0,4).map(it=>
   `<div class="sk-row"><span>${it[0].split(' / ')[0]}</span><div class="sk-bar"><i style="--v:${it[1]}%"></i></div></div>`).join('');
 
-// 笔记预览
-{
+// 笔记预览（加载完成后由 loadNotes 刷新）
+function renderNotePreview(){
   const n=NOTES[0];
-  $('#notePreview').innerHTML=`<h5>${n.t}</h5><p>${n.p.join('')}</p><time>${n.d}</time>`;
+  if(!n){ $('#notePreview').innerHTML='<p style="color:var(--text-3);font-size:13px">在「备忘录」文件夹放入 .txt 笔记后刷新即可显示</p>'; return; }
+  $('#notePreview').innerHTML=`<h5>${esc(n.t)}</h5><p>${esc(n.p.join(''))}</p><time>${esc(n.d)}</time>`;
 }
+renderNotePreview();
 /* ========================= 日历 & 摩羯座每日运势 ========================= */
 // 以日期为种子的伪随机数（同一天结果固定，次日变化）
 function dayRng(y,m,d){
@@ -1414,10 +1447,17 @@ const T = {
       </div>
       <svg class="arr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 17 17 7M9 7h8v8"/></svg>
     </a>`).join('')}</div>`,
-  notes:()=>`<div class="notes-list">${NOTES.map((n,i)=>`
+  notes:()=>{
+    if(notesStatus==='loading')return '<p style="text-align:center;color:var(--text-3);padding:30px">正在读取备忘录…</p>';
+    if(!NOTES.length)return `<div class="music-empty">
+      <p><b>「备忘录」文件夹${notesStatus==='error'?'无法读取':'还是空的'}</b></p>
+      <span>放入 .txt 笔记后刷新页面（首行 # 标题，可含 日期：YYYY-MM-DD 行）</span></div>`;
+    return `<div class="notes-list">${NOTES.map((n,i)=>`
     <button class="note-i" data-note="${i}">
-      <h5>${n.t}<time>${n.d}</time></h5><p>${n.p.join('')}</p>
-    </button>`).join('')}</div>`,
+      <h5>${esc(n.t)}<time>${esc(n.d)}</time></h5><p>${esc(n.p.join(''))}</p>
+    </button>`).join('')}
+    <p style="font-size:12px;color:var(--text-3);margin-top:12px;text-align:center">来自「备忘录」文件夹 · 共 ${NOTES.length} 篇</p></div>`;
+  },
   skills:()=>SKILLS.map(g=>`
     <div class="skill-group"><h5>${g.g}</h5>
       <div class="skill-bars">${g.items.map(it=>`
@@ -1594,7 +1634,7 @@ function bindWindow(id){
     $$('[data-note]').forEach(b=>b.onclick=()=>{
       const n=NOTES[+b.dataset.note];
       $('#window .win-body').innerHTML=`<div class="note-full">
-        <h5>${n.t}</h5><time>${n.d}</time>${n.p.map(x=>'<p>'+x+'</p>').join('')}
+        <h5>${esc(n.t)}</h5><time>${esc(n.d)}</time>${n.p.map(x=>'<p>'+esc(x)+'</p>').join('')}
         <button class="btn btn-ghost" style="margin-top:8px" id="noteBack">← 返回笔记列表</button></div>`;
       $('#noteBack').onclick=()=>{ $('#window .win-body').innerHTML=T.notes();bindWindow('notes'); };
     });
@@ -1788,6 +1828,7 @@ if('IntersectionObserver' in window){
 /* ========================= 读取图片文件夹 ========================= */
 loadPhotos();
 loadMusic();
+loadNotes();
 syncMusicUI();
 </script>
 </body>
