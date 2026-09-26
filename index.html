@@ -249,7 +249,8 @@ body[data-wp="off"] .bg-wp{opacity:0}
 .ic-fav{background:linear-gradient(160deg,#ffb64d,#ff7a1a)}
 .ic-settings{background:linear-gradient(160deg,#b7bed4,#7a849e)}
 .ic-weather{background:linear-gradient(160deg,#4cc8ff,#0a84ff)}
-.ic-weather svg{color:#fff}
+.ic-assistant{background:linear-gradient(160deg,#64d2ff,#5e5ce6)}
+.ic-weather svg,.ic-assistant svg{color:#fff}
 .ic-about{background:linear-gradient(160deg,#6ea4ff,#2b5ce0)}
 .ic-mail svg,.ic-drive svg,.ic-skills svg,.ic-timeline svg,.ic-music svg,
 .ic-games svg,.ic-fav svg,.ic-settings svg,.ic-about svg{color:#fff}
@@ -753,22 +754,61 @@ a.social-i{text-decoration:none;color:var(--text-1)}
 .wx-auto:hover{text-decoration:underline}
 
 /* 天气长条小组件 */
-.card-weather{grid-column:1/-1;min-height:110px;display:flex;align-items:center;padding:0 26px;overflow:hidden;border-radius:var(--radius-lg)}
+.card-weather{grid-column:span 6;min-height:110px;display:flex;align-items:center;padding:0 26px;overflow:hidden;border-radius:var(--radius-lg)}
 .wx-widget{display:flex;align-items:center;gap:20px;width:100%}
 .wxw-l{flex:none;min-width:90px}
 .wxw-city{font-size:16px;font-weight:630;white-space:nowrap}
 .wxw-desc{font-size:12.5px;color:var(--text-3);margin-top:3px}
-.wxw-m{display:flex;align-items:center;gap:10px;flex:none}
+.wxw-m{display:flex;align-items:center;gap:10px;flex:1;justify-content:flex-end;padding-right:6px}
 .wxw-emoji{font-size:36px;line-height:1}
 .wxw-temp{font-size:32px;font-weight:280;letter-spacing:-.5px}
-.wxw-r{flex:1;display:flex;gap:7px;justify-content:flex-end;flex-wrap:wrap}
-.wxw-d{
-  display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text-2);
-  background:var(--card-inner);border:1px solid var(--card-border);
-  border-radius:99px;padding:5px 11px;white-space:nowrap;font-variant-numeric:tabular-nums;
-}
-.wxw-d em{font-style:normal;color:var(--text-3)}
-@media (max-width:820px){.wxw-r{display:none}}
+
+/* 智能助手长条小组件 */
+.card-assistant{grid-column:span 6;min-height:110px;display:flex;align-items:center;padding:0 26px;overflow:hidden;border-radius:var(--radius-lg)}
+.assistant-widget{display:flex;align-items:center;gap:18px;width:100%}
+.asw-ic{width:52px;height:52px;border-radius:15px;flex:none;display:grid;place-items:center;position:relative}
+.asw-ic svg{width:28px;height:28px}
+.asw-ic::after{content:"";position:absolute;inset:-4px;border-radius:19px;border:1.5px solid rgba(100,210,255,.4);animation:aswPulse 2.6s ease-out infinite}
+@keyframes aswPulse{0%{opacity:.9;transform:scale(.92)}70%{opacity:0;transform:scale(1.14)}100%{opacity:0}}
+.asw-txt{flex:1;min-width:0}
+.asw-txt h3{font-size:16.5px;font-weight:650}
+.asw-txt p{font-size:12.5px;color:var(--text-3);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.asw-open{flex:none;display:inline-flex;align-items:center;gap:7px;padding:9px 17px;border-radius:99px;font-size:13px;font-weight:600;color:#fff;background:linear-gradient(145deg,#64d2ff,#5e5ce6);box-shadow:0 4px 14px rgba(94,92,230,.35)}
+.asw-open svg{width:13px;height:13px}
+@media (max-width:820px){.asw-open span{display:none}.asw-open{padding:9px 11px}}
+/* 智能助手弹窗（浏览器内对话） */
+.window.ai{max-width:760px;height:86vh}
+.window.ai .win-body{padding:0;overflow:hidden;display:flex;flex:1;min-height:0}
+.chat-wrap{display:flex;flex-direction:column;width:100%;min-height:0}
+.chat-msgs{flex:1;overflow-y:auto;padding:20px 22px 10px;display:flex;flex-direction:column;gap:13px}
+.chat-msgs::-webkit-scrollbar{width:8px}
+.chat-msgs::-webkit-scrollbar-thumb{background:var(--track);border-radius:4px}
+.msg{max-width:80%;padding:11px 15px;border-radius:17px;font-size:14px;line-height:1.65;white-space:pre-wrap;word-break:break-word;animation:msgIn .25s ease}
+@keyframes msgIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.msg.user{align-self:flex-end;background:linear-gradient(145deg,#4d92ff,#2b66e6);color:#fff;border-bottom-right-radius:5px;box-shadow:0 3px 10px rgba(43,102,230,.3)}
+.msg.bot{align-self:flex-start;background:var(--card-inner);border:1px solid var(--card-border);color:var(--text-1);border-bottom-left-radius:5px}
+.msg.typing{display:flex;gap:5px;align-items:center;padding:14px 17px}
+.msg.typing i{width:7px;height:7px;border-radius:50%;background:var(--text-3);animation:tp 1.1s ease-in-out infinite}
+.msg.typing i:nth-child(2){animation-delay:.18s}
+.msg.typing i:nth-child(3){animation-delay:.36s}
+@keyframes tp{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-4px);opacity:1}}
+.chat-hello{text-align:center;padding:26px 10px 6px;color:var(--text-2)}
+.chat-hello .ch-ic{width:60px;height:60px;border-radius:18px;margin:0 auto 13px;display:grid;place-items:center;
+  background:linear-gradient(160deg,#64d2ff,#5e5ce6);box-shadow:0 8px 22px rgba(94,92,230,.35)}
+.chat-hello .ch-ic svg{width:32px;height:32px;color:#fff}
+.chat-hello h4{font-size:16px;font-weight:650;color:var(--text-1);margin-bottom:5px}
+.chat-hello p{font-size:12.5px}
+.chat-sugg{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:14px 6px 4px}
+.chat-sugg button{font-size:12.5px;padding:8px 14px;border-radius:99px;background:var(--chip);
+  border:1px solid var(--card-border);color:var(--text-1);cursor:pointer;transition:.2s;font-family:inherit}
+.chat-sugg button:hover{background:var(--accent);color:#fff;border-color:transparent}
+.chat-bar{flex:none;display:flex;gap:10px;padding:14px 16px;border-top:1px solid var(--card-border)}
+.chat-bar input{flex:1;min-width:0;font-size:14px;padding:11px 16px;border-radius:99px;
+  background:var(--card-inner);border:1px solid var(--card-border);color:var(--text-1);font-family:inherit;outline:none}
+.chat-bar input:focus{border-color:var(--accent)}
+.chat-send{flex:none;border-radius:99px;padding:11px 20px;display:inline-flex;align-items:center;gap:7px}
+.chat-send:disabled{opacity:.5;cursor:not-allowed}
+.chat-send svg{width:15px;height:15px}
 
 /* 设置 */
 .setting-i{
@@ -840,7 +880,7 @@ a.social-i{text-decoration:none;color:var(--text-1)}
   .wrap{padding:calc(var(--nav-h) + 16px) 14px 36px}
   .grid{gap:14px}
   .card-profile,.card-photos,.card-contact,.card-projects,.card-skills,
-  .card-notes,.card-timeline,.card-remind{grid-column:span 12;min-height:0}
+  .card-notes,.card-timeline,.card-remind,.card-weather,.card-assistant{grid-column:span 12;min-height:0}
   .card-profile{min-height:340px;align-items:center;text-align:center}
   .card-profile .prof-plan{margin-left:auto;margin-right:auto}
   .tile-grid{min-height:0}
@@ -1017,9 +1057,20 @@ a.social-i{text-decoration:none;color:var(--text-1)}
           <div class="wxw-desc" id="wxwDesc">天气</div>
         </div>
         <div class="wxw-m"><span class="wxw-emoji" id="wxwEmoji"></span><span class="wxw-temp" id="wxwTemp"></span></div>
-        <div class="wxw-r" id="wxwDays"></div>
       </div>
     </article>
+    <!-- 智能助手长条卡 -->
+    <article class="card card-assistant" data-open="assistant" tabindex="0">
+      <div class="assistant-widget">
+        <span class="app-ic ic-assistant asw-ic" data-icon="assistant"></span>
+        <div class="asw-txt">
+          <h3>Jianye AI 智能助手</h3>
+          <p>问我任何问题 · 写作、编程、翻译、学习，随叫随到</p>
+        </div>
+        <span class="asw-open"><span>开始对话</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
+      </div>
+    </article>
+
     <article class="card compact" data-open="music" tabindex="0">
       <span class="app-ic tile-ic ic-music" data-icon="music"></span>
       <span class="c-label">音乐</span><span class="c-sub" id="musicSub">我的循环歌单</span>
@@ -1097,7 +1148,8 @@ const ICONS = {
   weibo:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M10.4 20c-4 .4-7.5-1.4-7.8-4-.3-2.7 2.7-5.1 6.8-5.5 4-.4 7.5 1.4 7.8 4 .3 2.7-2.7 5.1-6.8 5.5zm.4-2.4c1.7-.2 2.9-1.3 2.7-2.5-.2-1.1-1.7-1.9-3.4-1.7-1.7.2-2.9 1.3-2.7 2.4.2 1.2 1.7 1.9 3.4 1.8zm8.9-8.1c.4 1.2.1 2.6-.7 3.3-.3.2-.6.2-.8-.1s-.1-.7.1-.9c.4-.4.5-1.1.3-1.7-.2-.7-.8-1.2-1.5-1.3-.4-.1-.6-.4-.5-.8s.4-.6.8-.5c1.3.2 2.3 1.1 2.5 2.4zm-2-1.9c1.9.5 3.2 2.1 3.5 4 .1.4-.1.8-.5.9s-.8-.1-.9-.5c-.2-1.3-1.1-2.4-2.4-2.8-.4-.1-.6-.5-.5-.9s.5-.6.8-.7z"/></svg>',
   douyin:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.5 8.5a6 6 0 0 1-3.5-1.13v8.3a5.8 5.8 0 1 1-5.8-5.8c.28 0 .55.02.82.07v3.1a2.7 2.7 0 0 0-.82-.13 2.76 2.76 0 1 0 2.76 2.76V2h3.04a6 6 0 0 0 3.5 5.44z"/></svg>',
   feishu:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.2 7.7L3 21l1.9-5.4A8.5 8.5 0 1 1 21 11.5z"/><path d="M8 10.5h8M8 13.5h5" stroke-linecap="round"/></svg>',
-  steam:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-9.9 11.45l5.5 2.27a2.83 2.83 0 0 1 1.66-.51l2.44-3.55V11.3a3.83 3.83 0 1 1 3.83-3.83A3.8 3.8 0 0 1 15.5 11.2h-.43l-3.55 2.44c0 .05.01.11.01.16a2.85 2.85 0 0 1-2.85 2.85c-.28 0-.54-.05-.79-.13l-5.17-2.14A10 10 0 1 0 12 2zM9.33 13.5a1.9 1.9 0 1 1-.37 3.76l1.15.48a1.42 1.42 0 1 0-.78-4.24zm4.3-8.44a2.55 2.55 0 1 1 0 5.1 2.55 2.55 0 0 1 0-5.1zm0 1.2a1.35 1.35 0 1 0 0 2.7 1.35 1.35 0 0 0 0-2.7z"/></svg>'
+  steam:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-9.9 11.45l5.5 2.27a2.83 2.83 0 0 1 1.66-.51l2.44-3.55V11.3a3.83 3.83 0 1 1 3.83-3.83A3.8 3.8 0 0 1 15.5 11.2h-.43l-3.55 2.44c0 .05.01.11.01.16a2.85 2.85 0 0 1-2.85 2.85c-.28 0-.54-.05-.79-.13l-5.17-2.14A10 10 0 1 0 12 2zM9.33 13.5a1.9 1.9 0 1 1-.37 3.76l1.15.48a1.42 1.42 0 1 0-.78-4.24zm4.3-8.44a2.55 2.55 0 1 1 0 5.1 2.55 2.55 0 0 1 0-5.1zm0 1.2a1.35 1.35 0 1 0 0 2.7 1.35 1.35 0 0 0 0-2.7z"/></svg>',
+  assistant:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9z"/><path d="M18.7 14.8l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8zM5.3 15.8l.7 1.6 1.6.7-1.6.7-.7 1.6-.7-1.6-1.6-.7 1.6-.7z"/></svg>'
 };
 document.querySelectorAll('[data-icon]').forEach(el=>{
   el.innerHTML = ICONS[el.dataset.icon]||'';
@@ -1628,6 +1680,10 @@ const T = {
       <svg class="arr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 17 17 7M9 7h8v8"/></svg>
     </a>`).join(''),
   weather:()=>{
+    if(wxStatus==='setup')return `<div class="music-empty">
+      <p style="font-size:38px;margin-bottom:4px">📍</p>
+      <p><b>选择你所在的地区</b></p><span>设置后即可查看当地天气</span>
+      ${wxCityPickerHtml()}</div>`;
     if(wxStatus==='loading')return '<p style="text-align:center;color:var(--text-3);padding:30px">正在获取天气…</p>';
     if(wxStatus==='error')return `<div class="music-empty">
       <p><b>天气获取失败</b></p><span>可能是定位服务或网络不可用</span>
@@ -1641,7 +1697,7 @@ const T = {
       <div class="wx-main">
         <div class="wx-temp">${Math.round(cur.temperature_2m)}°</div>
         <div class="wx-desc">${wxText(cur.weather_code)}</div>
-        <div class="wx-city">${esc(loc.prov?loc.prov+(loc.cityName&&loc.cityName!==loc.name?loc.cityName:'')+loc.name:loc.name)}${loc.manual?'<span class="wx-manual">手动</span>':''}</div>
+        <div class="wx-city">${esc((()=>{const m=['北京市','天津市','上海市','重庆市'].includes(loc.prov);if(!loc.prov)return loc.name;if(m)return loc.prov+(loc.name!==loc.cityName?loc.name:'');const cn=loc.cityName&&loc.cityName!==loc.name?(/市$/.test(loc.cityName)?loc.cityName:loc.cityName+'市'):'';return loc.prov+cn+loc.name;})())}</div>
       </div>
       <div class="wx-meta">
         <div><span>体感</span><b>${Math.round(cur.apparent_temperature)}°</b></div>
@@ -1660,6 +1716,16 @@ const T = {
     </div>
     ${wxCityPickerHtml()}`;
   },
+  assistant:()=>`
+    <div class="chat-wrap">
+      <div class="chat-msgs" id="chatMsgs"></div>
+      <div class="chat-bar">
+        <input id="chatInput" placeholder="问点什么吧…" maxlength="2000" autocomplete="off">
+        <button class="btn btn-primary chat-send" id="chatSend">发送
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></svg>
+        </button>
+      </div>
+    </div>`,
   settings:()=>`
     <div class="setting-i">
       <span class="s-ic">${ICONS.fav}</span>
@@ -1702,7 +1768,8 @@ const META={
   games:['游戏','ic-games','games','在玩与通关'],
   favorites:['收藏','ic-fav','fav','常用工具集'],
   settings:['设置','ic-settings','settings','个性化此页面'],
-  weather:['天气','ic-weather','weather','实时天气']
+  weather:['天气','ic-weather','weather','实时天气'],
+  assistant:['智能助手','ic-assistant','assistant','Jianye AI · 随时问我']
 };
 
 /* ========================= 天气 =========================
@@ -1715,19 +1782,16 @@ const WX_CODES={0:['晴','☀️'],1:['大部晴朗','🌤️'],2:['局部多云
   80:['阵雨','🌦️'],81:['强阵雨','🌧️'],82:['暴雨','⛈️'],85:['阵雪','🌨️'],86:['强阵雪','❄️'],
   95:['雷暴','⛈️'],96:['雷暴伴冰雹','⛈️'],99:['雷暴伴冰雹','⛈️']};
 let wxLoc=JSON.parse(localStorage.getItem('jy-weather-city')||'null'); // {name,cityName,prov,lat,lon,manual}
-if(wxLoc&&!wxLoc.prov){ wxLoc=null; localStorage.removeItem('jy-weather-city'); } // 旧版缓存失效，重新自动定位
+if(wxLoc&&!wxLoc.prov){ wxLoc=null; localStorage.removeItem('jy-weather-city'); } // 旧版缓存失效
 let wxData=null, wxStatus='loading'; // loading|ready|error
 function wxEmoji(code){const w=WX_CODES[code];return w?w[1]:'🌡️';}
 function wxText(code){const w=WX_CODES[code];return w?w[0]:'未知';}
 async function fetchWeather(){
+  // 关闭自动定位：未选择地区时进入 setup 状态，提示用户手动选择
+  if(!wxLoc){ wxStatus='setup'; renderWxSub(); if(currentApp==='weather'){ $('#window .win-body').innerHTML=T.weather(); bindWindow('weather'); } return; }
   wxStatus='loading';
   try{
-    let loc=wxLoc;
-    if(!loc){
-      const g=await (await fetch('https://ipwho.is/')).json();
-      if(!g.success)throw new Error('geo fail');
-      loc={name:g.city||g.region||'当前位置',lat:g.latitude,lon:g.longitude,manual:false};
-    }
+    const loc=wxLoc;
     const u=`https://api.open-meteo.com/v1/forecast?latitude=${loc.lat}&longitude=${loc.lon}`+
       `&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m`+
       `&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=5`;
@@ -1739,62 +1803,68 @@ async function fetchWeather(){
   if(currentApp==='weather'){ $('#window .win-body').innerHTML=T.weather(); bindWindow('weather'); }
 }
 function renderWxSub(){
-  const city=$('#wxwCity'),desc=$('#wxwDesc'),emoji=$('#wxwEmoji'),temp=$('#wxwTemp'),days=$('#wxwDays');
+  const city=$('#wxwCity'),desc=$('#wxwDesc'),emoji=$('#wxwEmoji'),temp=$('#wxwTemp');
   if(!city)return;
-  if(wxStatus==='ready'){
-    const {loc,cur,daily}=wxData;
-    const full=loc.prov?loc.prov+(loc.cityName&&loc.cityName!==loc.name?loc.cityName:'')+loc.name:loc.name;
-    city.textContent=full+(loc.manual?'（手动）':'');
+  if(wxStatus==='setup'){
+    city.textContent='点击设置地区'; desc.textContent='天气'; emoji.textContent='📍'; temp.textContent='';
+  }else if(wxStatus==='ready'){
+    const {loc,cur}=wxData;
+    // 直辖市 prov 已含"市"且 cityName 与省同名，不重复拼接
+    const isMuni=['北京市','天津市','上海市','重庆市'].includes(loc.prov);
+    let full;
+    if(!loc.prov) full=loc.name;
+    else if(isMuni) full=loc.prov+(loc.name!==loc.cityName?loc.name:'');
+    else{
+      const cn=loc.cityName&&loc.cityName!==loc.name?(/市$/.test(loc.cityName)?loc.cityName:loc.cityName+'市'):'';
+      full=loc.prov+cn+loc.name;
+    }
+    city.textContent=full;
     city.title=full;
     desc.textContent=wxText(cur.weather_code);
     emoji.textContent=wxEmoji(cur.weather_code);
     temp.textContent=Math.round(cur.temperature_2m)+'°';
-    const wd=['日','一','二','三','四','五','六'];
-    days.innerHTML=daily.time.slice(0,4).map((t,i)=>`
-      <span class="wxw-d"><em>${i===0?'今':'周'+wd[new Date(t+'T12:00:00').getDay()]}</em>
-      ${wxEmoji(daily.weather_code[i])} ${Math.round(daily.temperature_2m_max[i])}°/${Math.round(daily.temperature_2m_min[i])}°</span>`).join('');
   }else if(wxStatus==='error'){
-    city.textContent='天气获取失败'; desc.textContent='点击卡片重试'; emoji.textContent='🌡️'; temp.textContent='--°'; days.innerHTML='';
+    city.textContent='天气获取失败'; desc.textContent='点击卡片重试'; emoji.textContent='🌡️'; temp.textContent='--°';
   }else{
-    city.textContent='正在定位…'; desc.textContent='天气'; emoji.textContent=''; temp.textContent=''; days.innerHTML='';
+    city.textContent='正在定位…'; desc.textContent='天气'; emoji.textContent=''; temp.textContent='';
   }
 }
 /* 全国省→市（省会/首府/直辖市），用于城市手动选择 */
 const CN_REGIONS={
-'北京市':[],
-'天津市':[],
-'上海市':[],
-'重庆市':[],
-'河北省':[['唐山',39.630,118.180],['保定',38.873,115.464],['秦皇岛',39.935,119.600],['邯郸',36.625,114.539],['邢台',37.068,114.505],['张家口',40.767,114.886],['承德',40.951,117.963],['沧州',38.304,116.839],['廊坊',39.538,116.683]],
-'山西省':[['大同',40.077,113.300],['阳泉',37.857,113.580],['长治',36.195,113.116],['晋城',35.490,112.851],['朔州',39.331,112.433],['晋中',37.687,112.753],['运城',35.026,111.007],['忻州',38.418,112.734],['临汾',36.088,111.519]],
-'内蒙古自治区':[['包头',40.657,109.840],['乌海',39.655,106.794],['赤峰',42.259,118.889],['通辽',43.653,122.243],['鄂尔多斯',39.608,109.781],['呼伦贝尔',49.212,119.766],['巴彦淖尔',40.743,107.387]],
-'辽宁省':[['大连',38.914,121.614],['鞍山',41.108,122.995],['抚顺',41.881,123.957],['本溪',41.486,123.685],['丹东',40.000,124.354],['锦州',41.096,121.127],['营口',40.667,122.235],['阜新',42.022,121.670],['辽阳',41.267,123.237],['盘锦',41.120,122.071],['铁岭',42.286,123.726],['朝阳',41.573,120.450]],
-'吉林省':[['吉林',43.838,126.549],['四平',43.166,124.350],['辽源',42.888,125.144],['通化',41.728,125.940],['白山',41.933,126.424],['松原',45.141,124.825],['白城',45.620,122.839]],
-'黑龙江省':[['齐齐哈尔',47.354,123.918],['鸡西',45.295,130.969],['鹤岗',47.350,130.297],['双鸭山',46.646,131.159],['大庆',46.587,125.104],['伊春',47.727,128.841],['佳木斯',46.800,130.319],['七台河',45.771,131.003],['牡丹江',44.551,129.633],['黑河',50.245,127.528]],
-'江苏省':[['无锡',31.491,120.312,[['无锡市区',31.491,120.312],['锡山区',31.589,120.357],['惠山区',31.681,120.298],['滨湖区',31.527,120.284],['新吴区',31.55,120.364],['江阴市',31.921,120.286],['宜兴市',31.361,119.823]]],['徐州',34.204,117.285],['常州',31.811,119.974,[['常州市区',31.811,119.974],['金坛区',31.723,119.597],['溧阳市',31.417,119.484]]],['苏州',31.299,120.585,[['苏州市区',31.299,120.585],['虎丘区',31.3,120.4],['吴中区',31.262,120.632],['相城区',31.369,120.642],['吴江区',31.16,120.645],['昆山市',31.385,120.981],['常熟市',31.654,120.752],['张家港市',31.876,120.556],['太仓市',31.459,121.13]]],['南通',31.980,120.894],['连云港',34.596,119.222],['淮安',33.610,119.015],['盐城',33.347,120.164],['扬州',32.393,119.413],['镇江',32.188,119.425],['泰州',32.456,119.923]],
-'浙江省':[['宁波',29.868,121.544],['温州',27.994,120.699],['嘉兴',30.746,120.755],['湖州',30.894,120.087],['绍兴',30.030,120.580],['金华',29.079,119.647],['衢州',28.935,118.859],['舟山',29.985,122.207],['台州',28.656,121.421]],
-'安徽省':[['芜湖',31.353,118.433],['蚌埠',32.916,117.389],['淮南',32.626,117.000],['马鞍山',31.670,118.507],['淮北',33.956,116.798],['铜陵',30.945,117.812],['安庆',30.543,117.063],['黄山',29.715,118.337],['滁州',32.256,118.333],['阜阳',32.890,115.814],['宿州',33.647,116.964],['六安',31.735,116.523],['亳州',33.845,115.778],['池州',30.665,117.491]],
-'福建省':[['厦门',24.480,118.089],['莆田',25.454,119.007],['三明',26.263,117.639],['泉州',24.874,118.676],['漳州',24.513,117.647],['南平',26.642,118.178],['龙岩',25.075,117.017]],
-'江西省':[['景德镇',29.269,117.178],['萍乡',27.623,113.854],['九江',29.705,116.001],['新余',27.817,114.917],['鹰潭',28.260,117.069],['赣州',25.831,114.935],['吉安',27.091,114.993],['宜春',27.804,114.416],['抚州',27.949,116.358]],
-'山东省':[['青岛',36.067,120.383],['淄博',36.813,118.055],['枣庄',34.810,117.323],['东营',37.435,118.675],['烟台',37.464,121.448],['潍坊',36.707,119.162],['济宁',35.415,116.587],['泰安',36.200,117.087],['威海',37.513,122.120],['日照',35.416,119.527],['临沂',35.104,118.356],['德州',37.436,116.359],['聊城',36.456,115.985],['滨州',37.382,117.971]],
-'河南省':[['开封',34.797,114.307],['洛阳',34.619,112.454],['平顶山',33.766,113.193],['安阳',36.098,114.392],['鹤壁',35.748,114.297],['新乡',35.303,113.927],['焦作',35.216,113.242],['濮阳',35.762,115.029],['许昌',34.036,113.852],['漯河',33.582,114.017],['三门峡',34.773,111.200],['南阳',32.991,112.528],['商丘',34.414,115.656],['信阳',32.147,114.091],['周口',33.626,114.697]],
-'湖北省':[['黄石',30.200,115.039],['十堰',32.629,110.798],['宜昌',30.692,111.286],['襄阳',32.009,112.122],['鄂州',30.391,114.885],['荆门',31.035,112.199],['孝感',30.925,113.917],['荆州',30.335,112.241],['黄冈',30.453,114.872],['咸宁',29.841,114.322],['随州',31.690,113.382]],
-'湖南省':[['株洲',27.827,113.134],['湘潭',27.830,112.944],['衡阳',26.893,112.572],['邵阳',27.239,111.468],['岳阳',29.357,113.129],['常德',29.032,111.698],['张家界',29.117,110.479],['益阳',28.554,112.355],['郴州',25.770,113.015],['永州',26.420,111.613],['怀化',27.569,109.998],['娄底',27.698,111.994]],
-'广东省':[['韶关',24.811,113.597],['深圳',22.543,114.058,[['深圳市区',22.543,114.058],['福田区',22.541,114.05],['南山区',22.531,113.93],['宝安区',22.555,113.884],['龙岗区',22.721,114.246],['龙华区',22.696,114.03],['坪山区',22.708,114.346]]],['珠海',22.271,113.577],['汕头',23.354,116.682],['佛山',23.021,113.122],['江门',22.579,113.082],['湛江',21.271,110.359],['茂名',21.663,110.925],['肇庆',23.047,112.465],['惠州',23.112,114.416],['梅州',24.289,116.122],['汕尾',22.786,115.375],['河源',23.744,114.700],['阳江',21.857,111.982],['清远',23.682,113.056],['东莞',23.021,113.752],['中山',22.517,113.393],['潮州',23.657,116.622],['揭阳',23.550,116.372]],
-'广西壮族自治区':[['柳州',24.326,109.428],['桂林',25.274,110.290],['梧州',23.477,111.279],['北海',21.481,109.120],['防城港',21.687,108.354],['钦州',21.981,108.654],['贵港',23.111,109.598],['玉林',22.654,110.181],['百色',23.902,106.618],['贺州',24.404,111.567],['河池',24.693,108.085],['来宾',23.750,109.221]],
-'海南省':[['三亚',18.253,109.512],['三沙',16.832,112.333]],
-'四川省':[['自贡',29.339,104.778],['攀枝花',26.582,101.719],['泸州',28.872,105.442],['德阳',31.127,104.398],['绵阳',31.468,104.679],['广元',32.435,105.844],['遂宁',30.533,105.593],['内江',29.580,105.058],['乐山',29.552,103.766],['南充',30.837,106.111],['眉山',30.075,103.848],['宜宾',28.752,104.642],['广安',30.456,106.633],['达州',31.209,107.468],['雅安',29.981,103.009],['巴中',31.867,106.747],['资阳',30.129,104.628],['阿坝',31.899,102.221],['甘孜',30.050,101.964]],
-'贵州省':[['六盘水',26.593,104.830],['遵义',27.726,106.927],['安顺',26.253,105.946],['毕节',27.302,105.292],['铜仁',27.731,109.189],['黔西南',25.088,104.906],['黔东南',26.584,107.983]],
-'云南省':[['曲靖',25.490,103.796],['玉溪',24.352,102.546],['保山',25.112,99.161],['昭通',27.338,103.717],['丽江',26.857,100.227],['普洱',22.825,100.966],['临沧',23.884,100.088],['楚雄',25.046,101.546],['红河',23.363,103.375],['文山',23.400,104.216],['西双版纳',22.008,100.797],['大理',25.606,100.268],['德宏',24.433,98.585],['怒江',25.853,98.854]],
-'西藏自治区':[['日喀则',29.267,88.881],['昌都',31.141,97.172],['林芝',29.649,94.362],['山南',29.237,91.773]],
-'陕西省':[['铜川',34.897,108.945],['宝鸡',34.363,107.238],['咸阳',34.330,108.709],['渭南',34.500,109.510],['延安',36.585,109.490],['汉中',33.068,107.023],['榆林',38.285,109.735],['安康',32.685,109.029]],
-'甘肃省':[['嘉峪关',39.773,98.289],['金昌',38.520,102.188],['白银',36.545,104.138],['天水',34.581,105.725],['武威',37.928,102.638],['张掖',38.926,100.450],['平凉',35.543,106.665],['酒泉',39.732,98.494],['庆阳',35.709,107.643],['定西',35.581,104.626],['陇南',33.400,104.921],['临夏',35.601,103.210]],
-'青海省':[['海东',36.502,102.104],['海北',36.960,100.901],['黄南',35.517,102.015],['海南',36.286,100.620],['果洛',34.471,100.245],['玉树',33.005,97.008]],
-'宁夏回族自治区':[['石嘴山',38.983,106.383],['吴忠',37.997,106.199],['固原',36.016,106.242]],
-'新疆维吾尔自治区':[['克拉玛依',45.580,84.889],['吐鲁番',42.951,89.190],['哈密',42.819,93.515],['昌吉',44.011,87.304],['博尔塔拉',44.906,82.066],['巴音郭楞',41.764,86.145],['阿克苏',41.168,80.260],['克孜勒苏',39.715,76.167],['喀什',39.468,75.994],['和田',37.114,79.922],['伊犁',43.917,81.324],['塔城',46.746,82.979]],
-'香港特别行政区':[],
-'澳门特别行政区':[],
-'台湾省':[['高雄',22.627,120.301],['台中',24.148,120.674]]
+'北京市':[['北京',39.904,116.407,[['东城区',39.928,116.416],['西城区',39.913,116.366],['朝阳区',39.921,116.443],['海淀区',39.959,116.298],['丰台区',39.858,116.287],['石景山区',39.906,116.223],['通州区',39.91,116.657],['顺义区',40.13,116.655],['昌平区',40.221,116.231],['大兴区',39.727,116.341],['房山区',39.749,116.143],['门头沟区',39.94,116.102],['怀柔区',40.316,116.632],['平谷区',40.141,117.121],['密云区',40.376,116.843],['延庆区',40.466,115.975]]]],
+'天津市':[['天津',39.085,117.199,[['和平区',39.117,117.215],['河东区',39.123,117.251],['河西区',39.109,117.223],['南开区',39.138,117.151],['河北区',39.148,117.197],['红桥区',39.167,117.164],['滨海新区',39.003,117.711],['东丽区',39.088,117.314],['西青区',39.141,117.009],['津南区',38.993,117.381],['北辰区',39.225,117.135],['武清区',39.384,117.044],['宝坻区',39.717,117.31],['宁河区',39.328,117.825],['静海区',38.946,116.974],['蓟州区',40.046,117.408]]]],
+'上海市':[['上海',31.23,121.474,[['黄浦区',31.222,121.49],['徐汇区',31.188,121.437],['长宁区',31.22,121.424],['静安区',31.229,121.448],['普陀区',31.249,121.395],['虹口区',31.264,121.505],['杨浦区',31.259,121.526],['浦东新区',31.221,121.544],['闵行区',31.112,121.382],['宝山区',31.405,121.489],['嘉定区',31.3,121.265],['金山区',30.742,121.341],['松江区',31.032,121.228],['青浦区',31.15,121.124],['奉贤区',30.918,121.474],['崇明区',31.624,121.397]]]],
+'重庆市':[['重庆',29.563,106.551,[['渝中区',29.553,106.568],['大渡口区',29.484,106.482],['江北区',29.607,106.574],['沙坪坝区',29.541,106.457],['九龙坡区',29.502,106.51],['南岸区',29.521,106.644],['北碚区',29.805,106.396],['渝北区',29.718,106.631],['巴南区',29.402,106.54],['万州区',30.807,108.408],['涪陵区',29.703,107.389],['黔江区',29.533,108.771],['长寿区',29.857,107.081],['江津区',29.29,106.259],['合川区',29.972,106.276],['永川区',29.356,105.927],['南川区',29.158,107.099],['璧山区',29.592,106.227],['铜梁区',29.845,106.056],['潼南区',30.191,105.84],['荣昌区',29.405,105.594],['开州区',31.161,108.393],['梁平区',30.673,107.804],['武隆区',29.326,107.76]]]],
+'河北省':[['石家庄',38.042,114.514],['唐山',39.63,118.18],['保定',38.873,115.464],['秦皇岛',39.935,119.6],['邯郸',36.625,114.539],['邢台',37.068,114.505],['张家口',40.767,114.886],['承德',40.951,117.963],['沧州',38.304,116.839],['廊坊',39.538,116.683],['衡水',37.735,115.67]],
+'山西省':[['太原',37.87,112.55],['大同',40.077,113.3],['阳泉',37.857,113.58],['长治',36.195,113.116],['晋城',35.49,112.851],['朔州',39.331,112.433],['晋中',37.687,112.753],['运城',35.026,111.007],['忻州',38.418,112.734],['临汾',36.088,111.519],['吕梁',37.518,111.144]],
+'内蒙古自治区':[['呼和浩特',40.842,111.749],['包头',40.657,109.84],['乌海',39.655,106.794],['赤峰',42.259,118.889],['通辽',43.653,122.243],['鄂尔多斯',39.608,109.781],['呼伦贝尔',49.212,119.766],['巴彦淖尔',40.743,107.387],['乌兰察布',40.994,113.133]],
+'辽宁省':[['沈阳',41.677,123.463],['大连',38.914,121.614],['鞍山',41.108,122.995],['抚顺',41.881,123.957],['本溪',41.486,123.685],['丹东',40.0,124.354],['锦州',41.096,121.127],['营口',40.667,122.235],['阜新',42.022,121.67],['辽阳',41.267,123.237],['盘锦',41.12,122.071],['铁岭',42.286,123.726],['朝阳',41.573,120.45],['葫芦岛',40.711,120.837]],
+'吉林省':[['长春',43.817,125.323],['吉林',43.838,126.549],['四平',43.166,124.35],['辽源',42.888,125.144],['通化',41.728,125.94],['白山',41.933,126.424],['松原',45.141,124.825],['白城',45.62,122.839],['延边',42.891,129.509]],
+'黑龙江省':[['哈尔滨',45.804,126.535],['齐齐哈尔',47.354,123.918],['鸡西',45.295,130.969],['鹤岗',47.35,130.297],['双鸭山',46.646,131.159],['大庆',46.587,125.104],['伊春',47.727,128.841],['佳木斯',46.8,130.319],['七台河',45.771,131.003],['牡丹江',44.551,129.633],['黑河',50.245,127.528],['绥化',46.654,126.969]],
+'江苏省':[['南京',32.06,118.797,[['南京市区',32.06,118.797],['玄武区',32.072,118.796],['秦淮区',32.04,118.795],['建邺区',32.003,118.732],['鼓楼区',32.066,118.77],['浦口区',32.059,118.628],['栖霞区',32.096,118.909],['雨花台区',31.992,118.779],['江宁区',31.954,118.84],['六合区',32.323,118.822],['溧水区',31.651,119.028],['高淳区',31.327,118.876]]],['无锡',31.491,120.312,[['无锡市区',31.491,120.312],['锡山区',31.589,120.357],['惠山区',31.681,120.298],['滨湖区',31.527,120.284],['梁溪区',31.575,120.303],['新吴区',31.55,120.364],['江阴市',31.921,120.286],['宜兴市',31.361,119.823]]],['徐州',34.204,117.285],['常州',31.811,119.974,[['常州市区',31.811,119.974],['天宁区',31.811,119.974],['钟楼区',31.802,119.902],['新北区',31.811,119.974],['武进区',31.701,119.942],['金坛区',31.723,119.597],['溧阳市',31.417,119.484]]],['苏州',31.299,120.585,[['苏州市区',31.299,120.585],['姑苏区',31.312,120.617],['虎丘区',31.3,120.4],['吴中区',31.262,120.632],['相城区',31.369,120.642],['吴江区',31.16,120.645],['苏州工业园区',31.323,120.738],['昆山市',31.385,120.981],['常熟市',31.654,120.752],['张家港市',31.876,120.556],['太仓市',31.459,121.13]]],['南通',31.98,120.894],['连云港',34.596,119.222],['淮安',33.61,119.015],['盐城',33.347,120.164],['扬州',32.393,119.413],['镇江',32.188,119.425],['泰州',32.456,119.923],['宿迁',33.963,118.275]],
+'浙江省':[['杭州',30.274,120.155,[['杭州市区',30.274,120.155],['上城区',30.242,120.169],['拱墅区',30.319,120.141],['西湖区',30.259,120.13],['滨江区',30.208,120.212],['萧山区',30.184,120.264],['余杭区',30.421,120.299],['临平区',30.419,120.302],['钱塘区',30.323,120.494],['富阳区',30.049,119.96],['临安区',30.234,119.715],['桐庐县',29.793,119.692],['淳安县',29.609,119.042],['建德市',29.475,119.281]]],['宁波',29.868,121.544],['温州',27.994,120.699],['嘉兴',30.746,120.755],['湖州',30.894,120.087],['绍兴',30.03,120.58],['金华',29.079,119.647],['衢州',28.935,118.859],['舟山',29.985,122.207],['台州',28.656,121.421],['丽水',28.467,119.923]],
+'安徽省':[['合肥',31.821,117.227],['芜湖',31.353,118.433],['蚌埠',32.916,117.389],['淮南',32.626,117.0],['马鞍山',31.67,118.507],['淮北',33.956,116.798],['铜陵',30.945,117.812],['安庆',30.543,117.063],['黄山',29.715,118.337],['滁州',32.256,118.333],['阜阳',32.89,115.814],['宿州',33.647,116.964],['六安',31.735,116.523],['亳州',33.845,115.778],['池州',30.665,117.491],['宣城',30.94,118.759]],
+'福建省':[['福州',26.074,119.296],['厦门',24.48,118.089],['莆田',25.454,119.007],['三明',26.263,117.639],['泉州',24.874,118.676],['漳州',24.513,117.647],['南平',26.642,118.178],['龙岩',25.075,117.017],['宁德',26.666,119.548]],
+'江西省':[['南昌',28.682,115.858],['景德镇',29.269,117.178],['萍乡',27.623,113.854],['九江',29.705,116.001],['新余',27.817,114.917],['鹰潭',28.26,117.069],['赣州',25.831,114.935],['吉安',27.091,114.993],['宜春',27.804,114.416],['抚州',27.949,116.358],['上饶',28.455,117.943]],
+'山东省':[['济南',36.651,117.12],['青岛',36.067,120.383],['淄博',36.813,118.055],['枣庄',34.81,117.323],['东营',37.435,118.675],['烟台',37.464,121.448],['潍坊',36.707,119.162],['济宁',35.415,116.587],['泰安',36.2,117.087],['威海',37.513,122.12],['日照',35.416,119.527],['临沂',35.104,118.356],['德州',37.436,116.359],['聊城',36.456,115.985],['滨州',37.382,117.971],['菏泽',35.233,115.481]],
+'河南省':[['郑州',34.747,113.625],['开封',34.797,114.307],['洛阳',34.619,112.454],['平顶山',33.766,113.193],['安阳',36.098,114.392],['鹤壁',35.748,114.297],['新乡',35.303,113.927],['焦作',35.216,113.242],['濮阳',35.762,115.029],['许昌',34.036,113.852],['漯河',33.582,114.017],['三门峡',34.773,111.2],['南阳',32.991,112.528],['商丘',34.414,115.656],['信阳',32.147,114.091],['周口',33.626,114.697],['驻马店',33.012,114.022]],
+'湖北省':[['武汉',30.593,114.305],['黄石',30.2,115.039],['十堰',32.629,110.798],['宜昌',30.692,111.286],['襄阳',32.009,112.122],['鄂州',30.391,114.885],['荆门',31.035,112.199],['孝感',30.925,113.917],['荆州',30.335,112.241],['黄冈',30.453,114.872],['咸宁',29.841,114.322],['随州',31.69,113.382],['恩施',30.272,109.488]],
+'湖南省':[['长沙',28.228,112.939],['株洲',27.827,113.134],['湘潭',27.83,112.944],['衡阳',26.893,112.572],['邵阳',27.239,111.468],['岳阳',29.357,113.129],['常德',29.032,111.698],['张家界',29.117,110.479],['益阳',28.554,112.355],['郴州',25.77,113.015],['永州',26.42,111.613],['怀化',27.569,109.998],['娄底',27.698,111.994],['湘西',28.312,109.739]],
+'广东省':[['广州',23.129,113.264],['韶关',24.811,113.597],['深圳',22.543,114.058],['珠海',22.271,113.577],['汕头',23.354,116.682],['佛山',23.021,113.122],['江门',22.579,113.082],['湛江',21.271,110.359],['茂名',21.663,110.925],['肇庆',23.047,112.465],['惠州',23.112,114.416],['梅州',24.289,116.122],['汕尾',22.786,115.375],['河源',23.744,114.7],['阳江',21.857,111.982],['清远',23.682,113.056],['东莞',23.021,113.752],['中山',22.517,113.393],['潮州',23.657,116.622],['揭阳',23.55,116.372],['云浮',22.915,112.044]],
+'广西壮族自治区':[['南宁',22.817,108.366],['柳州',24.326,109.428],['桂林',25.274,110.29],['梧州',23.477,111.279],['北海',21.481,109.12],['防城港',21.687,108.354],['钦州',21.981,108.654],['贵港',23.111,109.598],['玉林',22.654,110.181],['百色',23.902,106.618],['贺州',24.404,111.567],['河池',24.693,108.085],['来宾',23.75,109.221],['崇左',22.377,107.365]],
+'海南省':[['海口',20.044,110.199],['三亚',18.253,109.512],['三沙',16.832,112.333],['儋州',19.521,109.581]],
+'四川省':[['成都',30.573,104.067],['自贡',29.339,104.778],['攀枝花',26.582,101.719],['泸州',28.872,105.442],['德阳',31.127,104.398],['绵阳',31.468,104.679],['广元',32.435,105.844],['遂宁',30.533,105.593],['内江',29.58,105.058],['乐山',29.552,103.766],['南充',30.837,106.111],['眉山',30.075,103.848],['宜宾',28.752,104.642],['广安',30.456,106.633],['达州',31.209,107.468],['雅安',29.981,103.009],['巴中',31.867,106.747],['资阳',30.129,104.628],['阿坝',31.899,102.221],['甘孜',30.05,101.964],['凉山',27.882,102.267]],
+'贵州省':[['贵阳',26.647,106.63],['六盘水',26.593,104.83],['遵义',27.726,106.927],['安顺',26.253,105.946],['毕节',27.302,105.292],['铜仁',27.731,109.189],['黔西南',25.088,104.906],['黔东南',26.584,107.983],['黔南',26.254,107.522]],
+'云南省':[['昆明',24.88,102.833],['曲靖',25.49,103.796],['玉溪',24.352,102.546],['保山',25.112,99.161],['昭通',27.338,103.717],['丽江',26.857,100.227],['普洱',22.825,100.966],['临沧',23.884,100.088],['楚雄',25.046,101.546],['红河',23.363,103.375],['文山',23.4,104.216],['西双版纳',22.008,100.797],['大理',25.606,100.268],['德宏',24.433,98.585],['怒江',25.853,98.854],['迪庆',27.819,99.702]],
+'西藏自治区':[['拉萨',29.652,91.141],['日喀则',29.267,88.881],['昌都',31.141,97.172],['林芝',29.649,94.362],['山南',29.237,91.773],['那曲',31.476,92.052]],
+'陕西省':[['西安',34.341,108.94],['铜川',34.897,108.945],['宝鸡',34.363,107.238],['咸阳',34.33,108.709],['渭南',34.5,109.51],['延安',36.585,109.49],['汉中',33.068,107.023],['榆林',38.285,109.735],['安康',32.685,109.029],['商洛',33.87,109.918]],
+'甘肃省':[['兰州',36.061,103.834],['嘉峪关',39.773,98.289],['金昌',38.52,102.188],['白银',36.545,104.138],['天水',34.581,105.725],['武威',37.928,102.638],['张掖',38.926,100.45],['平凉',35.543,106.665],['酒泉',39.732,98.494],['庆阳',35.709,107.643],['定西',35.581,104.626],['陇南',33.4,104.921],['临夏',35.601,103.21],['甘南',34.983,102.911]],
+'青海省':[['西宁',36.617,101.778],['海东',36.502,102.104],['海北',36.96,100.901],['黄南',35.517,102.015],['海南',36.286,100.62],['果洛',34.471,100.245],['玉树',33.005,97.008],['海西',37.377,97.361]],
+'宁夏回族自治区':[['银川',38.487,106.23],['石嘴山',38.983,106.383],['吴忠',37.997,106.199],['固原',36.016,106.242],['中卫',37.5,105.197]],
+'新疆维吾尔自治区':[['乌鲁木齐',43.826,87.617],['克拉玛依',45.58,84.889],['吐鲁番',42.951,89.19],['哈密',42.819,93.515],['昌吉',44.011,87.304],['博尔塔拉',44.906,82.066],['巴音郭楞',41.764,86.145],['阿克苏',41.168,80.26],['克孜勒苏',39.715,76.167],['喀什',39.468,75.994],['和田',37.114,79.922],['伊犁',43.917,81.324],['塔城',46.746,82.979],['阿勒泰',47.827,88.132]],
+'香港特别行政区':[['香港',22.319,114.169]],
+'澳门特别行政区':[['澳门',22.199,113.545]],
+'台湾省':[['台北',25.033,121.565],['高雄',22.627,120.301],['台中',24.148,120.674],['台南',22.999,120.227]]
 };
 function wxCityPickerHtml(){
   const provs=Object.keys(CN_REGIONS);
@@ -1808,17 +1878,75 @@ function wxCityPickerHtml(){
       <select id="wxCitySel" class="wx-select" disabled><option value="">城市…</option></select>
       <select id="wxDistSel" class="wx-select" disabled><option value="">区县…</option></select>
     </div>
-    ${wxLoc&&wxLoc.manual?'<button class="wx-auto" id="wxAuto">↺ 恢复自动定位</button>':''}
+    ${wxStatus==='setup'?'':(wxLoc&&wxLoc.manual?'<button class="wx-auto" id="wxAuto">✕ 清除设置，重新选择</button>':'')}
   </div>`;
 }
 
 /* ========================= 弹窗逻辑 ========================= */
 let currentApp=null;
+/* ========================= 智能助手（浏览器内对话） =========================
+   直接调用 Pollinations 免费文本 API（免密钥）；会话仅保存在页面内存中 */
+const AI_SYS='你是「Jianye AI 智能助手」，鉴业个人主页里的内置 AI 助手。请用简洁、友好的中文回答，默认控制在 200 字以内，除非用户要求详细展开。';
+const AI_SUGG=['给我一句早安语录','帮我写一段生日祝福','讲一个冷笑话','推荐一首适合学习时听的歌','用三句话介绍摩羯座'];
+let chatLog=[];        // {role:'user'|'bot', text, typing}
+let chatBusy=false;
+
+function renderChat(){
+  const box=$('#chatMsgs'); if(!box)return;
+  if(!chatLog.length){
+    box.innerHTML=`<div class="chat-hello">
+      <div class="ch-ic">${ICONS.assistant}</div>
+      <h4>你好，我是 Jianye AI</h4>
+      <p>写作、问答、翻译、编程…… 直接在下面输入，或点一个话题开始</p>
+      <div class="chat-sugg">${AI_SUGG.map(s=>`<button data-sugg="${esc(s)}">${esc(s)}</button>`).join('')}</div>
+    </div>`;
+    $$('#chatMsgs [data-sugg]').forEach(b=>b.onclick=()=>{ if(!chatBusy)chatSend(b.dataset.sugg); });
+    return;
+  }
+  box.innerHTML=chatLog.map(m=>m.typing
+    ? `<div class="msg bot typing"><i></i><i></i><i></i></div>`
+    : `<div class="msg ${m.role==='user'?'user':'bot'}">${esc(m.text)}</div>`).join('');
+  box.scrollTop=box.scrollHeight;
+}
+
+async function aiFetch(msgs){
+  // Pollinations 的 POST 已启用人机验证（403），改用免密钥 GET：
+  // 把最近几轮对话拼成一个纯文本提示词，模型续写「助手：」之后的内容
+  const prompt=msgs.map(m=>(m.role==='system'?'设定':m.role==='user'?'用户':'助手')+'：'+m.content).join('\n')+'\n助手：';
+  const r=await fetch('https://text.pollinations.ai/'+encodeURIComponent(prompt)+'?model=openai');
+  if(!r.ok)throw 0;
+  const t=(await r.text()).trim();
+  if(!t)throw 0;
+  return t;
+}
+
+async function chatSend(text){
+  text=(text||'').trim(); if(!text||chatBusy)return;
+  chatBusy=true;
+  const inp=$('#chatInput'), btn=$('#chatSend');
+  if(inp){inp.value='';inp.disabled=true;} if(btn)btn.disabled=true;
+  chatLog.push({role:'user',text});
+  chatLog.push({role:'bot',typing:true});
+  renderChat();
+  try{
+    const msgs=[{role:'system',content:AI_SYS},
+      ...chatLog.filter(m=>!m.typing).slice(-8)
+        .map(m=>({role:m.role==='user'?'user':'assistant',content:m.text}))];
+    const reply=await aiFetch(msgs);
+    chatLog.pop(); chatLog.push({role:'bot',text:reply});
+  }catch{
+    chatLog.pop(); chatLog.push({role:'bot',text:'网络好像开小差了，请稍后再试一次 🙏'});
+  }
+  chatBusy=false;
+  renderChat();
+  if(inp){inp.disabled=false;inp.focus();} if(btn)btn.disabled=false;
+}
+
 function openApp(id){
   if(!T[id])return;
   currentApp=id;
   const m=META[id];
-  $('#window').className='window'+(id==='photos'?' wide':'');
+  $('#window').className='window'+(id==='photos'?' wide':id==='assistant'?' ai':'');
   $('#window').innerHTML=`
     <div class="win-hd">
       <span class="app-ic ${m[1]}">${ICONS[m[2]]}</span>
@@ -1874,6 +2002,13 @@ function bindWindow(id){
     $('#addTodo').onclick=add;
     input.onkeydown=e=>{if(e.key==='Enter')add();};
   }
+  if(id==='assistant'){
+    renderChat();
+    const inp=$('#chatInput');
+    $('#chatSend').onclick=()=>chatSend(inp.value);
+    inp.onkeydown=e=>{ if(e.key==='Enter')chatSend(inp.value); };
+    setTimeout(()=>inp.focus(),80);
+  }
   if(id==='music'){
     if(!$('#plPlay'))return;   // 空文件夹 / 加载中
     $('#plPlay').innerHTML=gAudio.paused?SVG_PLAY:SVG_PAUSE;
@@ -1893,7 +2028,7 @@ function bindWindow(id){
   if(id==='weather'){
     const retry=$('#wxRetry'); if(retry)retry.onclick=fetchWeather;
     const auto=$('#wxAuto'); if(auto)auto.onclick=()=>{
-      wxLoc=null; localStorage.removeItem('jy-weather-city'); fetchWeather(); toast('已恢复自动定位');
+      wxLoc=null; localStorage.removeItem('jy-weather-city'); fetchWeather(); toast('已清除，请重新选择地区');
     };
     const prov=$('#wxProv'), citySel=$('#wxCitySel'), distSel=$('#wxDistSel');
     if(prov){
@@ -1908,34 +2043,36 @@ function bindWindow(id){
         citySel.disabled=!cities.length;
       };
       if(prov.value){
-        fillCities(prov.value,wxLoc&&wxLoc.cityName);
-        const city=CN_REGIONS[prov.value].find(x=>x[0]===(wxLoc&&wxLoc.cityName));
-        if(city)fillDists(city,wxLoc&&wxLoc.name);
+        // cityName 可能带"市"后缀，选项值是简称，需匹配两者
+        const savedCity=wxLoc&&wxLoc.cityName;
+        const match=CN_REGIONS[prov.value].find(x=>savedCity&&(x[0]===savedCity||x[0]===savedCity.replace(/市$/,'')));
+        if(match){ fillCities(prov.value,match[0]); fillDists(match,wxLoc&&wxLoc.name); }
       }
       prov.onchange=()=>{ fillCities(prov.value); distSel.innerHTML='<option value="">区县…</option>'; distSel.disabled=true; };
+      // 城市名显示用全称：地级市统一补"市"（如"常州"→"常州市"），已带"市"或港澳台则不重复
+      const cityFull=n=>(/市$/.test(n)||['香港','澳门','台北','高雄','台中','台南'].includes(n)?n:n+'市');
       citySel.onchange=()=>{
         const p=prov.value, n=citySel.value;
         if(!p||!n)return;
         const city=CN_REGIONS[p].find(x=>x[0]===n);
         fillDists(city);
         if(city[3]&&city[3].length){
-          // 有区县时等待选择，默认先定位到市区第一项
           const d=city[3][0];
-          wxLoc={name:d[0],cityName:n,prov:p,lat:d[1],lon:d[2],manual:true};
+          wxLoc={name:d[0],cityName:cityFull(n),prov:p,lat:d[1],lon:d[2],manual:true};
         }else{
-          wxLoc={name:n,cityName:n,prov:p,lat:city[1],lon:city[2],manual:true};
+          wxLoc={name:n,cityName:cityFull(n),prov:p,lat:city[1],lon:city[2],manual:true};
         }
         localStorage.setItem('jy-weather-city',JSON.stringify(wxLoc));
-        fetchWeather(); toast('已切换到 '+p+n);
+        fetchWeather(); toast('已切换到 '+p+cityFull(n));
       };
       distSel.onchange=()=>{
         const p=prov.value, n=citySel.value, d0=distSel.value;
         if(!p||!n||!d0)return;
         const city=CN_REGIONS[p].find(x=>x[0]===n);
         const d=(city[3]||[]).find(x=>x[0]===d0); if(!d)return;
-        wxLoc={name:d[0],cityName:n,prov:p,lat:d[1],lon:d[2],manual:true};
+        wxLoc={name:d[0],cityName:cityFull(n),prov:p,lat:d[1],lon:d[2],manual:true};
         localStorage.setItem('jy-weather-city',JSON.stringify(wxLoc));
-        fetchWeather(); toast('已切换到 '+n+' '+d[0]);
+        fetchWeather(); toast('已切换到 '+cityFull(n)+' '+d[0]);
       };
     }
   }
