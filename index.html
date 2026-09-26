@@ -1924,37 +1924,14 @@ function renderChat(){
 }
 
 async function aiFetch(msgs){
-  // Pollinations 免费匿名接口。该接口偶发限流(429)或服务端抖动(5xx)，做多端点+多重试兜底
-  const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-  let lastErr=0;
-  // 1) POST /openai：标准的 OpenAI 格式，支持完整多轮对话
-  for(let i=0;i<2;i++){
-    try{
-      const r=await fetch('https://text.pollinations.ai/openai',{
-        method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({messages:msgs,model:'openai-fast'})});
-      if(r.ok){
-        const d=await r.json();
-        const t=((d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content)||'').trim();
-        if(t)return t;
-      }else lastErr=r.status;
-    }catch(e){ lastErr=0; }
-    await sleep(2500*(i+1));
-  }
-  // 2) GET 兜底：把最近几轮对话拼成纯文本提示词，模型续写「助手：」之后的内容
+  // Pollinations 的 POST 已启用人机验证（403），改用免密钥 GET：
+  // 把最近几轮对话拼成一个纯文本提示词，模型续写「助手：」之后的内容
   const prompt=msgs.map(m=>(m.role==='system'?'设定':m.role==='user'?'用户':'助手')+'：'+m.content).join('\n')+'\n助手：';
-  for(let i=0;i<2;i++){
-    try{
-      const r=await fetch('https://text.pollinations.ai/'+encodeURIComponent(prompt)+'?model=openai-fast');
-      if(r.ok){
-        const t=(await r.text()).trim();
-        // 200 也可能返回错误文案（如 key 预算提示），需过滤
-        if(t&&!t.startsWith('{')&&!/API key/i.test(t))return t;
-      }else lastErr=r.status;
-    }catch(e){ lastErr=0; }
-    await sleep(2500*(i+1));
-  }
-  throw lastErr||0;
+  const r=await fetch('https://text.pollinations.ai/'+encodeURIComponent(prompt)+'?model=openai');
+  if(!r.ok)throw 0;
+  const t=(await r.text()).trim();
+  if(!t)throw 0;
+  return t;
 }
 
 async function chatSend(text){
