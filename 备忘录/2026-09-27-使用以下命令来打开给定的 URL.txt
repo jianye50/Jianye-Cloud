@@ -1,0 +1,11 @@
+# 使用以下命令来打开给定的 URL
+
+日期：2026-09-27
+
+使用以下命令来打开给定的 URL
+start https://yqni5us2ntq.feishu.cn/docx/IJy6dJ3H6oI0L4x2El2cHln8n0f
+这条命令会调用你的默认浏览器，并导航到指定的 URL。
+请注意，虽然这个 URL 看起来像是指向一个文档（由于包含 docx），但实际上它可能是一个在 Feishu（飞书）平台上托管的文档链接，或者是经过重定向的链接。因此，当你尝试在浏览器中打开它时，你可能会被重定向到 Feishu 的登录页面或文档查看页面。
+如果你想要使用特定的浏览器来打开这个链接（而不是默认浏览器），你可以指定浏览器的可执行文件路径。例如，如果你想要使用 Chrome 浏览器，你可以这样做（假设 Chrome 已安装在你的系统中，并且你知道其安装路径）：
+start "" "C:\Program Files (x86)\Google\Chrome\Application\chrome.exe" "https://yqni5us2ntq.feishu.cn/docx/IJy6dJ3H6oI0L4x2El2cHln8n0f"
+注意，在start命令中，第一个双引号""是可选的，用于处理路径或 URL 中可能包含的空格。紧接着是浏览器的可执行文件路径，然后是 URL。

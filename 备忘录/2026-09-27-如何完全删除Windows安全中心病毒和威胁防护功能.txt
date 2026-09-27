@@ -1,0 +1,11 @@
+# 如何完全删除Windows安全中心病毒和威胁防护功能
+
+日期：2026-09-27
+
+若想手动完全删除请以最高权限操作
+删除以下文件夹
+"C:\Program Files\Windows Defender"
+"C:\Program Files\Windows Defender Advanced Threat Protection"
+"C:\ProgramData\Microsoft\Windows Defender"
+"C:\ProgramData\Microsoft\Windows Defender Advanced Threat Protection"
+"C:\ProgramData\Microsoft\Windows Security Health"
