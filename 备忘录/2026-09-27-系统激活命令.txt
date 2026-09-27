@@ -2,4 +2,5 @@
 
 日期：2026-09-27
 
+Windows PowerShell内执行：
 irm https://get.activated.win | iex
