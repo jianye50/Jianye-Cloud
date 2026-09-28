@@ -856,6 +856,10 @@ a.social-i{text-decoration:none;color:var(--text-1)}
 .dp-box{flex:1;min-width:180px;background:var(--card-inner);border:1px solid var(--card-border);border-radius:14px;padding:10px 14px}
 .dp-box .dp-label{display:block;font-size:10.5px;color:var(--text-3);letter-spacing:.5px;margin-bottom:2px}
 .dp-roombox b{font-size:22px;font-weight:700;letter-spacing:2.5px;color:var(--accent);font-variant-numeric:tabular-nums}
+.dp-roomline{display:flex;align-items:center;gap:8px}
+.dp-room-input{flex:1;min-width:0;font-size:21px;font-weight:700;letter-spacing:2px;color:var(--accent);
+  background:transparent;border:none;outline:none;font-family:inherit;text-transform:uppercase;font-variant-numeric:tabular-nums;padding:2px 0}
+.dp-room-input:focus{border-bottom:1.5px solid var(--accent)}
 .dp-mini{margin-left:10px;font-size:11px;padding:4px 10px;border-radius:99px;background:var(--chip);border:1px solid var(--card-border);color:var(--text-2);cursor:pointer;font-family:inherit;transition:.2s}
 .dp-mini:hover{background:var(--accent);color:#fff;border-color:transparent}
 .dp-namebox input{width:100%;font-size:15px;font-weight:630;background:transparent;border:none;outline:none;color:var(--text-1);font-family:inherit;padding:2px 0}
@@ -1021,12 +1025,12 @@ a.social-i{text-decoration:none;color:var(--text-1)}
   .wrap{padding:calc(var(--nav-h) + 16px) 14px 36px}
   .grid{gap:14px}
   .card-profile,.card-photos,.card-contact,.card-projects,.card-skills,
-  .card-notes,.card-timeline,.card-remind,.card-weather,.card-assistant,.card-speedtest,.card-hardware{grid-column:span 12;min-height:0}
-  /* 天气与 AI 助手两条长条组件保持等高 */
-  .card-weather,.card-assistant,.card-speedtest,.card-hardware{min-height:88px}
-  /* 手机上测速卡片精简显示 */
-  .spd-widget{gap:12px}
-  .card-speedtest,.card-hardware,.card-drop{padding:0 18px}
+  .card-notes,.card-timeline,.card-remind,.card-weather,.card-assistant,.card-speedtest,.card-hardware,.card-drop{grid-column:span 12;min-height:0}
+  /* 手机上长条组件与「智能助手」卡片规格完全一致 */
+  .card-weather,.card-assistant,.card-speedtest,.card-hardware,.card-drop{min-height:88px}
+  .card-speedtest,.card-hardware,.card-drop{padding:0 26px}
+  .spd-widget,.hdw-widget,.dpw-widget{gap:18px}
+  .spd-widget .app-ic,.hdw-widget .app-ic,.dpw-widget .app-ic{width:52px;height:52px;border-radius:15px}
   /* 手机上省/市/区县选择器竖向排列，避免挤压溢出 */
   .wx-selects{flex-direction:column}
   .card-profile{min-height:340px;align-items:center;text-align:center}
@@ -1771,12 +1775,14 @@ const T = {
     return `
     <div class="dp-wrap">
       <div class="dp-top">
-        <div class="dp-box dp-roombox"><span class="dp-label">房间码（所有设备输入同一码）</span><b id="dpRoom">------</b><button class="dp-mini" id="dpNewRoom">换一个</button></div>
+        <div class="dp-box dp-roombox"><span class="dp-label">房间码（两台设备必须输入同一码）</span>
+          <div class="dp-roomline"><input id="dpRoom" class="dp-room-input" maxlength="7" placeholder="如 KD7-TQ2" autocomplete="off" autocapitalize="characters"><button class="dp-mini" id="dpNewRoom">随机</button></div>
+        </div>
         <div class="dp-box dp-namebox"><span class="dp-label">本机名称</span><input id="dpName" maxlength="20" placeholder="给这台设备起个名字"></div>
       </div>
       <div class="dp-status" id="dpStatus">正在加入房间…</div>
       <div class="dp-peers" id="dpPeers"><span class="dp-empty">正在加入房间…</span></div>
-      <p class="dp-hint">相同房间码的设备建立 WebRTC 点对点直连，文件直接在设备间传输、不经过任何服务器。<br>同一 WiFi 下秒传；跨网络传输视网络穿透情况而定。</p>
+      <p class="dp-hint">先在所有设备上输入<b>完全相同的房间码</b>（可点「随机」生成一个再抄到其他设备），相同房间码的设备即建立 WebRTC 点对点直连，<br>文件直接在设备间传输、不经过任何服务器。同一 WiFi 下秒传；跨网络传输视网络穿透情况而定。</p>
       <div class="dp-files" id="dpFiles"></div>
       <input type="file" id="dpFile" multiple hidden>
     </div>`;
@@ -3147,7 +3153,18 @@ function dpBindWindow(){
     try{saved=JSON.parse(localStorage.getItem('jy-drop')||'null');}catch(e){}
     dpState={room:(saved&&saved.room)||dpRandomRoom(),name:(saved&&saved.name)||dpDevName(),connected:false,role:null};
   }
-  const roomEl=dpEl('dpRoom');if(roomEl)roomEl.textContent=dpState.room;
+  const roomEl=dpEl('dpRoom');
+  if(roomEl){
+    roomEl.value=dpState.room;
+    roomEl.onkeydown=e=>{if(e.key==='Enter')roomEl.blur();};
+    roomEl.onchange=()=>{
+      let v=(roomEl.value||'').toUpperCase().replace(/[^0-9A-Z]/g,'').slice(0,6);
+      if(v.length<3){roomEl.value=dpState.room;toast('房间码至少 3 位数字/字母',false);return;}
+      v=v.length>3?v.slice(0,3)+'-'+v.slice(3):v;
+      roomEl.value=v;
+      if(v!==dpState.room){dpState.room=v;dpSave();dpJoin();}
+    };
+  }
   const nameEl=dpEl('dpName');
   if(nameEl){
     nameEl.value=dpState.name;
