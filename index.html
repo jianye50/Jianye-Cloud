@@ -781,6 +781,51 @@ a.social-i{text-decoration:none;color:var(--text-1)}
 .asw-open{flex:none;display:inline-flex;align-items:center;gap:7px;padding:9px 17px;border-radius:99px;font-size:13px;font-weight:600;color:#fff;background:linear-gradient(145deg,#64d2ff,#5e5ce6);box-shadow:0 4px 14px rgba(94,92,230,.35)}
 .asw-open svg{width:13px;height:13px}
 @media (max-width:820px){.asw-open span{display:none}.asw-open{padding:9px 11px}}
+
+/* 网络测速长条小组件 */
+.card-speedtest{grid-column:span 12;min-height:110px;display:flex;align-items:center;padding:0 26px;overflow:hidden;border-radius:var(--radius-lg)}
+.spd-widget{display:flex;align-items:center;gap:18px;width:100%;min-width:0}
+.spd-txt{flex:1;min-width:0}
+.spd-txt h3{font-size:16.5px;font-weight:650;white-space:nowrap}
+.spd-txt p{font-size:12.5px;color:var(--text-3);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.spd-open{flex:none;background:linear-gradient(145deg,#30d158,#0aa562);box-shadow:0 4px 14px rgba(48,209,88,.35)}
+.ic-speed{background:linear-gradient(160deg,#30d158,#0a84ff)}
+.ic-speed svg,.spd-open svg{color:#fff}
+
+/* 网络测速弹窗（Speedtest 风格） */
+.window.speed{max-width:540px}
+.st-wrap{display:flex;flex-direction:column;align-items:center;gap:16px;padding:8px 0 2px}
+.st-gauge{position:relative;width:min(320px,100%)}
+.st-gauge svg{width:100%;display:block}
+.st-arc-bg{fill:none;stroke:var(--track);stroke-width:10;stroke-linecap:round}
+.st-arc{fill:none;stroke:url(#stGrad);stroke-width:10;stroke-linecap:round;transition:stroke-dasharray .15s linear}
+.st-tick{stroke:var(--text-3);stroke-width:1.4;opacity:.5}
+.st-needle{stroke:var(--accent);stroke-width:3;stroke-linecap:round;transition:transform .15s linear}
+.st-hub{fill:var(--accent)}
+.st-read{position:absolute;left:0;right:0;bottom:24px;text-align:center;pointer-events:none}
+.st-read b{font-size:42px;font-weight:250;letter-spacing:-1px;line-height:1;font-variant-numeric:tabular-nums}
+.st-read span{display:block;font-size:11.5px;color:var(--text-3);margin-top:4px;letter-spacing:.8px}
+.st-phase{font-size:13px;color:var(--accent);font-weight:600;text-align:center;min-height:18px}
+.st-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:100%}
+.st-cell{background:var(--card-inner);border:1px solid var(--card-border);border-radius:14px;padding:12px 6px;text-align:center}
+.st-cell b{display:block;font-size:19px;font-weight:600;font-variant-numeric:tabular-nums}
+.st-cell span{display:block;font-size:10.5px;color:var(--text-3);margin-top:3px;white-space:nowrap}
+.st-cell.dl b{color:#30d158}
+.st-cell.ul b{color:#64d2ff}
+.st-go{width:82px;height:82px;border-radius:50%;flex:none;
+  font-size:20px;font-weight:800;letter-spacing:2px;color:#fff;
+  background:linear-gradient(160deg,#1d3fb0,#0a84ff);
+  box-shadow:0 10px 26px rgba(10,132,255,.45),inset 0 1px 0 rgba(255,255,255,.3);
+  transition:.2s;font-family:inherit}
+.st-go:hover{transform:scale(1.05)}
+.st-go:disabled{opacity:.55;cursor:not-allowed;transform:none;filter:saturate(.6)}
+.st-meta{font-size:12px;color:var(--text-3);text-align:center}
+@media (max-width:520px){
+  .st-grid{grid-template-columns:repeat(2,1fr)}
+  .st-read b{font-size:34px}
+  .st-read{bottom:20px}
+}
+
 /* 智能助手弹窗（浏览器内对话） */
 .window.ai{max-width:760px;height:86vh}
 .window.ai .win-body{padding:0;overflow:hidden;display:flex;flex:1;min-height:0}
@@ -885,9 +930,12 @@ a.social-i{text-decoration:none;color:var(--text-1)}
   .wrap{padding:calc(var(--nav-h) + 16px) 14px 36px}
   .grid{gap:14px}
   .card-profile,.card-photos,.card-contact,.card-projects,.card-skills,
-  .card-notes,.card-timeline,.card-remind,.card-weather,.card-assistant{grid-column:span 12;min-height:0}
+  .card-notes,.card-timeline,.card-remind,.card-weather,.card-assistant,.card-speedtest{grid-column:span 12;min-height:0}
   /* 天气与 AI 助手两条长条组件保持等高 */
-  .card-weather,.card-assistant{min-height:88px}
+  .card-weather,.card-assistant,.card-speedtest{min-height:88px}
+  /* 手机上测速卡片精简显示 */
+  .spd-widget{gap:12px}
+  .card-speedtest{padding:0 18px}
   /* 手机上省/市/区县选择器竖向排列，避免挤压溢出 */
   .wx-selects{flex-direction:column}
   .card-profile{min-height:340px;align-items:center;text-align:center}
@@ -1080,6 +1128,18 @@ a.social-i{text-decoration:none;color:var(--text-1)}
       </div>
     </article>
 
+    <!-- 网络测速长条卡（点击打开 Speedtest 风格弹窗） -->
+    <article class="card card-speedtest" data-open="speedtest" tabindex="0">
+      <div class="spd-widget">
+        <span class="app-ic ic-speed" data-icon="speedtest"></span>
+        <div class="spd-txt">
+          <h3>网络测速</h3>
+          <p id="spdSub">Speedtest · 延迟 / 抖动 / 下载 / 上传 全面检测</p>
+        </div>
+        <span class="asw-open spd-open"><span>开始测速</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
+      </div>
+    </article>
+
     <article class="card compact" data-open="music" tabindex="0">
       <span class="app-ic tile-ic ic-music" data-icon="music"></span>
       <span class="c-label">音乐</span><span class="c-sub" id="musicSub">我的循环歌单</span>
@@ -1151,6 +1211,7 @@ const ICONS = {
   weather:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="8" cy="8" r="3.2"/><path d="M8 1.8v1.6M2 8h1.6M12.4 8h1.4M3.6 3.6l1.1 1.1M12.4 3.6l-1.1 1.1"/><path d="M8.5 21h8.2a3.3 3.3 0 0 0 .6-6.5A4.8 4.8 0 0 0 8 14.9 3.6 3.6 0 0 0 8.5 21z" stroke-linejoin="round"/></svg>',
   settings:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 13.5a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1v.2a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-2.7-1.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1.1-2.7H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.2-2.7l-.1-.1A2 2 0 1 1 7 4.6l.1.1a1.6 1.6 0 0 0 1.8.3 1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8 1.6 1.6 0 0 0 1.5 1h.2a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.3 1z"/></svg>',
   about:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8.5" r="4"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>',
+  speedtest:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 13.5 16.5 8"/><circle cx="12" cy="14" r="1.6" fill="currentColor" stroke="none"/><path d="M4.5 18.5a7.5 7.5 0 0 1 15 0"/></svg>',
   github:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-3.2 19.5c.5.1.7-.2.7-.5v-1.7c-2.8.6-3.4-1.3-3.4-1.3-.5-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.6 2.4 1.1 3 .9.1-.7.4-1.1.6-1.4-2.2-.300000000000001-4.6-1.1-4.6-5a4 4 0 0 1 1-2.7c-.1-.3-.5-1.3.1-2.7 0 0 .8-.3 2.7 1a9.3 9.3 0 0 1 5 0c1.9-1.3 2.7-1 2.7-1 .6 1.4.2 2.4.1 2.7a4 4 0 0 1 1 2.7c0 3.9-2.4 4.7-4.6 5 .4.3.7.9.7 1.9v2.8c0 .3.2.6.7.5A10 10 0 0 0 12 2z"/></svg>',
   video:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 8.5V7a3 3 0 0 0-3-3H5a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h9a3 3 0 0 0 3-3v-1.5l4 2.8v-12.6z"/></svg>',
   book:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19a2 2 0 0 1 2-2h13"/></svg>',
@@ -1508,6 +1569,40 @@ renderTodoMini();
 
 /* ========================= 弹窗内容模板 ========================= */
 const T = {
+  speedtest:()=>{
+    let ticks='';
+    for(let i=0;i<=12;i++){
+      const th=Math.PI*(1-i/12);
+      const x1=100+Math.cos(th)*62,y1=104-Math.sin(th)*62;
+      const x2=100+Math.cos(th)*72,y2=104-Math.sin(th)*72;
+      ticks+=`<line class="st-tick" x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}"/>`;
+    }
+    return `
+    <div class="st-wrap">
+      <div class="st-gauge">
+        <svg viewBox="0 0 200 118">
+          <defs><linearGradient id="stGrad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#30d158"/><stop offset=".55" stop-color="#64d2ff"/><stop offset="1" stop-color="#0a84ff"/>
+          </linearGradient></defs>
+          <path class="st-arc-bg" d="M24 104 A76 76 0 0 1 176 104" pathLength="100"/>
+          <path class="st-arc" id="stArc" d="M24 104 A76 76 0 0 1 176 104" pathLength="100" stroke-dasharray="0 100" style="opacity:0"/>
+          ${ticks}
+          <line class="st-needle" id="stNeedle" x1="100" y1="104" x2="44" y2="104" transform="rotate(0 100 104)"/>
+          <circle class="st-hub" cx="100" cy="104" r="5"/>
+        </svg>
+        <div class="st-read"><b id="stLive">--</b><span>Mbps</span></div>
+      </div>
+      <div class="st-phase" id="stPhase">点击 GO 开始测速</div>
+      <div class="st-grid">
+        <div class="st-cell"><b id="stPing">--</b><span>Ping 延迟 ms</span></div>
+        <div class="st-cell"><b id="stJitter">--</b><span>抖动 Jitter ms</span></div>
+        <div class="st-cell dl"><b id="stDown">--</b><span>下载 Mbps</span></div>
+        <div class="st-cell ul"><b id="stUp">--</b><span>上传 Mbps</span></div>
+      </div>
+      <button class="st-go" id="stGo"><span>GO</span></button>
+      <div class="st-meta" id="stMeta">数据来源：Cloudflare 全球测速网络</div>
+    </div>`;
+  },
   about:()=>`
     <div class="about-hero">
       <img src="${av}" alt="鉴业">
@@ -1783,7 +1878,8 @@ const META={
   favorites:['收藏','ic-fav','fav','常用工具集'],
   settings:['设置','ic-settings','settings','个性化此页面'],
   weather:['天气','ic-weather','weather','实时天气'],
-  assistant:['智能助手','ic-assistant','assistant','Jianye AI · 随时问我']
+  assistant:['智能助手','ic-assistant','assistant','Jianye AI · 随时问我'],
+  speedtest:['网络测速','ic-speed','speedtest','Speedtest · 网络质量检测']
 };
 
 /* ========================= 天气 =========================
@@ -1960,7 +2056,7 @@ function openApp(id){
   if(!T[id])return;
   currentApp=id;
   const m=META[id];
-  $('#window').className='window'+(id==='photos'?' wide':id==='assistant'?' ai':'');
+  $('#window').className='window'+(id==='photos'?' wide':id==='assistant'?' ai':id==='speedtest'?' speed':'');
   $('#window').innerHTML=`
     <div class="win-hd">
       <span class="app-ic ${m[1]}">${ICONS[m[2]]}</span>
@@ -1975,6 +2071,7 @@ function closeApp(){$('#scrim').classList.remove('open');currentApp=null;}
 
 function bindWindow(id){
   $('#winClose').onclick=closeApp;
+  if(id==='speedtest')stBindWindow();
   if(id==='contact'){
     $('#copyMail').onclick=copyEmail;
     $$('#window [data-soon]').forEach(b=>b.onclick=()=>toast(b.dataset.soon+' 主页即将开通，先发邮件吧'));
@@ -2125,6 +2222,217 @@ function bindWindow(id){
 }
 
 $('#scrim').addEventListener('click',e=>{if(e.target.id==='scrim')closeApp();});
+
+/* ========================= 网络测速（Speedtest 风格） =========================
+   流程：延迟/抖动 → 下载（最长 12s 流式采样）→ 上传（最长 10s XHR），
+   仪表盘指针采用 Ookla 式非线性刻度；结果持久化到 localStorage 并同步到长条卡片副标题 */
+const stSegs=[[0,1,.2],[1,5,.2],[5,10,.1],[10,30,.15],[30,60,.1],[60,100,.1],[100,250,.08],[250,500,.05],[500,1000,.02]];
+function stFrac(v){
+  if(v==null||!isFinite(v)||v<=0)return 0;
+  let acc=0;
+  for(const [a,b,f] of stSegs){ if(v<=b)return acc+(v-a)/(b-a)*f; acc+=f; }
+  return 1;
+}
+function stFmt(v){
+  if(v==null||!isFinite(v))return '--';
+  return v>=100?String(Math.round(v)):v>=10?v.toFixed(1):v.toFixed(2);
+}
+let stLast=null;
+try{ stLast=JSON.parse(localStorage.getItem('jy-speedtest')||'null'); }catch(e){}
+const stEl=id=>document.getElementById(id);
+const stSet=(id,v)=>{const n=stEl(id); if(n)n.textContent=v;};
+
+function stCardSub(){
+  const n=stEl('spdSub'); if(!n)return;
+  n.textContent=stLast
+    ? `上次测速 · 下载 ${stFmt(stLast.down)} Mbps · 上传 ${stLast.up!=null?stFmt(stLast.up):'--'} Mbps · 延迟 ${Math.round(stLast.ping)} ms`
+    : 'Speedtest · 延迟 / 抖动 / 下载 / 上传 全面检测';
+}
+function stFillResults(r){
+  if(!r)return;
+  stSet('stPing',Math.round(r.ping));
+  stSet('stJitter',r.jitter!=null?r.jitter.toFixed(1):'--');
+  stSet('stDown',stFmt(r.down));
+  stSet('stUp',r.up!=null?stFmt(r.up):'--');
+}
+
+// 延迟 + 抖动：8 次小请求，剔除首次（含 DNS/TLS 握手）；ping 取最小值（最接近真实 RTT， Ookla 同款策略）
+async function stLatency(){
+  const t=[];
+  for(let i=0;i<8;i++){
+    const s=performance.now();
+    await fetch('https://speed.cloudflare.com/__down?bytes=0&_='+Math.random(),{cache:'no-store'});
+    t.push(performance.now()-s);
+  }
+  t.shift();
+  const ping=Math.min(...t);
+  let j=0;
+  for(let i=1;i<t.length;i++)j+=Math.abs(t[i]-t[i-1]);
+  return {ping,jitter:j/Math.max(t.length-1,1)};
+}
+
+// 下载：多连接并行流式读取（Ookla 同款思路，6 路叠加），最长 12 秒；
+// 跳过首秒慢启动后取剩余时段均值，测速源自动回退
+async function stParDownload(base,streams,DURATION,onTick){
+  const ctrl=new AbortController();
+  const timer=setTimeout(()=>ctrl.abort(),DURATION);
+  const t0=performance.now();
+  let total=0,markB=0,markT=t0,live=0,lastT=t0,lastB=0,fail=0;
+  const tick=()=>{
+    const now=performance.now();
+    if(!markB&&now-t0>1000){markB=total;markT=now;} // 1 秒后记录基准，规避 TCP 慢启动
+    if(now-lastT>150){
+      const inst=(total-lastB)*8/((now-lastT)/1000)/1e6;
+      live=live?live*.55+inst*.45:inst;
+      lastT=now;lastB=total;
+      onTick(live);
+    }
+  };
+  await Promise.all(Array.from({length:streams},()=>(async()=>{
+    try{
+      const res=await fetch(base+Math.random(),{cache:'no-store',signal:ctrl.signal});
+      if(!res.ok||!res.body){fail++;return;}
+      const reader=res.body.getReader();
+      while(true){
+        const{done,value}=await reader.read();
+        if(done)break;
+        total+=value.length;
+        tick();
+      }
+    }catch(e){ if(!ctrl.signal.aborted)fail++; }
+  })()));
+  clearTimeout(timer);
+  if(!total||fail>=streams)throw new Error('dl-fail');
+  const secs=(performance.now()-markT)/1000;
+  const avg=(total-markB)*8/Math.max(secs,.25)/1e6;
+  return Math.max(avg,live*.92);
+}
+async function stDownload(onTick){
+  const bases=[
+    'https://speed.cloudflare.com/__down?bytes=150000000&_=',
+    'https://cdn.jsdelivr.net/npm/typescript@5.4.5/lib/typescript.js?_=',
+    'https://unpkg.com/typescript@5.4.5/lib/typescript.js?_='
+  ];
+  for(const b of bases){
+    try{ return await stParDownload(b,6,12000,onTick); }catch(e){/* 尝试下一个测速源 */}
+  }
+  throw new Error('no-source');
+}
+
+// 上传：3 连接并行 XHR 上传进度统计（Ookla 同款思路），最长 10 秒；失败返回 null（显示 --）
+function stRandomBlob(size){
+  // crypto.getRandomValues 单次上限 65536 字节，需分块填充
+  const buf=new Uint8Array(size);
+  for(let o=0;o<size;o+=65536){
+    crypto.getRandomValues(buf.subarray(o,Math.min(o+65536,size)));
+  }
+  // text/plain 属于 CORS 简单请求，避免触发预检被拦截
+  return new Blob([buf],{type:'text/plain;charset=UTF-8'});
+}
+async function stUpload(onTick){
+  const WORKERS=3,SIZE=4*1024*1024,DURATION=10000;
+  try{
+    const blob=stRandomBlob(SIZE);
+    const ctrl=new AbortController();
+    const timer=setTimeout(()=>ctrl.abort(),DURATION);
+    const failTimer=setTimeout(()=>{ if(sent===0)ctrl.abort(); },4000); // 4 秒仍发不出数据 → 通道不可用
+    const t0=performance.now();
+    let sent=0,markS=0,markT=t0,live=0,lastT=t0,lastS=0;
+    const tick=()=>{
+      const now=performance.now();
+      if(!markS&&now-t0>1500){markS=sent;markT=now;} // 1.5 秒后记录基准
+      if(now-lastT>150){
+        const inst=(sent-lastS)*8/((now-lastT)/1000)/1e6;
+        live=live?live*.55+inst*.45:inst;
+        lastT=now;lastS=sent;
+        onTick(live);
+      }
+    };
+    await Promise.all(Array.from({length:WORKERS},()=>(async()=>{
+      while(performance.now()-t0<DURATION){
+        await new Promise(res=>{
+          const xhr=new XMLHttpRequest();
+          xhr.open('POST','https://speed.cloudflare.com/__up?_='+Math.random(),true);
+          let lastLoaded=0,done=false;
+          xhr.upload.onprogress=e=>{
+            sent+=e.loaded-lastLoaded;lastLoaded=e.loaded;
+            tick();
+          };
+          xhr.onload=()=>{done=true;res(true);};
+          xhr.onerror=()=>{done=true;res(false);};
+          xhr.onabort=()=>{done=true;res(true);};
+          ctrl.signal.addEventListener('abort',()=>{ if(!done){try{xhr.abort();}catch(_){/* 忽略 */}res(true);} },{once:true});
+          xhr.send(blob);
+        });
+      }
+    })()));
+    clearTimeout(timer);clearTimeout(failTimer);
+    if(sent-markS<=0)return null;
+    return (sent-markS)*8/Math.max((performance.now()-markT)/1000,.25)/1e6;
+  }catch(e){ return null; }
+}
+
+let stRunning=false;
+async function stRun(){
+  if(stRunning)return;
+  stRunning=true;
+  const btn=stEl('stGo');
+  if(btn){btn.disabled=true;btn.innerHTML='<span>···</span>';}
+  const gauge=v=>{
+    const f=stFrac(v);
+    const arc=stEl('stArc'),needle=stEl('stNeedle');
+    if(arc){
+      arc.style.strokeDasharray=(f*100).toFixed(2)+' 100';
+      arc.style.opacity=f>0?'1':'0'; // 0 位时隐藏，避免圆头端点残留小圆点
+    }
+    if(needle)needle.setAttribute('transform',`rotate(${(f*180).toFixed(2)} 100 104)`);
+    stSet('stLive',stFmt(v));
+  };
+  const phase=t=>stSet('stPhase',t);
+  gauge(0);
+  ['stLive','stPing','stJitter','stDown','stUp'].forEach(id=>stSet(id,'--'));
+  const meta=stEl('stMeta'); if(meta)meta.textContent='正在连接测速节点…';
+  try{
+    phase('正在测量延迟与抖动…');
+    const {ping,jitter}=await stLatency();
+    stSet('stPing',Math.round(ping));
+    stSet('stJitter',jitter.toFixed(1));
+    let info='';
+    try{
+      const m=await (await fetch('https://speed.cloudflare.com/meta')).json();
+      info=[m.asOrganization,m.city,m.colo].filter(Boolean).join(' · ');
+    }catch(e){/* 节点信息可选 */}
+    if(meta)meta.textContent=(info?'节点 '+info+' · ':'')+'Cloudflare 全球测速网络'+
+      (ping>200?'（延迟异常偏高：疑似代理/VPN 或绕行线路）':'');
+    phase('正在测试下载速度…');
+    const down=await stDownload(gauge);
+    stSet('stDown',stFmt(down));
+    phase('正在测试上传速度…');
+    const up=await stUpload(gauge);
+    if(up!=null)stSet('stUp',stFmt(up));
+    stLast={ping,jitter,down,up,ts:Date.now()};
+    try{localStorage.setItem('jy-speedtest',JSON.stringify(stLast));}catch(e){}
+    stCardSub();
+    gauge(0);stSet('stLive','--');
+    phase('测速完成');
+    toast('网络测速完成');
+  }catch(e){
+    phase('测速失败，请检查网络后重试');
+    toast('测速失败，请稍后重试',false);
+  }
+  if(btn){btn.disabled=false;btn.innerHTML='<span>GO</span>';}
+  stRunning=false;
+}
+function stBindWindow(){
+  stFillResults(stLast);
+  const b=stEl('stGo');
+  if(b){
+    b.onclick=stRun;
+    b.disabled=stRunning;
+    b.innerHTML=stRunning?'<span>···</span>':'<span>GO</span>';
+  }
+}
+stCardSub();
 
 /* ========================= 灯箱 ========================= */
 let lbIndex=0;
