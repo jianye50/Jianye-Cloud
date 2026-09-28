@@ -854,6 +854,11 @@ a.social-i{text-decoration:none;color:var(--text-1)}
 .hw-per i{display:block;font-style:normal;font-size:11px;color:var(--text-3);margin-top:4px;line-height:1.5}
 .hw-per.ok{border:1px solid rgba(48,209,88,.5);background:rgba(48,209,88,.1)}
 .hw-per.ok i{color:#30d158}
+.hw-net{display:flex;flex-direction:column}
+.hw-net-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 10px;border-radius:10px}
+.hw-net-row:nth-child(odd){background:var(--chip)}
+.hw-net-row span{font-size:12px;color:var(--text-3);flex:none}
+.hw-net-row b{font-size:12.5px;font-weight:600;text-align:right;word-break:break-all;min-width:0}
 .hw-re{align-self:center;border:1px solid var(--card-border);background:var(--chip);color:var(--text-1);
   font-family:inherit;font-size:13px;font-weight:600;padding:9px 22px;border-radius:99px;cursor:pointer;transition:.2s}
 .hw-re:hover{background:var(--accent);color:#fff;border-color:transparent}
@@ -1665,11 +1670,11 @@ const T = {
         ${cell('hwMem','运行内存')}
         ${cell('hwGpu','GPU 显卡')}
         ${cell('hwHeap','JS 堆内存')}
-        ${cell('hwScreen','屏幕分辨率')}
+        ${cell('hwScreen','物理分辨率 · 缩放')}
         ${cell('hwHz','屏幕刷新率')}
         ${cell('hwBattery','电池状态')}
         ${cell('hwNet','网络类型')}
-        ${cell('hwStorage','可用存储')}
+        ${cell('hwStorage','浏览器存储配额')}
         ${cell('hwLang','语言 / 时区')}
         ${cell('hwTouch','触摸能力')}
         ${cell('hwUa','浏览器内核')}
@@ -1680,6 +1685,19 @@ const T = {
           ${per('hwMouse','🖱️ 鼠标','移动鼠标以检测')}
           ${per('hwKeyboard','⌨️ 键盘','按下任意键检测')}
           ${per('hwTouchPad','👆 触摸','自动检测')}
+        </div>
+      </div>
+      <div class="hw-periph">
+        <h5>网络信息</h5>
+        <div class="hw-net">
+          <div class="hw-net-row"><span>公网 IP</span><b id="hwIp">···</b></div>
+          <div class="hw-net-row"><span>运营商 / ISP</span><b id="hwIsp">···</b></div>
+          <div class="hw-net-row"><span>网络类型</span><b id="hwNetType">···</b></div>
+          <div class="hw-net-row"><span>连接质量</span><b id="hwNetQuality">···</b></div>
+          <div class="hw-net-row"><span>带宽估算</span><b id="hwNetDown">···</b></div>
+          <div class="hw-net-row"><span>往返延迟</span><b id="hwNetRtt">···</b></div>
+          <div class="hw-net-row"><span>省流模式</span><b id="hwNetSave">···</b></div>
+          <div class="hw-net-row"><span>在线状态</span><b id="hwNetOnline">···</b></div>
         </div>
       </div>
       <button class="hw-re" id="hwRe">重新检测</button>
@@ -2593,44 +2611,128 @@ function hwHz(){
     })();
   });
 }
+// 屏幕物理密度 PPI：对 CSS resolution 媒询二分搜索（Chrome/Edge 精确，回退 96×dpr）
+function hwScreenPPI(){
+  try{
+    if(!matchMedia('(min-resolution: 25dpi)').matches)return Math.round(96*(window.devicePixelRatio||1));
+    let lo=25,hi=2000;
+    while(hi-lo>1){
+      const mid=(lo+hi)>>1;
+      if(matchMedia('(min-resolution: '+mid+'dpi)').matches)lo=mid;else hi=mid;
+    }
+    return lo;
+  }catch(e){return Math.round(96*(window.devicePixelRatio||1));}
+}
+// 鼠标 DPI 校准：Pointer Lock 累计移动量（unadjustedMovement 关闭系统加速），
+// 用户同步移动实体鼠标 5 厘米 → DPI = 移动像素 / (5/2.54) 英寸；顺带统计回报率
+async function hwDpiCalibrate(){
+  if(hwStats.calibrating)return;
+  const card=hwEl('hwMouse');
+  if(!card)return;
+  hwStats.calibrating=true;
+  const setTxt=(id,t)=>{const n=hwEl(id);if(n)n.textContent=t;};
+  setTxt('hwMouseTxt','校准中：请在 3 秒内将实体鼠标匀速移动 5 厘米（约两指宽）…');
+  let dist=0;const times=[];
+  const onMove=e=>{
+    times.push(performance.now());
+    dist+=Math.hypot(e.movementX||0,e.movementY||0);
+  };
+  window.addEventListener('mousemove',onMove);
+  try{
+    try{await card.requestPointerLock({unadjustedMovement:true});} // 关闭系统加速，读数更准
+    catch(_){try{await card.requestPointerLock();}catch(_2){/* 降级：普通指针状态测量 */}}
+  }catch(e){}
+  await new Promise(r=>setTimeout(r,3000));
+  if(document.pointerLockElement)document.exitPointerLock();
+  window.removeEventListener('mousemove',onMove);
+  hwStats.calibrated=true;hwStats.calibrating=false;
+  const n=hwEl('hwMouse');if(n)n.classList.add('ok');
+  // 回报率：mousemove 事件间隔中位数（活动时接近真实轮询率）
+  let rate='--';
+  if(times.length>10){
+    const gap=[];
+    for(let i=1;i<times.length;i++)gap.push(times[i]-times[i-1]);
+    gap.sort((a,b)=>a-b);
+    rate='≈ '+Math.round(1000/Math.max(gap[Math.floor(gap.length/2)],0.1))+' Hz';
+  }
+  const dpi=dist>1?'≈ '+Math.round(dist/(5/2.54)):'无法计算';
+  setTxt('hwMouseTxt','✓ DPI '+dpi+' · 回报率 '+rate+' · 屏幕 '+hwScreenPPI()+' PPI');
+  toast('鼠标 DPI 校准完成');
+}
 
-// 外设实时检测：鼠标移动/滚轮/按键 → 卡片变绿并显示反馈
+// 外设实时检测：桌面端检测鼠标/键盘；手机/平板自动切换为触摸交互检测
 let hwPeriphCleanup=null,hwStats={};
 function hwDetectPeripherals(){
   if(hwPeriphCleanup){hwPeriphCleanup();hwPeriphCleanup=null;}
   hwStats={};
   const per=id=>hwEl(id);
   const setTxt=(id,t)=>{const n=hwEl(id);if(n)n.textContent=t;};
+  const setTitle=(id,t)=>{const n=per(id);if(n&&n.firstElementChild)n.firstElementChild.textContent=t;};
   const mark=(id,on)=>{const n=per(id);if(n)n.classList.toggle('ok',!!on);};
-  // 触摸：自动判定
   const tp=navigator.maxTouchPoints||0;
   const fine=matchMedia('(pointer:fine)').matches,hov=matchMedia('(hover:hover)').matches;
-  const tPer=per('hwTouchPad');
-  if(tPer)tPer.classList.toggle('ok',tp>0);
-  setTxt('hwTouchPadTxt',tp>0?'✓ 支持 · '+tp+' 点触控':'未检测到触摸屏');
-  if(!(fine&&hov))setTxt('hwMouseTxt','未检测到精确指针，可尝试触摸');
-  const updMouse=()=>{
-    if(hwStats.moves){mark('hwMouse',true);
-      setTxt('hwMouseTxt','✓ 已检测 · 移动 '+hwStats.moves+' 次'
-        +(hwStats.btn?' · 按键 ✓':'')+(hwStats.wheel?' · 滚轮 ✓':''));}
-  };
-  const onMove=e=>{hwStats.moves=(hwStats.moves||0)+1;if(e.buttons)hwStats.btn=true;updMouse();};
-  const onWheel=()=>{hwStats.wheel=true;updMouse();};
+  const coarse=matchMedia('(pointer:coarse)').matches;
+  const touchOnly=tp>0&&coarse&&!(fine&&hov); // 手机 / 平板：粗指针为主、无精确指针
+  const removers=[];
+  // 键盘（两种模式通用）
   const onKeyDown=e=>{
     mark('hwKeyboard',true);
     const k=e.key&&e.key.length===1?e.key.toUpperCase():e.key;
     setTxt('hwKeyboardTxt','✓ 已检测 · 最近按键 '+(k===' '?'Space':k||'未知'));
   };
-  window.addEventListener('mousemove',onMove);
-  window.addEventListener('wheel',onWheel,{passive:true});
   window.addEventListener('keydown',onKeyDown);
-  hwPeriphCleanup=()=>{
-    window.removeEventListener('mousemove',onMove);
-    window.removeEventListener('wheel',onWheel);
-    window.removeEventListener('keydown',onKeyDown);
-  };
+  removers.push(()=>window.removeEventListener('keydown',onKeyDown));
+  // 触摸能力卡（两种模式均显示）
+  const tPer=per('hwTouchPad');
+  if(tPer)tPer.classList.toggle('ok',tp>0);
+  setTxt('hwTouchPadTxt',tp>0?'✓ 支持 · '+tp+' 点触控':'未检测到触摸屏');
+  if(touchOnly){
+    // 触屏设备：主卡切换为触摸检测，不显示鼠标移动次数
+    setTitle('hwMouse','👆 触摸');
+    setTxt('hwMouseTxt','点按或滑动屏幕以检测');
+    const updTouch=n=>{
+      hwStats.touches=(hwStats.touches||0)+1;
+      hwStats.maxPts=Math.max(hwStats.maxPts||1,n);
+      mark('hwMouse',true);
+      setTxt('hwMouseTxt','✓ 支持触摸 · 交互 '+hwStats.touches+' 次'
+        +(hwStats.maxPts>1?' · '+hwStats.maxPts+' 点同时':''));
+    };
+    const onStart=e=>updTouch(e.touches?e.touches.length:1);
+    const onEnd=()=>updTouch(1);
+    window.addEventListener('touchstart',onStart,{passive:true});
+    window.addEventListener('touchend',onEnd,{passive:true});
+    removers.push(()=>window.removeEventListener('touchstart',onStart));
+    removers.push(()=>window.removeEventListener('touchend',onEnd));
+    setTxt('hwKeyboardTxt','外接键盘按下任意键检测');
+  }else{
+    // 桌面端：鼠标检测（不显示移动次数）+ 点按卡片校准 DPI
+    setTxt('hwMouseTxt','移动鼠标检测 · 点按卡片校准 DPI');
+    const mCard=per('hwMouse');
+    if(mCard)mCard.style.cursor='pointer';
+    const updMouse=()=>{
+      if(hwStats.calibrating)return;
+      if(hwStats.moves){mark('hwMouse',true);
+        if(!hwStats.calibrated)setTxt('hwMouseTxt','✓ 已检测 · 点按卡片校准 DPI');}
+    };
+    const onMove=e=>{hwStats.moves=(hwStats.moves||0)+1;if(e.buttons)hwStats.btn=true;updMouse();};
+    const onWheel=()=>{if(!hwStats.calibrating){hwStats.wheel=true;updMouse();}};
+    const onCard=()=>hwDpiCalibrate();
+    window.addEventListener('mousemove',onMove);
+    window.addEventListener('wheel',onWheel,{passive:true});
+    if(mCard)mCard.addEventListener('click',onCard);
+    removers.push(()=>window.removeEventListener('mousemove',onMove));
+    removers.push(()=>window.removeEventListener('wheel',onWheel));
+    if(mCard)removers.push(()=>mCard.removeEventListener('click',onCard));
+  }
+  hwPeriphCleanup=()=>removers.forEach(f=>f());
 }
 
+// 屏幕物理分辨率字符串：screen.width/height 是 CSS 逻辑像素，
+// 受系统缩放（如 Windows 150%）影响，乘以 devicePixelRatio 还原物理像素
+function hwScreenStr(){
+  const dpr=window.devicePixelRatio||1;
+  return Math.round(screen.width*dpr)+'×'+Math.round(screen.height*dpr)+' · 缩放 '+Math.round(dpr*100)+'%';
+}
 let hwRunning=false;
 async function hwRun(){
   if(hwRunning)return;hwRunning=true;
@@ -2649,6 +2751,14 @@ async function hwRun(){
       else if(d.platformVersion)os=os+' '+d.platformVersion;
     }
   }catch(e){}
+  // 移动端 UA 兜底识别设备型号（iOS 无 userAgentData；iPadOS 伪装成 Mac，用触摸点数区分）
+  const UAn=navigator.userAgent;
+  if(device==='此设备'){
+    if(/iPhone|iPod/.test(UAn))device='iPhone / iPod';
+    else if(/iPad/.test(UAn))device='iPad';
+    else if(/Macintosh/.test(UAn)&&navigator.maxTouchPoints>1)device='iPad（iPadOS）';
+    else if(/Android/.test(UAn))device='Android 设备';
+  }
   hwSet('hwDevice',device);
   hwSet('hwOS',os);
   // CPU / 内存 / GPU / 堆内存
@@ -2658,7 +2768,7 @@ async function hwRun(){
   const pm=performance.memory;
   hwSet('hwHeap',pm?(pm.usedJSHeapSize/1048576).toFixed(0)+' / '+(pm.jsHeapSizeLimit/1048576).toFixed(0)+' MB':'不可用');
   // 屏幕 / 刷新率
-  hwSet('hwScreen',screen.width+'×'+screen.height+' @'+(window.devicePixelRatio||1)+'x');
+  hwSet('hwScreen',hwScreenStr());
   hwSet('hwHz','≈ '+(await hwHz())+' Hz');
   // 电池（Firefox/Safari 不支持 → 不可用）
   try{
@@ -2667,14 +2777,34 @@ async function hwRun(){
       hwSet('hwBattery',Math.round(b.level*100)+'%'+(b.charging?' · 充电中':''));
     }else hwSet('hwBattery','不可用');
   }catch(e){hwSet('hwBattery','不可用');}
-  // 网络（Network Information API）
+  // 网络（Network Information API）：网格卡显示摘要，下方「网络信息」面板展示全部
   const c=navigator.connection;
   hwSet('hwNet',c?(c.effectiveType||'--').toUpperCase()+(c.downlink?' · ≈'+c.downlink+' Mbps':''):'不可用');
-  // 存储配额
+  const NET_TYPES={wifi:'Wi-Fi 无线网络',ethernet:'有线网络',cellular:'蜂窝移动网络',none:'无网络',bluetooth:'蓝牙',wimax:'WiMAX'};
+  hwSet('hwNetType',c&&c.type?(NET_TYPES[c.type]||c.type):(navigator.onLine?'浏览器未暴露具体类型':'离线'));
+  hwSet('hwNetQuality',c&&c.effectiveType?c.effectiveType.toUpperCase()+' 网络':'不可用');
+  hwSet('hwNetDown',c&&c.downlink!=null?'≈ '+c.downlink+' Mbps':'不可用');
+  hwSet('hwNetRtt',c&&c.rtt!=null?c.rtt+' ms':'不可用');
+  hwSet('hwNetSave',c&&c.saveData!=null?(c.saveData?'已开启':'未开启'):'不可用');
+  hwSet('hwNetOnline',navigator.onLine?'✓ 在线':'✗ 离线');
+  // 公网 IP / 运营商（ipwho.is 免密钥接口，与本站天气定位同源）
+  (async()=>{
+    try{
+      const d=await(await fetch('https://ipwho.is/')).json();
+      if(!d||!d.success)throw new Error('ip-fail');
+      hwSet('hwIp',d.ip+(d.type?'（'+d.type+'）':''));
+      const cn=d.connection||{};
+      hwSet('hwIsp',(cn.isp||cn.org||'未知')+(cn.asn?' · AS'+cn.asn:''));
+    }catch(e){hwSet('hwIp','获取失败');hwSet('hwIsp','获取失败');}
+  })();
+  // 存储配额（StorageManager API：浏览器为本站分配的配额，非硬盘剩余空间）
   try{
     if(navigator.storage&&navigator.storage.estimate){
       const est=await navigator.storage.estimate();
       hwSet('hwStorage',(Math.max(est.quota-est.usage,0)/HW_GB).toFixed(1)+' GB 可用');
+      const sn=hwEl('hwStorage');
+      if(sn)sn.title='浏览器为本站分配的存储配额剩余量（含已用 '+(est.usage/HW_GB).toFixed(2)+' GB）。'+
+        '出于安全考虑，浏览器无法读取硬盘真实剩余空间，此数值通常远小于硬盘可用容量。';
     }else hwSet('hwStorage','不可用');
   }catch(e){hwSet('hwStorage','不可用');}
   // 语言 / 时区 / 触摸 / 浏览器
@@ -2685,6 +2815,13 @@ async function hwRun(){
   const vm=navigator.userAgent.match(/(Edg|OPR|Chrome|Firefox|Version)\/[\d.]+/);
   hwSet('hwUa',hwBrowser()+(vm?' · '+vm[0].replace('Version','Safari'):''));
   hwSet('hwMeta','完整 User-Agent：'+navigator.userAgent);
+  // 防御：若运行期间弹窗 DOM 被重建，早期同步写入的字段会落在旧节点上，这里统一补写
+  hwSet('hwDevice',device);hwSet('hwOS',os);
+  hwSet('hwCpu',(navigator.hardwareConcurrency||'?')+' 核');
+  hwSet('hwMem',navigator.deviceMemory?'>= '+navigator.deviceMemory+' GB':'不可用');
+  hwSet('hwGpu',hwGpuName()||'不可用');
+  hwSet('hwHeap',pm?(pm.usedJSHeapSize/1048576).toFixed(0)+' / '+(pm.jsHeapSizeLimit/1048576).toFixed(0)+' MB':'不可用');
+  hwSet('hwScreen',hwScreenStr());
   hwDetectPeripherals();
   if(btn)btn.disabled=false;
   hwRunning=false;
@@ -2715,6 +2852,9 @@ document.addEventListener('click',e=>{
   }
   const card=e.target.closest('[data-open]');
   if(!card)return;
+  // 启动器内按钮由 launcher 自己的监听打开，这里跳过，避免重复 openApp
+  // （重复打开会换掉弹窗 DOM，导致硬件检测等渐进式填充的弹窗卡在初始状态）
+  if(card.closest('#launcher'))return;
   // 顶栏仅头像可打开弹窗，九宫格/加号有自己的处理逻辑
   if(card.closest('.nav') && !card.classList.contains('nav-avatar'))return;
   openApp(card.dataset.open);
