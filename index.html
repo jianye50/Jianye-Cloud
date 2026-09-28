@@ -2926,6 +2926,9 @@ let dpClients={};   // hub 视角：peerId -> {name,conn}
 let dpPeers={};     // 客户端视角：peerId -> {name,conn}（含 hub）
 let dpEntries=[];   // 传输记录（新的在前）
 let dpRenderTimer=null;
+let dpHubPrune=null;   // hub 定期剔除失效成员的定时器
+let dpVisBound=false;  // 前后台切换重连监听（只绑一次）
+let dpNames={};        // 房间内最新成员表 id -> 名称（被动接入时识别对方用）
 const dpEl=id=>document.getElementById(id);
 const dpFmtSize=b=>b==null?'--':b<1024?b+' B':b<1048576?(b/1024).toFixed(1)+' KB':b<1073741824?(b/1048576).toFixed(1)+' MB':(b/1073741824).toFixed(2)+' GB';
 function dpRandomRoom(){
@@ -2990,7 +2993,7 @@ function dpBindDataConn(conn,rec){
   if(rec.bound)return;rec.bound=true;
   conn.on('data',data=>{
     if(data&&data.type==='fmeta'){
-      rec.in={entry:{dir:'in',name:data.name,size:data.size,done:0,state:'run',peerName:rec.name},chunks:[]};
+      rec.in={entry:{dir:'in',name:data.name,size:data.size,done:0,state:'run',peerName:data.from||rec.name},chunks:[]};
       dpAddEntry(rec.in.entry);
     }else if(data&&data.type==='fend'&&rec.in){
       const e=rec.in.entry;
@@ -3020,7 +3023,7 @@ async function dpSendFiles(rec,files){
     const entry={dir:'out',name:f.name,size:f.size,done:0,state:'run',peerName:rec.name};
     dpAddEntry(entry);
     try{
-      rec.conn.send({type:'fmeta',name:f.name,size:f.size});
+      rec.conn.send({type:'fmeta',name:f.name,size:f.size,from:dpState.name});
       const CH=65536;
       for(let o=0;o<f.size;o+=CH){
         const buf=await f.slice(o,o+CH).arrayBuffer();
@@ -3041,6 +3044,8 @@ async function dpSendFiles(rec,files){
 
 // 加入房间：先尝试以 hub ID 注册；被占用说明房间已存在 → 以客户端身份连入
 function dpCleanup(){
+  if(dpHubPrune){clearInterval(dpHubPrune);dpHubPrune=null;}
+  dpNames={};
   try{if(dpHubConn)dpHubConn.close();}catch(e){}
   try{if(dpPeer)dpPeer.destroy();}catch(e){}
   Object.values(dpPeers).forEach(v=>{try{v.conn.close();}catch(e){}});
@@ -3085,6 +3090,15 @@ function dpBecomeHub(){
     });
     conn.on('error',()=>{delete dpClients[conn.peer];});
   });
+  // iOS Safari 切后台/锁屏会静默断开 WebSocket 且不触发 close 事件，
+  // 定期剔除已断开的成员，避免向其他人广播"僵尸设备 ID"
+  dpHubPrune=setInterval(()=>{
+    let changed=false;
+    Object.entries(dpClients).forEach(([id,v])=>{
+      if(!v.conn.open){delete dpClients[id];changed=true;}
+    });
+    if(changed){dpHubBroadcast();dpRenderPeers();}
+  },10000);
 }
 function dpHubBroadcast(){
   const list=Object.entries(dpClients).map(([id,v])=>({id,name:v.name}));
@@ -3093,8 +3107,25 @@ function dpHubBroadcast(){
 }
 function dpJoinAsClient(hubId){
   try{if(dpPeer)dpPeer.destroy();}catch(e){} // 释放声明 hub 失败的旧实例
+  // iOS 切后台/锁屏会暂停 WebSocket，回前台时自动重连信令
+  if(!dpVisBound){
+    dpVisBound=true;
+    document.addEventListener('visibilitychange',()=>{
+      if(!document.hidden&&dpPeer&&dpPeer.disconnected){try{dpPeer.reconnect();}catch(e){/* 忽略 */}}
+    });
+  }
   const p=new Peer(DP_PEER_OPTS);
   dpPeer=p;
+  // 被动接入：其他客户端按"ID 较小方发起"的约定连过来时，绑定数据通道
+  // （此前只有 hub 注册了该处理器，客户端之间互传文件全靠这条路径）
+  p.on('connection',conn=>{
+    const rec={name:dpNames[conn.peer]||'未知设备',conn};
+    dpPeers[conn.peer]=rec;
+    conn.on('open',()=>{dpBindDataConn(conn,rec);dpRenderPeers();});
+    conn.on('close',()=>{
+      if(dpPeers[conn.peer]===rec){delete dpPeers[conn.peer];dpRenderPeers();}
+    });
+  });
   p.on('open',()=>{
     const conn=p.connect(hubId,{reliable:true});
     dpHubConn=conn;
@@ -3123,13 +3154,17 @@ function dpJoinAsClient(hubId){
     });
   });
   p.on('error',e=>{
-    if(e.type==='peer-unavailable'){dpStatus('房间暂时不可达，正在重试…','err');setTimeout(dpJoin,2500);}
+    // 仅在尚未入房时视为致命（房主已离开）；入房后同步成员时连到已离开的设备属正常情况，静默忽略，
+    // 否则会触发整个房间反复重建的死循环
+    if(e.type==='peer-unavailable'){
+      if(!dpState.connected){dpStatus('房间暂时不可达，正在重试…','err');setTimeout(dpJoin,2500);}
+    }else if(e.type!=='unavailable-id')dpStatus('连接出错：'+(e.type||'未知'),'err');
   });
   p.on('disconnected',()=>{try{p.reconnect();}catch(_){/* 忽略 */}});
 }
 function dpSyncPeers(list){
   const want={};
-  list.forEach(x=>{if(x&&x.id&&x.id!==dpPeer.id)want[x.id]=x.name||'未知设备';});
+  list.forEach(x=>{if(x&&x.id&&x.id!==dpPeer.id){want[x.id]=x.name||'未知设备';dpNames[x.id]=want[x.id];}});
   Object.keys(dpPeers).forEach(id=>{
     if(!want[id]&&id!==dpHubConn.peer){
       try{dpPeers[id].conn.close();}catch(e){}
@@ -3138,11 +3173,20 @@ function dpSyncPeers(list){
   });
   Object.keys(want).forEach(id=>{
     if(dpPeers[id])return;
+    // 防冲突：两台客户端互见时会同时收到广播，若双方都发起 WebRTC 连接会 offer 冲突，
+    // 约定只有 Peer ID 较小的一方主动发起，较大的一方等待被动接入（见 p.on('connection')）
+    if(id<dpPeer.id)return;
     const c=dpPeer.connect(id,{reliable:true});
     const rec={name:want[id],conn:c};
     dpPeers[id]=rec;
     c.on('open',()=>dpBindDataConn(c,rec));
     c.on('open',dpRenderPeers);
+    // 对端可能已离开（尤其 iOS 静默掉线），10 秒仍未连通则移除，避免列表里挂着死设备
+    setTimeout(()=>{
+      if(dpPeers[id]===rec&&!rec.conn.open){
+        delete dpPeers[id];dpRenderPeers();
+      }
+    },10000);
   });
   dpRenderPeers();
 }
