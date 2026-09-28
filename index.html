@@ -2256,19 +2256,26 @@ function stFillResults(r){
   stSet('stUp',r.up!=null?stFmt(r.up):'--');
 }
 
-// 延迟 + 抖动：8 次小请求，剔除首次（含 DNS/TLS 握手）；ping 取最小值（最接近真实 RTT， Ookla 同款策略）
-async function stLatency(){
+// 延迟探测：no-cors 模式即可计时（不受 CORS 限制）。
+// 国内直连反映宽带真实 RTT；与 Cloudflare 延迟对比可识别国际绕行/代理
+const ST_TARGETS=[
+  {name:'国内直连',ping:'https://www.baidu.com/favicon.ico?_=',dl:null},
+  {name:'jsDelivr',ping:'https://cdn.jsdelivr.net/npm/typescript@5.4.5/package.json?_=',dl:'https://cdn.jsdelivr.net/npm/typescript@5.4.5/lib/typescript.js?_='},
+  {name:'Cloudflare',ping:'https://speed.cloudflare.com/__down?bytes=0&_=',dl:'https://speed.cloudflare.com/__down?bytes=150000000&_='}
+];
+// 单节点探测：4 次请求，剔除首次（含 DNS/TLS 握手）；ping 取最小值（最接近真实 RTT，Ookla 同款策略）
+async function stProbe(url){
   const t=[];
-  for(let i=0;i<8;i++){
+  for(let i=0;i<4;i++){
     const s=performance.now();
-    await fetch('https://speed.cloudflare.com/__down?bytes=0&_='+Math.random(),{cache:'no-store'});
+    await fetch(url+Math.random(),{mode:'no-cors',cache:'no-store'});
     t.push(performance.now()-s);
   }
   t.shift();
-  const ping=Math.min(...t);
+  const min=Math.min(...t);
   let j=0;
   for(let i=1;i<t.length;i++)j+=Math.abs(t[i]-t[i-1]);
-  return {ping,jitter:j/Math.max(t.length-1,1)};
+  return {min,jit:j/Math.max(t.length-1,1)};
 }
 
 // 下载：多连接并行流式读取（Ookla 同款思路，6 路叠加），最长 12 秒；
@@ -2307,14 +2314,10 @@ async function stParDownload(base,streams,DURATION,onTick){
   const avg=(total-markB)*8/Math.max(secs,.25)/1e6;
   return Math.max(avg,live*.92);
 }
-async function stDownload(onTick){
-  const bases=[
-    'https://speed.cloudflare.com/__down?bytes=150000000&_=',
-    'https://cdn.jsdelivr.net/npm/typescript@5.4.5/lib/typescript.js?_=',
-    'https://unpkg.com/typescript@5.4.5/lib/typescript.js?_='
-  ];
-  for(const b of bases){
-    try{ return await stParDownload(b,6,12000,onTick); }catch(e){/* 尝试下一个测速源 */}
+async function stDownload(ranked,onTick){
+  for(const p of ranked){
+    if(!p.s||!p.s.dl)continue;
+    try{ return await stParDownload(p.s.dl,6,12000,onTick); }catch(e){/* 尝试下一个测速源 */}
   }
   throw new Error('no-source');
 }
@@ -2393,24 +2396,28 @@ async function stRun(){
   ['stLive','stPing','stJitter','stDown','stUp'].forEach(id=>stSet(id,'--'));
   const meta=stEl('stMeta'); if(meta)meta.textContent='正在连接测速节点…';
   try{
-    phase('正在测量延迟与抖动…');
-    const {ping,jitter}=await stLatency();
-    stSet('stPing',Math.round(ping));
-    stSet('stJitter',jitter.toFixed(1));
-    let info='';
-    try{
-      const m=await (await fetch('https://speed.cloudflare.com/meta')).json();
-      info=[m.asOrganization,m.city,m.colo].filter(Boolean).join(' · ');
-    }catch(e){/* 节点信息可选 */}
-    if(meta)meta.textContent=(info?'节点 '+info+' · ':'')+'Cloudflare 全球测速网络'+
-      (ping>200?'（延迟异常偏高：疑似代理/VPN 或绕行线路）':'');
+    phase('正在探测各节点延迟…');
+    const probed=await Promise.all(ST_TARGETS.map(async s=>{
+      try{const r=await stProbe(s.ping);return {s,...r};}
+      catch(e){return {s,min:Infinity,jit:NaN};}
+    }));
+    probed.sort((a,b)=>a.min-b.min);
+    const direct=probed.find(p=>p.s.name==='国内直连');
+    const best=probed.find(p=>p.s.dl&&isFinite(p.min))||probed[0];
+    const ref=isFinite(direct&&direct.min)?direct:best; // 延迟显示以国内直连为准
+    stSet('stPing',Math.round(ref.min));
+    stSet('stJitter',isFinite(ref.jit)?ref.jit.toFixed(1):'--');
+    const detail=probed.filter(p=>isFinite(p.min)).map(p=>`${p.s.name} ${Math.round(p.min)}ms`).join(' · ');
+    if(meta)meta.textContent='节点延迟：'+detail+
+      '｜下载节点 '+best.s.name+' · 上传经由 Cloudflare'+
+      (ref.min>100?'（直连延迟偏高：疑似代理/VPN 全局模式）':'');
     phase('正在测试下载速度…');
-    const down=await stDownload(gauge);
+    const down=await stDownload(probed,gauge);
     stSet('stDown',stFmt(down));
     phase('正在测试上传速度…');
     const up=await stUpload(gauge);
     if(up!=null)stSet('stUp',stFmt(up));
-    stLast={ping,jitter,down,up,ts:Date.now()};
+    stLast={ping:ref.min,jitter:ref.jit,down,up,ts:Date.now()};
     try{localStorage.setItem('jy-speedtest',JSON.stringify(stLast));}catch(e){}
     stCardSub();
     gauge(0);stSet('stLive','--');
