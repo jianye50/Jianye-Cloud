@@ -826,6 +826,44 @@ a.social-i{text-decoration:none;color:var(--text-1)}
   .st-read{bottom:20px}
 }
 
+/* 硬件检测长条小组件 */
+.card-hardware{grid-column:span 12;min-height:110px;display:flex;align-items:center;padding:0 26px;overflow:hidden;border-radius:var(--radius-lg)}
+.hdw-widget{display:flex;align-items:center;gap:18px;width:100%;min-width:0}
+.hdw-txt{flex:1;min-width:0}
+.hdw-txt h3{font-size:16.5px;font-weight:650;white-space:nowrap}
+.hdw-txt p{font-size:12.5px;color:var(--text-3);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hdw-open{flex:none;background:linear-gradient(145deg,#bf5af2,#5e5ce6);box-shadow:0 4px 14px rgba(191,90,242,.35)}
+.ic-hardware{background:linear-gradient(160deg,#bf5af2,#0a84ff)}
+.ic-hardware svg,.hdw-open svg{color:#fff}
+
+/* 硬件检测弹窗 */
+.window.hw{max-width:620px}
+.hw-wrap{display:flex;flex-direction:column;gap:14px;padding:6px 0 2px}
+.hw-hero{text-align:center}
+.hw-hero b{display:block;font-size:20px;font-weight:650}
+.hw-hero span{display:block;font-size:12.5px;color:var(--text-3);margin-top:4px}
+.hw-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.hw-cell{background:var(--card-inner);border:1px solid var(--card-border);border-radius:14px;padding:12px 8px;text-align:center;min-width:0}
+.hw-cell b{display:block;font-size:13px;font-weight:630;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hw-cell span{display:block;font-size:10.5px;color:var(--text-3);margin-top:4px;white-space:nowrap}
+.hw-periph{background:var(--card-inner);border:1px solid var(--card-border);border-radius:16px;padding:14px 16px}
+.hw-periph h5{font-size:13.5px;font-weight:650;margin-bottom:10px}
+.hw-per-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.hw-per{text-align:center;padding:10px 6px;border-radius:12px;background:var(--chip);transition:.25s}
+.hw-per b{display:block;font-size:13px;font-weight:630}
+.hw-per i{display:block;font-style:normal;font-size:11px;color:var(--text-3);margin-top:4px;line-height:1.5}
+.hw-per.ok{border:1px solid rgba(48,209,88,.5);background:rgba(48,209,88,.1)}
+.hw-per.ok i{color:#30d158}
+.hw-re{align-self:center;border:1px solid var(--card-border);background:var(--chip);color:var(--text-1);
+  font-family:inherit;font-size:13px;font-weight:600;padding:9px 22px;border-radius:99px;cursor:pointer;transition:.2s}
+.hw-re:hover{background:var(--accent);color:#fff;border-color:transparent}
+.hw-re:disabled{opacity:.55;cursor:not-allowed}
+.hw-meta{font-size:11px;color:var(--text-3);text-align:center;line-height:1.6;word-break:break-all}
+@media (max-width:520px){
+  .hw-grid{grid-template-columns:repeat(2,1fr)}
+  .hw-per-grid{grid-template-columns:1fr}
+}
+
 /* 智能助手弹窗（浏览器内对话） */
 .window.ai{max-width:760px;height:86vh}
 .window.ai .win-body{padding:0;overflow:hidden;display:flex;flex:1;min-height:0}
@@ -930,12 +968,12 @@ a.social-i{text-decoration:none;color:var(--text-1)}
   .wrap{padding:calc(var(--nav-h) + 16px) 14px 36px}
   .grid{gap:14px}
   .card-profile,.card-photos,.card-contact,.card-projects,.card-skills,
-  .card-notes,.card-timeline,.card-remind,.card-weather,.card-assistant,.card-speedtest{grid-column:span 12;min-height:0}
+  .card-notes,.card-timeline,.card-remind,.card-weather,.card-assistant,.card-speedtest,.card-hardware{grid-column:span 12;min-height:0}
   /* 天气与 AI 助手两条长条组件保持等高 */
-  .card-weather,.card-assistant,.card-speedtest{min-height:88px}
+  .card-weather,.card-assistant,.card-speedtest,.card-hardware{min-height:88px}
   /* 手机上测速卡片精简显示 */
   .spd-widget{gap:12px}
-  .card-speedtest{padding:0 18px}
+  .card-speedtest,.card-hardware{padding:0 18px}
   /* 手机上省/市/区县选择器竖向排列，避免挤压溢出 */
   .wx-selects{flex-direction:column}
   .card-profile{min-height:340px;align-items:center;text-align:center}
@@ -1140,6 +1178,18 @@ a.social-i{text-decoration:none;color:var(--text-1)}
       </div>
     </article>
 
+    <!-- 硬件检测长条卡（点击打开硬件检测弹窗） -->
+    <article class="card card-hardware" data-open="hardware" tabindex="0">
+      <div class="hdw-widget">
+        <span class="app-ic ic-hardware" data-icon="hardware"></span>
+        <div class="hdw-txt">
+          <h3>硬件检测</h3>
+          <p>CPU / 内存 / GPU / 屏幕 / 电池 / 鼠标键盘外设 一键体检</p>
+        </div>
+        <span class="asw-open hdw-open"><span>开始检测</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
+      </div>
+    </article>
+
     <article class="card compact" data-open="music" tabindex="0">
       <span class="app-ic tile-ic ic-music" data-icon="music"></span>
       <span class="c-label">音乐</span><span class="c-sub" id="musicSub">我的循环歌单</span>
@@ -1212,6 +1262,7 @@ const ICONS = {
   settings:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 13.5a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1v.2a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-2.7-1.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1.1-2.7H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.2-2.7l-.1-.1A2 2 0 1 1 7 4.6l.1.1a1.6 1.6 0 0 0 1.8.3 1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8 1.6 1.6 0 0 0 1.5 1h.2a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.3 1z"/></svg>',
   about:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8.5" r="4"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>',
   speedtest:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 13.5 16.5 8"/><circle cx="12" cy="14" r="1.6" fill="currentColor" stroke="none"/><path d="M4.5 18.5a7.5 7.5 0 0 1 15 0"/></svg>',
+  hardware:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6.5" y="6.5" width="11" height="11" rx="2"/><rect x="10.2" y="10.2" width="3.6" height="3.6" rx=".8"/><path d="M9 2.5v4M15 2.5v4M9 17.5v4M15 17.5v4M2.5 9h4M2.5 15h4M17.5 9h4M17.5 15h4"/></svg>',
   github:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-3.2 19.5c.5.1.7-.2.7-.5v-1.7c-2.8.6-3.4-1.3-3.4-1.3-.5-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.6 2.4 1.1 3 .9.1-.7.4-1.1.6-1.4-2.2-.300000000000001-4.6-1.1-4.6-5a4 4 0 0 1 1-2.7c-.1-.3-.5-1.3.1-2.7 0 0 .8-.3 2.7 1a9.3 9.3 0 0 1 5 0c1.9-1.3 2.7-1 2.7-1 .6 1.4.2 2.4.1 2.7a4 4 0 0 1 1 2.7c0 3.9-2.4 4.7-4.6 5 .4.3.7.9.7 1.9v2.8c0 .3.2.6.7.5A10 10 0 0 0 12 2z"/></svg>',
   video:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 8.5V7a3 3 0 0 0-3-3H5a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h9a3 3 0 0 0 3-3v-1.5l4 2.8v-12.6z"/></svg>',
   book:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19a2 2 0 0 1 2-2h13"/></svg>',
@@ -1603,6 +1654,38 @@ const T = {
       <div class="st-meta" id="stMeta">数据来源：Cloudflare 全球测速网络</div>
     </div>`;
   },
+  hardware:()=>{
+    const cell=(id,label)=>`<div class="hw-cell"><b id="${id}">--</b><span>${label}</span></div>`;
+    const per=(id,t,hint)=>`<div class="hw-per" id="${id}"><b>${t}</b><i id="${id}Txt">${hint}</i></div>`;
+    return `
+    <div class="hw-wrap">
+      <div class="hw-hero"><b id="hwDevice">正在识别设备…</b><span id="hwOS"></span></div>
+      <div class="hw-grid">
+        ${cell('hwCpu','CPU 核心数')}
+        ${cell('hwMem','运行内存')}
+        ${cell('hwGpu','GPU 显卡')}
+        ${cell('hwHeap','JS 堆内存')}
+        ${cell('hwScreen','屏幕分辨率')}
+        ${cell('hwHz','屏幕刷新率')}
+        ${cell('hwBattery','电池状态')}
+        ${cell('hwNet','网络类型')}
+        ${cell('hwStorage','可用存储')}
+        ${cell('hwLang','语言 / 时区')}
+        ${cell('hwTouch','触摸能力')}
+        ${cell('hwUa','浏览器内核')}
+      </div>
+      <div class="hw-periph">
+        <h5>外设检测（实时）</h5>
+        <div class="hw-per-grid">
+          ${per('hwMouse','🖱️ 鼠标','移动鼠标以检测')}
+          ${per('hwKeyboard','⌨️ 键盘','按下任意键检测')}
+          ${per('hwTouchPad','👆 触摸','自动检测')}
+        </div>
+      </div>
+      <button class="hw-re" id="hwRe">重新检测</button>
+      <div class="hw-meta" id="hwMeta"></div>
+    </div>`;
+  },
   about:()=>`
     <div class="about-hero">
       <img src="${av}" alt="鉴业">
@@ -1879,7 +1962,8 @@ const META={
   settings:['设置','ic-settings','settings','个性化此页面'],
   weather:['天气','ic-weather','weather','实时天气'],
   assistant:['智能助手','ic-assistant','assistant','Jianye AI · 随时问我'],
-  speedtest:['网络测速','ic-speed','speedtest','Speedtest · 网络质量检测']
+  speedtest:['网络测速','ic-speed','speedtest','Speedtest · 网络质量检测'],
+  hardware:['硬件检测','ic-hardware','hardware','CPU · GPU · 屏幕 · 外设体检']
 };
 
 /* ========================= 天气 =========================
@@ -2056,7 +2140,7 @@ function openApp(id){
   if(!T[id])return;
   currentApp=id;
   const m=META[id];
-  $('#window').className='window'+(id==='photos'?' wide':id==='assistant'?' ai':id==='speedtest'?' speed':'');
+  $('#window').className='window'+(id==='photos'?' wide':id==='assistant'?' ai':id==='speedtest'?' speed':id==='hardware'?' hw':'');
   $('#window').innerHTML=`
     <div class="win-hd">
       <span class="app-ic ${m[1]}">${ICONS[m[2]]}</span>
@@ -2072,6 +2156,7 @@ function closeApp(){$('#scrim').classList.remove('open');currentApp=null;}
 function bindWindow(id){
   $('#winClose').onclick=closeApp;
   if(id==='speedtest')stBindWindow();
+  if(id==='hardware'){hwRun();const rb=hwEl('hwRe');if(rb)rb.onclick=hwRun;}
   if(id==='contact'){
     $('#copyMail').onclick=copyEmail;
     $$('#window [data-soon]').forEach(b=>b.onclick=()=>toast(b.dataset.soon+' 主页即将开通，先发邮件吧'));
@@ -2461,6 +2546,149 @@ function stBindWindow(){
   }
 }
 stCardSub();
+
+/* ========================= 硬件检测 =========================
+   浏览器沙箱内可获取的硬件信息：CPU 核心数 / 内存档位 / GPU(WebGL) /
+   屏幕与刷新率 / 电池 / 网络 / 存储配额 / 外设(鼠标键盘触摸)实时检测 */
+const hwEl=id=>document.getElementById(id);
+function hwSet(id,v){const n=hwEl(id);if(!n)return;n.textContent=v;n.title=v;}
+const HW_GB=1024*1024*1024;
+function hwOSName(){
+  const ua=navigator.userAgent;
+  if(/Windows NT 10\.0/.test(ua))return 'Windows 10 / 11';
+  if(/Windows NT 6\.3/.test(ua))return 'Windows 8.1';
+  if(/Windows NT 6\.1/.test(ua))return 'Windows 7';
+  if(/Mac OS X ([\d_]+)/.test(ua))return 'macOS '+RegExp.$1.replace(/_/g,'.');
+  if(/Android ([\d.]+)/.test(ua))return 'Android '+RegExp.$1;
+  if(/iPhone|iPad|iPod/.test(ua))return 'iOS / iPadOS';
+  if(/Linux/.test(ua))return 'Linux';
+  return '未知系统';
+}
+function hwBrowser(){
+  const ua=navigator.userAgent;
+  if(/Edg\//.test(ua))return 'Edge';
+  if(/OPR\//.test(ua))return 'Opera';
+  if(/Firefox\//.test(ua))return 'Firefox';
+  if(/Chrome\//.test(ua))return 'Chrome';
+  if(/Safari\//.test(ua))return 'Safari';
+  return '未知';
+}
+function hwGpuName(){
+  try{
+    const c=document.createElement('canvas');
+    const gl=c.getContext('webgl')||c.getContext('experimental-webgl');
+    if(!gl)return null;
+    const ext=gl.getExtension('WEBGL_debug_renderer_info');
+    return ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER);
+  }catch(e){return null;}
+}
+// 刷新率估算：统计 0.5 秒内 requestAnimationFrame 帧数
+function hwHz(){
+  return new Promise(res=>{
+    let n=0;const t0=performance.now();
+    (function tick(){
+      n++;const t=performance.now();
+      if(t-t0<520)requestAnimationFrame(tick);
+      else res(Math.round(n*1000/(t-t0)));
+    })();
+  });
+}
+
+// 外设实时检测：鼠标移动/滚轮/按键 → 卡片变绿并显示反馈
+let hwPeriphCleanup=null,hwStats={};
+function hwDetectPeripherals(){
+  if(hwPeriphCleanup){hwPeriphCleanup();hwPeriphCleanup=null;}
+  hwStats={};
+  const per=id=>hwEl(id);
+  const setTxt=(id,t)=>{const n=hwEl(id);if(n)n.textContent=t;};
+  const mark=(id,on)=>{const n=per(id);if(n)n.classList.toggle('ok',!!on);};
+  // 触摸：自动判定
+  const tp=navigator.maxTouchPoints||0;
+  const fine=matchMedia('(pointer:fine)').matches,hov=matchMedia('(hover:hover)').matches;
+  const tPer=per('hwTouchPad');
+  if(tPer)tPer.classList.toggle('ok',tp>0);
+  setTxt('hwTouchPadTxt',tp>0?'✓ 支持 · '+tp+' 点触控':'未检测到触摸屏');
+  if(!(fine&&hov))setTxt('hwMouseTxt','未检测到精确指针，可尝试触摸');
+  const updMouse=()=>{
+    if(hwStats.moves){mark('hwMouse',true);
+      setTxt('hwMouseTxt','✓ 已检测 · 移动 '+hwStats.moves+' 次'
+        +(hwStats.btn?' · 按键 ✓':'')+(hwStats.wheel?' · 滚轮 ✓':''));}
+  };
+  const onMove=e=>{hwStats.moves=(hwStats.moves||0)+1;if(e.buttons)hwStats.btn=true;updMouse();};
+  const onWheel=()=>{hwStats.wheel=true;updMouse();};
+  const onKeyDown=e=>{
+    mark('hwKeyboard',true);
+    const k=e.key&&e.key.length===1?e.key.toUpperCase():e.key;
+    setTxt('hwKeyboardTxt','✓ 已检测 · 最近按键 '+(k===' '?'Space':k||'未知'));
+  };
+  window.addEventListener('mousemove',onMove);
+  window.addEventListener('wheel',onWheel,{passive:true});
+  window.addEventListener('keydown',onKeyDown);
+  hwPeriphCleanup=()=>{
+    window.removeEventListener('mousemove',onMove);
+    window.removeEventListener('wheel',onWheel);
+    window.removeEventListener('keydown',onKeyDown);
+  };
+}
+
+let hwRunning=false;
+async function hwRun(){
+  if(hwRunning)return;hwRunning=true;
+  const btn=hwEl('hwRe');if(btn)btn.disabled=true;
+  ['hwCpu','hwMem','hwGpu','hwHeap','hwScreen','hwHz','hwBattery','hwNet','hwStorage','hwLang','hwTouch','hwUa']
+    .forEach(id=>hwSet(id,'···'));
+  // 设备与系统（优先 Chromium 高精度 UA 数据，回退解析 userAgent）
+  let device='此设备',os=hwOSName();
+  try{
+    if(navigator.userAgentData){
+      const d=await navigator.userAgentData.getHighEntropyValues(['platform','platformVersion','architecture','model']);
+      if(d.model)device=d.model;
+      else device=(d.platform||navigator.userAgentData.platform||'')+(navigator.userAgentData.mobile?' 手机':' 电脑');
+      if(d.platform==='Windows')os='Windows '+(parseInt(d.platformVersion||'0',10)>=13?'11':'10')
+        +(d.architecture?' · '+d.architecture.toUpperCase()+' 位':'');
+      else if(d.platformVersion)os=os+' '+d.platformVersion;
+    }
+  }catch(e){}
+  hwSet('hwDevice',device);
+  hwSet('hwOS',os);
+  // CPU / 内存 / GPU / 堆内存
+  hwSet('hwCpu',(navigator.hardwareConcurrency||'?')+' 核');
+  hwSet('hwMem',navigator.deviceMemory?'>= '+navigator.deviceMemory+' GB':'不可用');
+  hwSet('hwGpu',hwGpuName()||'不可用');
+  const pm=performance.memory;
+  hwSet('hwHeap',pm?(pm.usedJSHeapSize/1048576).toFixed(0)+' / '+(pm.jsHeapSizeLimit/1048576).toFixed(0)+' MB':'不可用');
+  // 屏幕 / 刷新率
+  hwSet('hwScreen',screen.width+'×'+screen.height+' @'+(window.devicePixelRatio||1)+'x');
+  hwSet('hwHz','≈ '+(await hwHz())+' Hz');
+  // 电池（Firefox/Safari 不支持 → 不可用）
+  try{
+    if(navigator.getBattery){
+      const b=await navigator.getBattery();
+      hwSet('hwBattery',Math.round(b.level*100)+'%'+(b.charging?' · 充电中':''));
+    }else hwSet('hwBattery','不可用');
+  }catch(e){hwSet('hwBattery','不可用');}
+  // 网络（Network Information API）
+  const c=navigator.connection;
+  hwSet('hwNet',c?(c.effectiveType||'--').toUpperCase()+(c.downlink?' · ≈'+c.downlink+' Mbps':''):'不可用');
+  // 存储配额
+  try{
+    if(navigator.storage&&navigator.storage.estimate){
+      const est=await navigator.storage.estimate();
+      hwSet('hwStorage',(Math.max(est.quota-est.usage,0)/HW_GB).toFixed(1)+' GB 可用');
+    }else hwSet('hwStorage','不可用');
+  }catch(e){hwSet('hwStorage','不可用');}
+  // 语言 / 时区 / 触摸 / 浏览器
+  const tz=Intl.DateTimeFormat().resolvedOptions().timeZone||'--';
+  hwSet('hwLang',navigator.language+' · '+tz);
+  const tp=navigator.maxTouchPoints||0;
+  hwSet('hwTouch',tp>0?tp+' 点触控':'无触摸屏');
+  const vm=navigator.userAgent.match(/(Edg|OPR|Chrome|Firefox|Version)\/[\d.]+/);
+  hwSet('hwUa',hwBrowser()+(vm?' · '+vm[0].replace('Version','Safari'):''));
+  hwSet('hwMeta','完整 User-Agent：'+navigator.userAgent);
+  hwDetectPeripherals();
+  if(btn)btn.disabled=false;
+  hwRunning=false;
+}
 
 /* ========================= 灯箱 ========================= */
 let lbIndex=0;
