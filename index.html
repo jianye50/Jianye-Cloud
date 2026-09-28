@@ -2256,12 +2256,18 @@ function stFillResults(r){
   stSet('stUp',r.up!=null?stFmt(r.up):'--');
 }
 
-// 延迟探测：no-cors 模式即可计时（不受 CORS 限制）。
-// 国内直连反映宽带真实 RTT；与 Cloudflare 延迟对比可识别国际绕行/代理
+// 测速节点：Speedtest（Ookla）官方节点 HTTP legacy 端点 + 回退源
+// 上海电信节点完整支持跨域（latency.txt / random4000x4000.jpg / upload.php 均回 ACAO）；
+// 昆山杜克与百度无 CORS，仅作延迟参考（no-cors 计时）；
+// 注意：Ookla 节点仅提供 HTTP，页面部署到 https 时浏览器会拦截混合内容，将自动回退 Cloudflare/jsDelivr
 const ST_TARGETS=[
-  {name:'国内直连',ping:'https://www.baidu.com/favicon.ico?_=',dl:null},
-  {name:'jsDelivr',ping:'https://cdn.jsdelivr.net/npm/typescript@5.4.5/package.json?_=',dl:'https://cdn.jsdelivr.net/npm/typescript@5.4.5/lib/typescript.js?_='},
-  {name:'Cloudflare',ping:'https://speed.cloudflare.com/__down?bytes=0&_=',dl:'https://speed.cloudflare.com/__down?bytes=150000000&_='}
+  {name:'Speedtest·上海电信',ping:'http://speedtest1.online.sh.cn:8080/speedtest/latency.txt?_=',
+   dl:'http://speedtest1.online.sh.cn:8080/speedtest/random4000x4000.jpg?_=',
+   up:'http://speedtest1.online.sh.cn:8080/speedtest/upload.php?_=',ookla:true},
+  {name:'Speedtest·昆山DKU',ping:'http://speedtest.dukekunshan.edu.cn:8080/speedtest/latency.txt?_=',dl:null,up:null,ookla:true},
+  {name:'国内直连',ping:'https://www.baidu.com/favicon.ico?_=',dl:null,up:null},
+  {name:'jsDelivr',ping:'https://cdn.jsdelivr.net/npm/typescript@5.4.5/package.json?_=',dl:'https://cdn.jsdelivr.net/npm/typescript@5.4.5/lib/typescript.js?_=',up:null},
+  {name:'Cloudflare',ping:'https://speed.cloudflare.com/__down?bytes=0&_=',dl:'https://speed.cloudflare.com/__down?bytes=150000000&_=',up:'https://speed.cloudflare.com/__up?_='}
 ];
 // 单节点探测：4 次请求，剔除首次（含 DNS/TLS 握手）；ping 取最小值（最接近真实 RTT，Ookla 同款策略）
 async function stProbe(url){
@@ -2323,6 +2329,7 @@ async function stDownload(ranked,onTick){
 }
 
 // 上传：3 连接并行 XHR 上传进度统计（Ookla 同款思路），最长 10 秒；失败返回 null（显示 --）
+// upBase 可指定 Speedtest 节点的 upload.php，失败自动回退 Cloudflare
 function stRandomBlob(size){
   // crypto.getRandomValues 单次上限 65536 字节，需分块填充
   const buf=new Uint8Array(size);
@@ -2332,8 +2339,21 @@ function stRandomBlob(size){
   // text/plain 属于 CORS 简单请求，避免触发预检被拦截
   return new Blob([buf],{type:'text/plain;charset=UTF-8'});
 }
-async function stUpload(onTick){
-  const WORKERS=3,SIZE=4*1024*1024,DURATION=10000;
+async function stUpload(onTick,upBase){
+  const list=[];
+  if(upBase)list.push(upBase);
+  list.push('https://speed.cloudflare.com/__up?_=');
+  const tried=new Set();
+  for(const base of list){
+    if(tried.has(base))continue;
+    tried.add(base);
+    const v=await stUploadVia(base,onTick);
+    if(v!=null)return v;
+  }
+  return null;
+}
+async function stUploadVia(base,onTick){
+  const WORKERS=3,SIZE=2*1024*1024,DURATION=10000;
   try{
     const blob=stRandomBlob(SIZE);
     const ctrl=new AbortController();
@@ -2355,7 +2375,7 @@ async function stUpload(onTick){
       while(performance.now()-t0<DURATION){
         await new Promise(res=>{
           const xhr=new XMLHttpRequest();
-          xhr.open('POST','https://speed.cloudflare.com/__up?_='+Math.random(),true);
+          xhr.open('POST',base+Math.random(),true);
           let lastLoaded=0,done=false;
           xhr.upload.onprogress=e=>{
             sent+=e.loaded-lastLoaded;lastLoaded=e.loaded;
@@ -2404,18 +2424,19 @@ async function stRun(){
     probed.sort((a,b)=>a.min-b.min);
     const direct=probed.find(p=>p.s.name==='国内直连');
     const best=probed.find(p=>p.s.dl&&isFinite(p.min))||probed[0];
-    const ref=isFinite(direct&&direct.min)?direct:best; // 延迟显示以国内直连为准
+    // 延迟显示优先用 Speedtest 节点（与官方 App 同口径），不可达时退回国内直连
+    const ref=probed.find(p=>p.s.ookla&&p.s.dl&&isFinite(p.min))||direct||best;
     stSet('stPing',Math.round(ref.min));
     stSet('stJitter',isFinite(ref.jit)?ref.jit.toFixed(1):'--');
     const detail=probed.filter(p=>isFinite(p.min)).map(p=>`${p.s.name} ${Math.round(p.min)}ms`).join(' · ');
     if(meta)meta.textContent='节点延迟：'+detail+
-      '｜下载节点 '+best.s.name+' · 上传经由 Cloudflare'+
-      (ref.min>100?'（直连延迟偏高：疑似代理/VPN 全局模式）':'');
+      '｜下载 '+best.s.name+' · 上传 '+(best.s.up?'Speedtest':'Cloudflare')+
+      (ref.min>150?'（延迟偏高：疑似代理/VPN 全局模式）':'');
     phase('正在测试下载速度…');
     const down=await stDownload(probed,gauge);
     stSet('stDown',stFmt(down));
     phase('正在测试上传速度…');
-    const up=await stUpload(gauge);
+    const up=await stUpload(gauge,best.s&&best.s.up);
     if(up!=null)stSet('stUp',stFmt(up));
     stLast={ping:ref.min,jitter:ref.jit,down,up,ts:Date.now()};
     try{localStorage.setItem('jy-speedtest',JSON.stringify(stLast));}catch(e){}
