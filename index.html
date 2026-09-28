@@ -826,8 +826,8 @@ a.social-i{text-decoration:none;color:var(--text-1)}
   .st-read{bottom:20px}
 }
 
-/* 硬件检测长条小组件 */
-.card-hardware{grid-column:span 12;min-height:110px;display:flex;align-items:center;padding:0 26px;overflow:hidden;border-radius:var(--radius-lg)}
+/* 硬件检测长条小组件（半宽） */
+.card-hardware{grid-column:span 6;min-height:110px;display:flex;align-items:center;padding:0 22px;overflow:hidden;border-radius:var(--radius-lg)}
 .hdw-widget{display:flex;align-items:center;gap:18px;width:100%;min-width:0}
 .hdw-txt{flex:1;min-width:0}
 .hdw-txt h3{font-size:16.5px;font-weight:650;white-space:nowrap}
@@ -835,6 +835,54 @@ a.social-i{text-decoration:none;color:var(--text-1)}
 .hdw-open{flex:none;background:linear-gradient(145deg,#bf5af2,#5e5ce6);box-shadow:0 4px 14px rgba(191,90,242,.35)}
 .ic-hardware{background:linear-gradient(160deg,#bf5af2,#0a84ff)}
 .ic-hardware svg,.hdw-open svg{color:#fff}
+
+/* 文件传送长条小组件（半宽） */
+.card-drop{grid-column:span 6;min-height:110px;display:flex;align-items:center;padding:0 22px;overflow:hidden;border-radius:var(--radius-lg)}
+.dpw-widget{display:flex;align-items:center;gap:16px;width:100%;min-width:0}
+.dpw-txt{flex:1;min-width:0}
+.dpw-txt h3{font-size:16.5px;font-weight:650;white-space:nowrap}
+.dpw-txt p{font-size:12.5px;color:var(--text-3);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dpw-open{flex:none;background:linear-gradient(145deg,#64d2ff,#30d158);box-shadow:0 4px 14px rgba(48,209,88,.3)}
+.ic-drop{background:linear-gradient(160deg,#64d2ff,#30d158)}
+.ic-drop svg,.dpw-open svg{color:#fff}
+@media (max-width:1100px){
+  .card-hardware,.card-drop{grid-column:span 12}
+}
+
+/* 文件传送弹窗（fyDrop / Snapdrop 风格） */
+.window.drop{max-width:600px}
+.dp-wrap{display:flex;flex-direction:column;gap:14px;padding:6px 0 2px}
+.dp-top{display:flex;gap:12px;flex-wrap:wrap}
+.dp-box{flex:1;min-width:180px;background:var(--card-inner);border:1px solid var(--card-border);border-radius:14px;padding:10px 14px}
+.dp-box .dp-label{display:block;font-size:10.5px;color:var(--text-3);letter-spacing:.5px;margin-bottom:2px}
+.dp-roombox b{font-size:22px;font-weight:700;letter-spacing:2.5px;color:var(--accent);font-variant-numeric:tabular-nums}
+.dp-mini{margin-left:10px;font-size:11px;padding:4px 10px;border-radius:99px;background:var(--chip);border:1px solid var(--card-border);color:var(--text-2);cursor:pointer;font-family:inherit;transition:.2s}
+.dp-mini:hover{background:var(--accent);color:#fff;border-color:transparent}
+.dp-namebox input{width:100%;font-size:15px;font-weight:630;background:transparent;border:none;outline:none;color:var(--text-1);font-family:inherit;padding:2px 0}
+.dp-status{font-size:12.5px;color:var(--text-3);text-align:center;min-height:17px}
+.dp-status.ok{color:#30d158}
+.dp-status.err{color:#ff453a}
+.dp-peers{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;min-height:96px;align-content:center}
+.dp-peer{display:flex;flex-direction:column;align-items:center;gap:6px;background:none;border:none;cursor:pointer;font-family:inherit;padding:4px 6px;border-radius:12px;transition:.2s}
+.dp-peer:hover{background:var(--chip);transform:translateY(-2px)}
+.dp-avatar{width:62px;height:62px;border-radius:50%;display:grid;place-items:center;font-size:24px;font-weight:700;color:#fff;
+  background:linear-gradient(150deg,#64d2ff,#0a84ff);box-shadow:0 6px 16px rgba(10,132,255,.35)}
+.dp-peer.me .dp-avatar{background:linear-gradient(150deg,#5e5ce6,#bf5af2);box-shadow:0 6px 16px rgba(191,90,242,.35)}
+.dp-peer span.nm{font-size:11.5px;color:var(--text-2);max-width:92px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dp-peer.me span.nm{color:var(--text-1);font-weight:630}
+.dp-hint{font-size:11.5px;color:var(--text-3);text-align:center;line-height:1.6}
+.dp-files{display:flex;flex-direction:column;gap:8px}
+.dp-file{display:flex;align-items:center;gap:12px;background:var(--card-inner);border:1px solid var(--card-border);border-radius:14px;padding:10px 14px}
+.dp-file .fi{width:38px;height:38px;border-radius:10px;flex:none;display:grid;place-items:center;background:var(--chip);font-size:19px}
+.dp-file .fm{flex:1;min-width:0}
+.dp-file .fm b{display:block;font-size:13px;font-weight:630;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dp-file .fm span{font-size:11px;color:var(--text-3)}
+.dp-bar{height:4px;border-radius:2px;background:var(--track);margin-top:5px;overflow:hidden}
+.dp-bar i{display:block;height:100%;width:0;border-radius:2px;background:linear-gradient(90deg,#30d158,#64d2ff);transition:width .2s}
+.dp-save{flex:none;font-size:12px;font-weight:600;padding:7px 14px;border-radius:99px;border:none;color:#fff;
+  background:linear-gradient(145deg,#30d158,#0aa562);cursor:pointer;font-family:inherit}
+.dp-save:disabled{opacity:.5;cursor:not-allowed}
+.dp-empty{font-size:12px;color:var(--text-3);text-align:center;padding:6px 0}
 
 /* 硬件检测弹窗 */
 .window.hw{max-width:620px}
@@ -978,7 +1026,7 @@ a.social-i{text-decoration:none;color:var(--text-1)}
   .card-weather,.card-assistant,.card-speedtest,.card-hardware{min-height:88px}
   /* 手机上测速卡片精简显示 */
   .spd-widget{gap:12px}
-  .card-speedtest,.card-hardware{padding:0 18px}
+  .card-speedtest,.card-hardware,.card-drop{padding:0 18px}
   /* 手机上省/市/区县选择器竖向排列，避免挤压溢出 */
   .wx-selects{flex-direction:column}
   .card-profile{min-height:340px;align-items:center;text-align:center}
@@ -1189,9 +1237,21 @@ a.social-i{text-decoration:none;color:var(--text-1)}
         <span class="app-ic ic-hardware" data-icon="hardware"></span>
         <div class="hdw-txt">
           <h3>硬件检测</h3>
-          <p>CPU / 内存 / GPU / 屏幕 / 电池 / 鼠标键盘外设 一键体检</p>
+          <p>CPU / 内存 / GPU / 屏幕 / 电池 / 外设 一键体检</p>
         </div>
         <span class="asw-open hdw-open"><span>开始检测</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
+      </div>
+    </article>
+
+    <!-- 文件传送长条卡（点击打开 P2P 快传弹窗） -->
+    <article class="card card-drop" data-open="drop" tabindex="0">
+      <div class="dpw-widget">
+        <span class="app-ic ic-drop" data-icon="drop"></span>
+        <div class="dpw-txt">
+          <h3>文件传送</h3>
+          <p id="dpSub">输入相同房间码 · P2P 直连互传，文件不经过服务器</p>
+        </div>
+        <span class="asw-open dpw-open"><span>开始传送</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M7 17 17 7M9 7h8v8"/></svg></span>
       </div>
     </article>
 
@@ -1245,6 +1305,8 @@ a.social-i{text-decoration:none;color:var(--text-1)}
 
 <div class="toast" id="toast"></div>
 
+<!-- PeerJS：WebRTC 信令与 P2P 数据通道（免费云信令，文件传输不走服务器） -->
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script>
 /* ========================= 图标库 ========================= */
 const ICONS = {
@@ -1268,6 +1330,7 @@ const ICONS = {
   about:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8.5" r="4"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0"/></svg>',
   speedtest:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 13.5 16.5 8"/><circle cx="12" cy="14" r="1.6" fill="currentColor" stroke="none"/><path d="M4.5 18.5a7.5 7.5 0 0 1 15 0"/></svg>',
   hardware:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6.5" y="6.5" width="11" height="11" rx="2"/><rect x="10.2" y="10.2" width="3.6" height="3.6" rx=".8"/><path d="M9 2.5v4M15 2.5v4M9 17.5v4M15 17.5v4M2.5 9h4M2.5 15h4M17.5 9h4M17.5 15h4"/></svg>',
+  drop:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15.5V3.5M7.5 8 12 3.5 16.5 8"/><path d="M5 13.5v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"/></svg>',
   github:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-3.2 19.5c.5.1.7-.2.7-.5v-1.7c-2.8.6-3.4-1.3-3.4-1.3-.5-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.6 2.4 1.1 3 .9.1-.7.4-1.1.6-1.4-2.2-.300000000000001-4.6-1.1-4.6-5a4 4 0 0 1 1-2.7c-.1-.3-.5-1.3.1-2.7 0 0 .8-.3 2.7 1a9.3 9.3 0 0 1 5 0c1.9-1.3 2.7-1 2.7-1 .6 1.4.2 2.4.1 2.7a4 4 0 0 1 1 2.7c0 3.9-2.4 4.7-4.6 5 .4.3.7.9.7 1.9v2.8c0 .3.2.6.7.5A10 10 0 0 0 12 2z"/></svg>',
   video:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M17 8.5V7a3 3 0 0 0-3-3H5a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h9a3 3 0 0 0 3-3v-1.5l4 2.8v-12.6z"/></svg>',
   book:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19a2 2 0 0 1 2-2h13"/></svg>',
@@ -1704,6 +1767,20 @@ const T = {
       <div class="hw-meta" id="hwMeta"></div>
     </div>`;
   },
+  drop:()=>{
+    return `
+    <div class="dp-wrap">
+      <div class="dp-top">
+        <div class="dp-box dp-roombox"><span class="dp-label">房间码（所有设备输入同一码）</span><b id="dpRoom">------</b><button class="dp-mini" id="dpNewRoom">换一个</button></div>
+        <div class="dp-box dp-namebox"><span class="dp-label">本机名称</span><input id="dpName" maxlength="20" placeholder="给这台设备起个名字"></div>
+      </div>
+      <div class="dp-status" id="dpStatus">正在加入房间…</div>
+      <div class="dp-peers" id="dpPeers"><span class="dp-empty">正在加入房间…</span></div>
+      <p class="dp-hint">相同房间码的设备建立 WebRTC 点对点直连，文件直接在设备间传输、不经过任何服务器。<br>同一 WiFi 下秒传；跨网络传输视网络穿透情况而定。</p>
+      <div class="dp-files" id="dpFiles"></div>
+      <input type="file" id="dpFile" multiple hidden>
+    </div>`;
+  },
   about:()=>`
     <div class="about-hero">
       <img src="${av}" alt="鉴业">
@@ -1981,7 +2058,8 @@ const META={
   weather:['天气','ic-weather','weather','实时天气'],
   assistant:['智能助手','ic-assistant','assistant','Jianye AI · 随时问我'],
   speedtest:['网络测速','ic-speed','speedtest','Speedtest · 网络质量检测'],
-  hardware:['硬件检测','ic-hardware','hardware','CPU · GPU · 屏幕 · 外设体检']
+  hardware:['硬件检测','ic-hardware','hardware','CPU · GPU · 屏幕 · 外设体检'],
+  drop:['文件传送','ic-drop','drop','P2P 快传 · 文件不经过服务器']
 };
 
 /* ========================= 天气 =========================
@@ -2158,7 +2236,7 @@ function openApp(id){
   if(!T[id])return;
   currentApp=id;
   const m=META[id];
-  $('#window').className='window'+(id==='photos'?' wide':id==='assistant'?' ai':id==='speedtest'?' speed':id==='hardware'?' hw':'');
+  $('#window').className='window'+(id==='photos'?' wide':id==='assistant'?' ai':id==='speedtest'?' speed':id==='hardware'?' hw':id==='drop'?' drop':'');
   $('#window').innerHTML=`
     <div class="win-hd">
       <span class="app-ic ${m[1]}">${ICONS[m[2]]}</span>
@@ -2175,6 +2253,7 @@ function bindWindow(id){
   $('#winClose').onclick=closeApp;
   if(id==='speedtest')stBindWindow();
   if(id==='hardware'){hwRun();const rb=hwEl('hwRe');if(rb)rb.onclick=hwRun;}
+  if(id==='drop')dpBindWindow();
   if(id==='contact'){
     $('#copyMail').onclick=copyEmail;
     $$('#window [data-soon]').forEach(b=>b.onclick=()=>toast(b.dataset.soon+' 主页即将开通，先发邮件吧'));
@@ -2825,6 +2904,268 @@ async function hwRun(){
   hwDetectPeripherals();
   if(btn)btn.disabled=false;
   hwRunning=false;
+}
+
+/* ========================= 文件传送（WebRTC P2P） =========================
+   原理同 fyDrop / Snapdrop：PeerJS 免费云仅做信令握手（交换连接信息），
+   文件本身通过 WebRTC DataChannel 在设备间点对点直传，不经过任何服务器。
+   房间码 → 确定性 hub ID：同房间第一台设备成为"目录"（hub），
+   后续设备连入 hub 获取成员列表，然后所有设备彼此直连互传。 */
+const DP_PREFIX='jydrop-v1-';
+const DP_PEER_OPTS={debug:0};
+let dpState=null;   // {room,name,role:'hub'|'client',connected}
+let dpPeer=null;    // 当前 Peer 实例
+let dpHubConn=null; // 客户端与 hub 的连接（兼作与 hub 传文件的直连通道）
+let dpClients={};   // hub 视角：peerId -> {name,conn}
+let dpPeers={};     // 客户端视角：peerId -> {name,conn}（含 hub）
+let dpEntries=[];   // 传输记录（新的在前）
+let dpRenderTimer=null;
+const dpEl=id=>document.getElementById(id);
+const dpFmtSize=b=>b==null?'--':b<1024?b+' B':b<1048576?(b/1024).toFixed(1)+' KB':b<1073741824?(b/1048576).toFixed(1)+' MB':(b/1073741824).toFixed(2)+' GB';
+function dpRandomRoom(){
+  const ab='23456789ABCDEFGHJKMNPQRSTUVWXYZ';
+  const pick=n=>Array.from({length:n},()=>ab[Math.floor(Math.random()*ab.length)]).join('');
+  return pick(3)+'-'+pick(3);
+}
+function dpDevName(){
+  const ua=navigator.userAgent;
+  if(/iPhone/.test(ua))return 'iPhone';
+  if(/iPad/.test(ua))return 'iPad';
+  if(/Android/.test(ua))return 'Android 设备';
+  if(/Macintosh/.test(ua))return 'Mac';
+  if(/Windows/.test(ua))return 'Windows 电脑';
+  if(/Linux/.test(ua))return 'Linux 设备';
+  return '我的设备';
+}
+function dpSave(){try{localStorage.setItem('jy-drop',JSON.stringify({room:dpState.room,name:dpState.name}));}catch(e){}}
+function dpStatus(t,cls){const n=dpEl('dpStatus');if(n){n.textContent=t;n.className='dp-status'+(cls?' '+cls:'');}}
+function dpCardSub(){
+  const n=dpEl('dpSub');if(!n)return;
+  n.textContent=dpState&&dpState.room&&dpState.connected
+    ?'房间 '+dpState.room+' · 在线，等待同房间设备加入'
+    :'输入相同房间码 · P2P 直连互传，文件不经过服务器';
+}
+function dpRenderPeers(){
+  const box=dpEl('dpPeers');if(!box||!dpState)return;
+  const self=`<button class="dp-peer me" type="button"><span class="dp-avatar">${esc((dpState.name||'我')[0].toUpperCase())}</span><span class="nm">${esc(dpState.name||'本机')}（本机）</span></button>`;
+  const src=dpState.role==='hub'?dpClients:dpPeers;
+  const list=Object.entries(src).map(([id,v])=>
+    `<button class="dp-peer" type="button" data-dpeer="${id}"><span class="dp-avatar">${esc((v.name||'?')[0].toUpperCase())}</span><span class="nm">${esc(v.name||'未知设备')}</span></button>`).join('');
+  box.innerHTML=self+list+(!list&&dpState.connected?'<span class="dp-empty" style="align-self:center;padding:16px 10px">还没有其他设备 · 让对方打开本页并输入相同房间码</span>':'');
+  box.querySelectorAll('[data-dpeer]').forEach(b=>b.onclick=()=>dpPickFiles(b.dataset.dpeer));
+}
+function dpRenderFiles(){
+  const box=dpEl('dpFiles');if(!box)return;
+  if(!dpEntries.length){box.innerHTML='<span class="dp-empty">暂无传输记录 · 点击上方设备头像即可发送文件</span>';return;}
+  box.innerHTML=dpEntries.map((e,i)=>{
+    const pct=e.size?Math.min(100,Math.round(e.done/e.size*100)):0;
+    const icon=e.dir==='out'?'📤':'📥';
+    const dirTxt=e.dir==='out'?'发送至 '+(e.peerName||'对方'):'来自 '+(e.peerName||'对方');
+    const right=e.state==='done'&&e.url?`<button class="dp-save" data-dsave="${i}">保存</button>`
+      :e.state==='fail'?'<span class="dp-empty">失败</span>'
+      :e.state==='done'?'<span class="dp-empty">已完成</span>':'<span class="dp-empty">'+pct+'%</span>';
+    return `<div class="dp-file"><span class="fi">${icon}</span><div class="fm"><b>${esc(e.name)}</b>
+      <span>${dirTxt} · ${dpFmtSize(e.size)}</span>
+      ${e.state==='run'?'<div class="dp-bar"><i style="width:'+pct+'%"></i></div>':''}</div>${right}</div>`;
+  }).join('');
+  box.querySelectorAll('[data-dsave]').forEach(b=>b.onclick=()=>{
+    const e=dpEntries[+b.dataset.dsave];if(!e||!e.url)return;
+    const a=document.createElement('a');a.href=e.url;a.download=e.name;document.body.appendChild(a);a.click();a.remove();
+  });
+}
+function dpThrottleRender(){
+  if(dpRenderTimer)return;
+  dpRenderTimer=setTimeout(()=>{dpRenderTimer=null;dpRenderFiles();},150);
+}
+function dpAddEntry(e){dpEntries.unshift(e);dpRenderFiles();}
+
+// 数据通道协议：{type:'fmeta',name,size} → ArrayBuffer 分块 → {type:'fend'}
+function dpBindDataConn(conn,rec){
+  if(rec.bound)return;rec.bound=true;
+  conn.on('data',data=>{
+    if(data&&data.type==='fmeta'){
+      rec.in={entry:{dir:'in',name:data.name,size:data.size,done:0,state:'run',peerName:rec.name},chunks:[]};
+      dpAddEntry(rec.in.entry);
+    }else if(data&&data.type==='fend'&&rec.in){
+      const e=rec.in.entry;
+      e.url=URL.createObjectURL(new Blob(rec.in.chunks));
+      e.state='done';rec.in=null;
+      dpRenderFiles();
+      toast('收到文件：'+e.name);
+    }else if(rec.in&&(data instanceof ArrayBuffer||data instanceof Uint8Array)){
+      const u=data instanceof Uint8Array?data:new Uint8Array(data);
+      rec.in.chunks.push(u);
+      rec.in.entry.done+=u.byteLength;
+      dpThrottleRender();
+    }
+  });
+}
+function dpPickFiles(peerId){
+  const src=dpState.role==='hub'?dpClients:dpPeers;
+  const rec=src[peerId];if(!rec)return;
+  if(!rec.conn.open){toast('与该设备的连接尚未就绪，请稍候',false);return;}
+  const inp=dpEl('dpFile');if(!inp)return;
+  inp.value='';
+  inp.onchange=()=>{const files=[...(inp.files||[])];if(files.length)dpSendFiles(rec,files);};
+  inp.click();
+}
+async function dpSendFiles(rec,files){
+  for(const f of files){
+    const entry={dir:'out',name:f.name,size:f.size,done:0,state:'run',peerName:rec.name};
+    dpAddEntry(entry);
+    try{
+      rec.conn.send({type:'fmeta',name:f.name,size:f.size});
+      const CH=65536;
+      for(let o=0;o<f.size;o+=CH){
+        const buf=await f.slice(o,o+CH).arrayBuffer();
+        // 背压控制：缓冲区积压超过 1MB 时暂停发送，避免内存暴涨
+        while(rec.conn.dataChannel&&rec.conn.dataChannel.bufferedAmount>1048576){
+          await new Promise(r=>setTimeout(r,40));
+        }
+        rec.conn.send(buf);
+        entry.done=Math.min(o+CH,f.size);
+        dpThrottleRender();
+      }
+      rec.conn.send({type:'fend'});
+      entry.state='done';entry.done=f.size;
+    }catch(e){entry.state='fail';}
+    dpRenderFiles();
+  }
+}
+
+// 加入房间：先尝试以 hub ID 注册；被占用说明房间已存在 → 以客户端身份连入
+function dpCleanup(){
+  try{if(dpHubConn)dpHubConn.close();}catch(e){}
+  try{if(dpPeer)dpPeer.destroy();}catch(e){}
+  Object.values(dpPeers).forEach(v=>{try{v.conn.close();}catch(e){}});
+  dpHubConn=null;dpPeer=null;dpPeers={};dpClients={};
+}
+function dpJoin(){
+  dpCleanup();
+  if(typeof Peer==='undefined'){dpStatus('PeerJS 库加载失败，请检查网络后刷新页面','err');return;}
+  dpState.connected=false;dpState.role=null;
+  dpCardSub();
+  const hubId=DP_PREFIX+dpState.room.replace(/[^0-9A-Za-z]/g,'')+'-hub';
+  dpStatus('正在加入房间 '+dpState.room+' …');
+  const p=new Peer(hubId,DP_PEER_OPTS);
+  dpPeer=p;
+  let fellBack=false;
+  p.on('open',()=>dpBecomeHub());
+  p.on('error',e=>{
+    if(e.type==='unavailable-id'&&!fellBack){fellBack=true;dpJoinAsClient(hubId);}
+    else if(e.type!=='peer-unavailable')dpStatus('连接出错：'+(e.type||'未知'),'err');
+  });
+  p.on('disconnected',()=>{try{p.reconnect();}catch(_){/* 忽略 */}});
+}
+function dpBecomeHub(){
+  dpState.role='hub';dpState.connected=true;
+  dpStatus('房间 '+dpState.room+' 已创建 · 等待其他设备加入（本机为房主）','ok');
+  dpCardSub();dpRenderPeers();
+  dpPeer.on('connection',conn=>{
+    const rec={name:'未知设备',conn};
+    conn.on('open',()=>dpBindDataConn(conn,rec));
+    conn.on('data',msg=>{
+      if(msg&&msg.type==='hello'){
+        rec.name=msg.name||'未知设备';
+        dpClients[conn.peer]=rec;
+        dpHubBroadcast();dpRenderPeers();
+        toast(rec.name+' 加入了房间');
+      }
+    });
+    conn.on('close',()=>{
+      const had=dpClients[conn.peer];
+      delete dpClients[conn.peer];
+      if(had){dpHubBroadcast();dpRenderPeers();toast(had.name+' 离开了房间');}
+    });
+    conn.on('error',()=>{delete dpClients[conn.peer];});
+  });
+}
+function dpHubBroadcast(){
+  const list=Object.entries(dpClients).map(([id,v])=>({id,name:v.name}));
+  const hub={id:dpPeer.id,name:dpState.name};
+  Object.values(dpClients).forEach(v=>{try{v.conn.send({type:'peers',list,hub});}catch(e){/* 忽略 */}});
+}
+function dpJoinAsClient(hubId){
+  try{if(dpPeer)dpPeer.destroy();}catch(e){} // 释放声明 hub 失败的旧实例
+  const p=new Peer(DP_PEER_OPTS);
+  dpPeer=p;
+  p.on('open',()=>{
+    const conn=p.connect(hubId,{reliable:true});
+    dpHubConn=conn;
+    conn.on('open',()=>{
+      dpState.role='client';dpState.connected=true;
+      conn.send({type:'hello',name:dpState.name});
+      dpStatus('已加入房间 '+dpState.room+' · 等待成员列表…','ok');
+      dpCardSub();
+    });
+    conn.on('data',msg=>{
+      if(msg&&msg.type==='peers'){
+        // hub 自己也作为可直连的成员（复用与 hub 的连接传文件）
+        if(msg.hub&&msg.hub.id!==p.id&&!dpPeers[msg.hub.id]){
+          dpPeers[msg.hub.id]={name:msg.hub.name,conn:dpHubConn};
+          dpBindDataConn(dpHubConn,dpPeers[msg.hub.id]);
+        }
+        dpSyncPeers(msg.list||[]);
+        dpStatus('已加入房间 '+dpState.room+' · 在线','ok');
+      }
+    });
+    conn.on('close',()=>{
+      dpState.connected=false;
+      dpStatus('与房间失去连接，正在重连…');
+      dpCardSub();
+      setTimeout(dpJoin,1500);
+    });
+  });
+  p.on('error',e=>{
+    if(e.type==='peer-unavailable'){dpStatus('房间暂时不可达，正在重试…','err');setTimeout(dpJoin,2500);}
+  });
+  p.on('disconnected',()=>{try{p.reconnect();}catch(_){/* 忽略 */}});
+}
+function dpSyncPeers(list){
+  const want={};
+  list.forEach(x=>{if(x&&x.id&&x.id!==dpPeer.id)want[x.id]=x.name||'未知设备';});
+  Object.keys(dpPeers).forEach(id=>{
+    if(!want[id]&&id!==dpHubConn.peer){
+      try{dpPeers[id].conn.close();}catch(e){}
+      delete dpPeers[id];
+    }
+  });
+  Object.keys(want).forEach(id=>{
+    if(dpPeers[id])return;
+    const c=dpPeer.connect(id,{reliable:true});
+    const rec={name:want[id],conn:c};
+    dpPeers[id]=rec;
+    c.on('open',()=>dpBindDataConn(c,rec));
+    c.on('open',dpRenderPeers);
+  });
+  dpRenderPeers();
+}
+function dpBindWindow(){
+  if(typeof Peer==='undefined'){dpStatus('PeerJS 库加载失败，请检查网络后刷新页面','err');return;}
+  if(!dpState){
+    let saved=null;
+    try{saved=JSON.parse(localStorage.getItem('jy-drop')||'null');}catch(e){}
+    dpState={room:(saved&&saved.room)||dpRandomRoom(),name:(saved&&saved.name)||dpDevName(),connected:false,role:null};
+  }
+  const roomEl=dpEl('dpRoom');if(roomEl)roomEl.textContent=dpState.room;
+  const nameEl=dpEl('dpName');
+  if(nameEl){
+    nameEl.value=dpState.name;
+    nameEl.onchange=()=>{
+      dpState.name=nameEl.value.trim()||dpDevName();
+      nameEl.value=dpState.name;dpSave();
+      dpJoin(); // 以新名称重新加入
+    };
+  }
+  const nr=dpEl('dpNewRoom');
+  if(nr)nr.onclick=()=>{
+    dpState.room=dpRandomRoom();dpSave();
+    const r=dpEl('dpRoom');if(r)r.textContent=dpState.room;
+    dpJoin();
+  };
+  dpRenderPeers();dpRenderFiles();
+  if(!dpState.connected)dpJoin();
+  dpCardSub();
 }
 
 /* ========================= 灯箱 ========================= */
