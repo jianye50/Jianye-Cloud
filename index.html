@@ -2987,7 +2987,7 @@ function dpCardSub(){
 function dpRenderPeers(){
   const box=dpEl('dpPeers');if(!box||!dpState)return;
   const self=`<button class="dp-peer me" type="button">${dpAvatar(dpState.dev)}<span class="nm">${esc(dpState.name||'本机')}（本机）</span></button>`;
-  const list=Object.entries(dpPeers).map(([id,v])=>
+  const list=Object.entries(dpPeers).sort((a,b)=>(a[1].slot||99)-(b[1].slot||99)).map(([id,v])=>
     `<button class="dp-peer" type="button" data-dpeer="${id}">${dpAvatar(v.dev)}<span class="nm">${esc(v.name||'未知设备')}</span></button>`).join('');
   box.innerHTML=self+list+(!list&&dpState.connected?'<span class="dp-empty" style="align-self:center;padding:16px 10px">还没有其他设备 · 让对方打开本页并输入相同房间码</span>':'');
   box.querySelectorAll('[data-dpeer]').forEach(b=>b.onclick=()=>dpPickFiles(b.dataset.dpeer));
@@ -3037,13 +3037,18 @@ function dpBindDataConn(conn,rec){
       dpThrottleRender();
     }
   });
+  // 连接中断：传输中的文件标记为失败，避免进度条永远卡住
+  conn.on('close',()=>{
+    if(rec.in){rec.in.entry.state='fail';rec.in=null;dpRenderFiles();}
+  });
 }
 function dpPickFiles(peerId){
   const rec=dpPeers[peerId];if(!rec)return;
-  if(!rec.conn.open){toast('与该设备的连接尚未就绪，请稍候',false);return;}
+  if(!rec.conn.open){dpProbeLower();toast('与该设备的连接正在重试，请稍候再试',false);return;}
   const inp=dpEl('dpFile');if(!inp)return;
   inp.value='';
-  inp.onchange=()=>{const files=[...(inp.files||[])];if(files.length)dpSendFiles(rec,files);};
+  // onchange 时重新查表：选文件期间连接可能已被重探替换成新 rec
+  inp.onchange=()=>{const files=[...(inp.files||[])];if(files.length)dpSendFiles(dpPeers[peerId]||rec,files);};
   inp.click();
 }
 async function dpSendFiles(rec,files){
@@ -3107,11 +3112,17 @@ const dpSlotNum=id=>{const m=/-s(\d+)$/.exec(id||'');return m?+m[1]:null;};
 // 占席：从 s1 开始逐个尝试声明席位 ID，被占用就顺延到下一席
 function dpClaim(i){
   if(!dpState)return;
-  if(i>DP_SLOTS){dpStatus('房间已满 · 最多支持 '+DP_SLOTS+' 台设备','err');return;}
+  if(i>DP_SLOTS){
+    dpStatus('房间已满 · 最多支持 '+DP_SLOTS+' 台设备，有设备离开后会自动加入','err');
+    // 延迟重试：等有设备离开腾出席位后自动加入，而不是永久放弃
+    dpReconnectTimer=setTimeout(dpJoin,12000);
+    return;
+  }
   const p=new Peer(dpSlotId(i),DP_PEER_OPTS);
   dpPeer=p;
   // 看门狗：9 秒仍未握上信令（PeerJS 云偶发无响应）就推倒重来，避免永久卡在"正在加入房间"
-  dpReconnectTimer=setTimeout(()=>{if(dpPeer===p&&!p.open){try{p.destroy();}catch(e){}dpRetry();}},9000);
+  // 先置空 dpPeer 再销毁：销毁动作可能触发迟到错误事件，置空可让守卫拦住，避免误触 dpClaim 链
+  dpReconnectTimer=setTimeout(()=>{if(dpPeer===p&&!p.open){dpPeer=null;try{p.destroy();}catch(e){}dpRetry();}},9000);
   p.on('open',()=>{
     if(dpPeer!==p)return;
     dpState.slot=i;dpState.connected=true;
@@ -3135,7 +3146,13 @@ function dpClaim(i){
   p.on('connection',conn=>{
     const rec={name:'…',dev:null,conn,slot:dpSlotNum(conn.peer),opened:false};
     dpPeers[conn.peer]=rec;
+    const giveUp=setTimeout(()=>{ // 半开连接保护：10 秒仍未打通则移除，不留"未准备就绪"的死头像
+      if(rec.open)return; // 已打通，由 close/error 处理器负责
+      try{conn.close();}catch(e){/* 忽略 */} // 即使 rec 已被替换也要关闭，防止连接泄漏
+      if(dpPeers[conn.peer]===rec){delete dpPeers[conn.peer];dpRenderPeers();}
+    },10000);
     conn.on('open',()=>{
+      clearTimeout(giveUp);
       rec.opened=true;dpBindDataConn(conn,rec);
       try{conn.send({type:'hello',name:dpState.name,dev:dpState.dev});}catch(e){/* 忽略 */}
       dpRenderPeers();
@@ -3144,28 +3161,39 @@ function dpClaim(i){
       if(msg&&msg.type==='hello'){
         rec.name=msg.name||'未知设备';rec.dev=msg.dev;
         if(!rec.greeted){rec.greeted=true;toast(rec.name+' 加入了房间');}
+        // 对方名片丢失自愈：被动方收到问候必回名片（主动方按周期重发，不回信，避免死循环）
+        try{conn.send({type:'hello',name:dpState.name,dev:dpState.dev});}catch(e){/* 忽略 */}
         dpRenderPeers();
       }
     });
-    conn.on('close',()=>{if(dpPeers[conn.peer]===rec){delete dpPeers[conn.peer];dpRenderPeers();}});
-    conn.on('error',()=>{if(dpPeers[conn.peer]===rec){delete dpPeers[conn.peer];dpRenderPeers();}});
+    conn.on('close',()=>{clearTimeout(giveUp);if(dpPeers[conn.peer]===rec){delete dpPeers[conn.peer];dpRenderPeers();}});
+    conn.on('error',()=>{clearTimeout(giveUp);if(dpPeers[conn.peer]===rec){delete dpPeers[conn.peer];dpRenderPeers();}});
   });
 }
 // 主动探测所有比自己席位号小的设备（空席位返回 peer-unavailable，属正常）；
 // 对方收到连接后也会回 hello，因此新设备加入时双向都能感知
 function dpProbeLower(){
   const p=dpPeer;if(!p||!p.open||dpState.slot==null)return;
+  // 给已连通的低席位设备重发名片：任一方的 hello 在传输中丢失都能在下一周期自愈
+  Object.entries(dpPeers).forEach(([id,v])=>{
+    if(v.slot!=null&&v.slot<dpState.slot&&v.conn&&v.conn.open){
+      try{v.conn.send({type:'hello',name:dpState.name,dev:dpState.dev});}catch(e){/* 忽略 */}
+    }
+  });
   for(let j=1;j<dpState.slot;j++){
     const id=dpSlotId(j);
     if(dpPeers[id]&&dpPeers[id].conn.open)continue;
     if(dpPending[j])continue;
     const c=p.connect(id,{reliable:true});
     dpPending[j]=c;
+    if(dpPeers[id]&&!dpPeers[id].conn.open){try{dpPeers[id].conn.close();}catch(e){/* 忽略 */}} // 释放旧死连接
     const rec={name:'…',dev:null,conn:c,slot:j,opened:false};
     dpPeers[id]=rec;
     const giveUp=setTimeout(()=>{ // 对端可能已离开（尤其 iOS 静默掉线），10 秒未连通则放弃
       delete dpPending[j];
-      if(dpPeers[id]===rec&&!rec.open){try{c.close();}catch(e){/* 忽略 */}delete dpPeers[id];dpRenderPeers();}
+      if(rec.open)return; // 已打通，由 close/error 处理器负责
+      try{c.close();}catch(e){/* 忽略 */} // 即使 rec 已被替换也要关闭，防止连接泄漏
+      if(dpPeers[id]===rec){delete dpPeers[id];dpRenderPeers();}
     },10000);
     c.on('open',()=>{
       clearTimeout(giveUp);delete dpPending[j];
