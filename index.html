@@ -871,6 +871,7 @@ a.social-i{text-decoration:none;color:var(--text-1)}
 .dp-peer:hover{background:var(--chip);transform:translateY(-2px)}
 .dp-avatar{width:62px;height:62px;border-radius:50%;display:grid;place-items:center;font-size:24px;font-weight:700;color:#fff;
   background:linear-gradient(150deg,#64d2ff,#0a84ff);box-shadow:0 6px 16px rgba(10,132,255,.35)}
+.dp-avatar svg{width:30px;height:30px}
 .dp-peer.me .dp-avatar{background:linear-gradient(150deg,#5e5ce6,#bf5af2);box-shadow:0 6px 16px rgba(191,90,242,.35)}
 .dp-peer span.nm{font-size:11.5px;color:var(--text-2);max-width:92px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dp-peer.me span.nm{color:var(--text-1);font-weight:630}
@@ -2253,7 +2254,10 @@ function openApp(id){
   $('#scrim').classList.add('open');
   bindWindow(id);
 }
-function closeApp(){$('#scrim').classList.remove('open');currentApp=null;}
+function closeApp(){
+  if(currentApp==='drop'&&typeof dpLeave==='function')dpLeave(); // 关闭文件传送即下线
+  $('#scrim').classList.remove('open');currentApp=null;
+}
 
 function bindWindow(id){
   $('#winClose').onclick=closeApp;
@@ -2927,8 +2931,9 @@ let dpPeers={};     // 客户端视角：peerId -> {name,conn}（含 hub）
 let dpEntries=[];   // 传输记录（新的在前）
 let dpRenderTimer=null;
 let dpHubPrune=null;   // hub 定期剔除失效成员的定时器
+let dpReconnectTimer=null; // 待执行的重连定时（离开房间时需取消，避免"复活"）
 let dpVisBound=false;  // 前后台切换重连监听（只绑一次）
-let dpNames={};        // 房间内最新成员表 id -> 名称（被动接入时识别对方用）
+let dpNames={};        // 房间内最新成员表 id -> {name,dev}（被动接入时识别对方用）
 const dpEl=id=>document.getElementById(id);
 const dpFmtSize=b=>b==null?'--':b<1024?b+' B':b<1048576?(b/1024).toFixed(1)+' KB':b<1073741824?(b/1048576).toFixed(1)+' MB':(b/1073741824).toFixed(2)+' GB';
 function dpRandomRoom(){
@@ -2946,6 +2951,26 @@ function dpDevName(){
   if(/Linux/.test(ua))return 'Linux 设备';
   return '我的设备';
 }
+/* 设备类型：决定头像里画哪种设备图标 */
+function dpDevType(){
+  const ua=navigator.userAgent;
+  const touch=(navigator.maxTouchPoints||0)>1;
+  if(/iPad/.test(ua)||(touch&&/Macintosh/.test(ua)))return 'tablet';
+  if(/iPhone|iPod/.test(ua))return 'phone';
+  if(/Android/.test(ua))return /Tab|Pad|Fold|SM-X/i.test(ua)?'tablet':'phone';
+  if(/Macintosh/.test(ua))return 'laptop';
+  if(/Windows|Linux|X11|CrOS/i.test(ua))return 'pc';
+  return 'pc';
+}
+/* 五种设备线框图标 */
+const DP_ICONS={
+  pc:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="1.8"/><path d="M9 20h6M12 16v4"/><path d="M7 8.5h6M7 11.5h4" opacity=".55"/></svg>',
+  laptop:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="14" height="9.5" rx="1.6"/><path d="M2.5 18.5h19M4 18.5l1-2.6M20 18.5l-1-2.6"/><path d="M9 8h6" opacity=".55"/></svg>',
+  phone:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2.4"/><path d="M10.5 5h3"/><circle cx="12" cy="18.2" r=".9" fill="currentColor" stroke="none"/></svg>',
+  tablet:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2.4"/><path d="M8.5 6h7" opacity=".55"/><circle cx="12" cy="17.8" r=".9" fill="currentColor" stroke="none"/></svg>',
+  tv:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12.5" rx="2"/><path d="M8 21.5h8M9.5 9.5l-2.5 3 2.5 3M14.5 9.5l2.5 3-2.5 3"/></svg>'
+};
+const dpAvatar=dev=>'<span class="dp-avatar">'+(DP_ICONS[dev]||DP_ICONS.pc)+'</span>';
 function dpSave(){try{localStorage.setItem('jy-drop',JSON.stringify({room:dpState.room,name:dpState.name}));}catch(e){}}
 function dpStatus(t,cls){const n=dpEl('dpStatus');if(n){n.textContent=t;n.className='dp-status'+(cls?' '+cls:'');}}
 function dpCardSub(){
@@ -2956,10 +2981,10 @@ function dpCardSub(){
 }
 function dpRenderPeers(){
   const box=dpEl('dpPeers');if(!box||!dpState)return;
-  const self=`<button class="dp-peer me" type="button"><span class="dp-avatar">${esc((dpState.name||'我')[0].toUpperCase())}</span><span class="nm">${esc(dpState.name||'本机')}（本机）</span></button>`;
+  const self=`<button class="dp-peer me" type="button">${dpAvatar(dpState.dev)}<span class="nm">${esc(dpState.name||'本机')}（本机）</span></button>`;
   const src=dpState.role==='hub'?dpClients:dpPeers;
   const list=Object.entries(src).map(([id,v])=>
-    `<button class="dp-peer" type="button" data-dpeer="${id}"><span class="dp-avatar">${esc((v.name||'?')[0].toUpperCase())}</span><span class="nm">${esc(v.name||'未知设备')}</span></button>`).join('');
+    `<button class="dp-peer" type="button" data-dpeer="${id}">${dpAvatar(v.dev)}<span class="nm">${esc(v.name||'未知设备')}</span></button>`).join('');
   box.innerHTML=self+list+(!list&&dpState.connected?'<span class="dp-empty" style="align-self:center;padding:16px 10px">还没有其他设备 · 让对方打开本页并输入相同房间码</span>':'');
   box.querySelectorAll('[data-dpeer]').forEach(b=>b.onclick=()=>dpPickFiles(b.dataset.dpeer));
 }
@@ -3045,28 +3070,36 @@ async function dpSendFiles(rec,files){
 // 加入房间：先尝试以 hub ID 注册；被占用说明房间已存在 → 以客户端身份连入
 function dpCleanup(){
   if(dpHubPrune){clearInterval(dpHubPrune);dpHubPrune=null;}
+  if(dpReconnectTimer){clearTimeout(dpReconnectTimer);dpReconnectTimer=null;}
   dpNames={};
   try{if(dpHubConn)dpHubConn.close();}catch(e){}
   try{if(dpPeer)dpPeer.destroy();}catch(e){}
   Object.values(dpPeers).forEach(v=>{try{v.conn.close();}catch(e){}});
   dpHubConn=null;dpPeer=null;dpPeers={};dpClients={};
 }
+// 关闭弹窗即下线：离开房间、断开信令与所有 P2P 连接（其他设备会立刻看到本机离开）
+function dpLeave(){
+  dpCleanup();
+  dpState.connected=false;dpState.role=null;
+  dpStatus('已离开房间 · 重新打开即可再次加入');
+  dpCardSub();
+}
 function dpJoin(){
   dpCleanup();
-  if(typeof Peer==='undefined'){dpStatus('PeerJS 库加载失败，请检查网络后刷新页面','err');return;}
-  dpState.connected=false;dpState.role=null;
+  if(typeof Peer==='undefined'){dpStatus('PeerJS 库加载失败，请检查网络后刷新页面','err');return;}  dpState.connected=false;dpState.role=null;
   dpCardSub();
   const hubId=DP_PREFIX+dpState.room.replace(/[^0-9A-Za-z]/g,'')+'-hub';
   dpStatus('正在加入房间 '+dpState.room+' …');
   const p=new Peer(hubId,DP_PEER_OPTS);
   dpPeer=p;
   let fellBack=false;
-  p.on('open',()=>dpBecomeHub());
+  p.on('open',()=>{if(dpPeer!==p)return;dpBecomeHub();});
   p.on('error',e=>{
+    if(dpPeer!==p)return; // 旧实例的延迟事件，忽略
     if(e.type==='unavailable-id'&&!fellBack){fellBack=true;dpJoinAsClient(hubId);}
     else if(e.type!=='peer-unavailable')dpStatus('连接出错：'+(e.type||'未知'),'err');
   });
-  p.on('disconnected',()=>{try{p.reconnect();}catch(_){/* 忽略 */}});
+  p.on('disconnected',()=>{if(dpPeer===p){try{p.reconnect();}catch(_){/* 忽略 */}}});
 }
 function dpBecomeHub(){
   dpState.role='hub';dpState.connected=true;
@@ -3074,10 +3107,11 @@ function dpBecomeHub(){
   dpCardSub();dpRenderPeers();
   dpPeer.on('connection',conn=>{
     const rec={name:'未知设备',conn};
-    conn.on('open',()=>dpBindDataConn(conn,rec));
+    conn.on('open',()=>{rec.opened=true;dpBindDataConn(conn,rec);});
     conn.on('data',msg=>{
       if(msg&&msg.type==='hello'){
         rec.name=msg.name||'未知设备';
+        rec.dev=msg.dev;
         dpClients[conn.peer]=rec;
         dpHubBroadcast();dpRenderPeers();
         toast(rec.name+' 加入了房间');
@@ -3095,14 +3129,14 @@ function dpBecomeHub(){
   dpHubPrune=setInterval(()=>{
     let changed=false;
     Object.entries(dpClients).forEach(([id,v])=>{
-      if(!v.conn.open){delete dpClients[id];changed=true;}
+      if(!v.conn.open&&v.opened){delete dpClients[id];changed=true;}
     });
     if(changed){dpHubBroadcast();dpRenderPeers();}
   },10000);
 }
 function dpHubBroadcast(){
-  const list=Object.entries(dpClients).map(([id,v])=>({id,name:v.name}));
-  const hub={id:dpPeer.id,name:dpState.name};
+  const list=Object.entries(dpClients).map(([id,v])=>({id,name:v.name,dev:v.dev}));
+  const hub={id:dpPeer.id,name:dpState.name,dev:dpState.dev};
   Object.values(dpClients).forEach(v=>{try{v.conn.send({type:'peers',list,hub});}catch(e){/* 忽略 */}});
 }
 function dpJoinAsClient(hubId){
@@ -3119,9 +3153,9 @@ function dpJoinAsClient(hubId){
   // 被动接入：其他客户端按"ID 较小方发起"的约定连过来时，绑定数据通道
   // （此前只有 hub 注册了该处理器，客户端之间互传文件全靠这条路径）
   p.on('connection',conn=>{
-    const rec={name:dpNames[conn.peer]||'未知设备',conn};
+    const rec={name:(dpNames[conn.peer]&&dpNames[conn.peer].name)||'未知设备',dev:dpNames[conn.peer]&&dpNames[conn.peer].dev,conn};
     dpPeers[conn.peer]=rec;
-    conn.on('open',()=>{dpBindDataConn(conn,rec);dpRenderPeers();});
+    conn.on('open',()=>{rec.opened=true;dpBindDataConn(conn,rec);dpRenderPeers();});
     conn.on('close',()=>{
       if(dpPeers[conn.peer]===rec){delete dpPeers[conn.peer];dpRenderPeers();}
     });
@@ -3131,7 +3165,7 @@ function dpJoinAsClient(hubId){
     dpHubConn=conn;
     conn.on('open',()=>{
       dpState.role='client';dpState.connected=true;
-      conn.send({type:'hello',name:dpState.name});
+      conn.send({type:'hello',name:dpState.name,dev:dpState.dev});
       dpStatus('已加入房间 '+dpState.room+' · 等待成员列表…','ok');
       dpCardSub();
     });
@@ -3139,7 +3173,7 @@ function dpJoinAsClient(hubId){
       if(msg&&msg.type==='peers'){
         // hub 自己也作为可直连的成员（复用与 hub 的连接传文件）
         if(msg.hub&&msg.hub.id!==p.id&&!dpPeers[msg.hub.id]){
-          dpPeers[msg.hub.id]={name:msg.hub.name,conn:dpHubConn};
+          dpPeers[msg.hub.id]={name:msg.hub.name,dev:msg.hub.dev,conn:dpHubConn};
           dpBindDataConn(dpHubConn,dpPeers[msg.hub.id]);
         }
         dpSyncPeers(msg.list||[]);
@@ -3147,24 +3181,35 @@ function dpJoinAsClient(hubId){
       }
     });
     conn.on('close',()=>{
+      if(dpHubConn!==conn)return; // 主动离开(dpLeave)触发的 close，不重连
       dpState.connected=false;
       dpStatus('与房间失去连接，正在重连…');
       dpCardSub();
-      setTimeout(dpJoin,1500);
+      dpReconnectTimer=setTimeout(dpJoin,1500);
     });
   });
+  // 客户端同样定期剔除静默掉线的成员（iOS 切后台不触发 close，列表里会挂死设备）
+  // opened 标记：只剔除"开过又死了"的连接，避免误杀还在握手的新建连接
+  dpHubPrune=setInterval(()=>{
+    let changed=false;
+    Object.entries(dpPeers).forEach(([id,v])=>{
+      if(!v.conn.open&&v.opened){try{v.conn.close();}catch(e){}delete dpPeers[id];changed=true;}
+    });
+    if(changed)dpRenderPeers();
+  },10000);
   p.on('error',e=>{
+    if(dpPeer!==p)return; // 旧实例的延迟事件，忽略
     // 仅在尚未入房时视为致命（房主已离开）；入房后同步成员时连到已离开的设备属正常情况，静默忽略，
     // 否则会触发整个房间反复重建的死循环
     if(e.type==='peer-unavailable'){
-      if(!dpState.connected){dpStatus('房间暂时不可达，正在重试…','err');setTimeout(dpJoin,2500);}
+      if(!dpState.connected){dpStatus('房间暂时不可达，正在重试…','err');dpReconnectTimer=setTimeout(dpJoin,1500);}
     }else if(e.type!=='unavailable-id')dpStatus('连接出错：'+(e.type||'未知'),'err');
   });
-  p.on('disconnected',()=>{try{p.reconnect();}catch(_){/* 忽略 */}});
+  p.on('disconnected',()=>{if(dpPeer===p){try{p.reconnect();}catch(_){/* 忽略 */}}});
 }
 function dpSyncPeers(list){
   const want={};
-  list.forEach(x=>{if(x&&x.id&&x.id!==dpPeer.id){want[x.id]=x.name||'未知设备';dpNames[x.id]=want[x.id];}});
+  list.forEach(x=>{if(x&&x.id&&x.id!==dpPeer.id){want[x.id]={name:x.name||'未知设备',dev:x.dev};dpNames[x.id]=want[x.id];}});
   Object.keys(dpPeers).forEach(id=>{
     if(!want[id]&&id!==dpHubConn.peer){
       try{dpPeers[id].conn.close();}catch(e){}
@@ -3177,9 +3222,9 @@ function dpSyncPeers(list){
     // 约定只有 Peer ID 较小的一方主动发起，较大的一方等待被动接入（见 p.on('connection')）
     if(id<dpPeer.id)return;
     const c=dpPeer.connect(id,{reliable:true});
-    const rec={name:want[id],conn:c};
+    const rec={name:want[id].name,dev:want[id].dev,conn:c};
     dpPeers[id]=rec;
-    c.on('open',()=>dpBindDataConn(c,rec));
+    c.on('open',()=>{rec.opened=true;dpBindDataConn(c,rec);});
     c.on('open',dpRenderPeers);
     // 对端可能已离开（尤其 iOS 静默掉线），10 秒仍未连通则移除，避免列表里挂着死设备
     setTimeout(()=>{
@@ -3195,7 +3240,7 @@ function dpBindWindow(){
   if(!dpState){
     let saved=null;
     try{saved=JSON.parse(localStorage.getItem('jy-drop')||'null');}catch(e){}
-    dpState={room:(saved&&saved.room)||dpRandomRoom(),name:(saved&&saved.name)||dpDevName(),connected:false,role:null};
+    dpState={room:(saved&&saved.room)||dpRandomRoom(),name:(saved&&saved.name)||dpDevName(),dev:dpDevType(),connected:false,role:null};
   }
   const roomEl=dpEl('dpRoom');
   if(roomEl){
@@ -3221,7 +3266,7 @@ function dpBindWindow(){
   const nr=dpEl('dpNewRoom');
   if(nr)nr.onclick=()=>{
     dpState.room=dpRandomRoom();dpSave();
-    const r=dpEl('dpRoom');if(r)r.textContent=dpState.room;
+    const r=dpEl('dpRoom');if(r)r.value=dpState.room; // 输入框要用 value 而非 textContent
     dpJoin();
   };
   dpRenderPeers();dpRenderFiles();
