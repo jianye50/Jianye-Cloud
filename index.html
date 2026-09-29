@@ -2916,24 +2916,25 @@ async function hwRun(){
   hwRunning=false;
 }
 
-/* ========================= 文件传送（WebRTC P2P） =========================
+/* ========================= 文件传送（WebRTC P2P · 无房主席位制） =========================
    原理同 fyDrop / Snapdrop：PeerJS 免费云仅做信令握手（交换连接信息），
    文件本身通过 WebRTC DataChannel 在设备间点对点直传，不经过任何服务器。
-   房间码 → 确定性 hub ID：同房间第一台设备成为"目录"（hub），
-   后续设备连入 hub 获取成员列表，然后所有设备彼此直连互传。 */
-const DP_PREFIX='jydrop-v1-';
+   设备发现：房间码映射出 8 个确定席位 ID（-s1 ~ -s8），每台设备占一个空席；
+   约定席位号大的主动连接席位号小的（彻底避免双向同时发起的 offer 冲突）；
+   新设备双向感知：高席位主动探测低席位，低席位通过被动接入认识对方。 */
+const DP_PREFIX='jydrop-v2-';
+const DP_SLOTS=8;
 const DP_PEER_OPTS={debug:0};
-let dpState=null;   // {room,name,role:'hub'|'client',connected}
-let dpPeer=null;    // 当前 Peer 实例
-let dpHubConn=null; // 客户端与 hub 的连接（兼作与 hub 传文件的直连通道）
-let dpClients={};   // hub 视角：peerId -> {name,conn}
-let dpPeers={};     // 客户端视角：peerId -> {name,conn}（含 hub）
+let dpState=null;   // {room,name,dev,slot,connected}
+let dpPeer=null;    // 当前 Peer 实例（占用 dpState.slot 号席位）
+let dpPeers={};     // 成员表：slotId -> {name,dev,conn,slot,opened}
 let dpEntries=[];   // 传输记录（新的在前）
 let dpRenderTimer=null;
-let dpHubPrune=null;   // hub 定期剔除失效成员的定时器
+let dpPruneTimer=null;     // 定期剔除静默掉线成员
+let dpProbeTimer=null;     // 定期重探低席位，发现新加入的设备
 let dpReconnectTimer=null; // 待执行的重连定时（离开房间时需取消，避免"复活"）
-let dpVisBound=false;  // 前后台切换重连监听（只绑一次）
-let dpNames={};        // 房间内最新成员表 id -> {name,dev}（被动接入时识别对方用）
+let dpVisBound=false;      // 前后台切换重连监听（只绑一次）
+let dpPending={};          // 正在探测中的席位号 -> conn
 const dpEl=id=>document.getElementById(id);
 const dpFmtSize=b=>b==null?'--':b<1024?b+' B':b<1048576?(b/1024).toFixed(1)+' KB':b<1073741824?(b/1048576).toFixed(1)+' MB':(b/1073741824).toFixed(2)+' GB';
 function dpRandomRoom(){
@@ -2986,8 +2987,7 @@ function dpCardSub(){
 function dpRenderPeers(){
   const box=dpEl('dpPeers');if(!box||!dpState)return;
   const self=`<button class="dp-peer me" type="button">${dpAvatar(dpState.dev)}<span class="nm">${esc(dpState.name||'本机')}（本机）</span></button>`;
-  const src=dpState.role==='hub'?dpClients:dpPeers;
-  const list=Object.entries(src).map(([id,v])=>
+  const list=Object.entries(dpPeers).map(([id,v])=>
     `<button class="dp-peer" type="button" data-dpeer="${id}">${dpAvatar(v.dev)}<span class="nm">${esc(v.name||'未知设备')}</span></button>`).join('');
   box.innerHTML=self+list+(!list&&dpState.connected?'<span class="dp-empty" style="align-self:center;padding:16px 10px">还没有其他设备 · 让对方打开本页并输入相同房间码</span>':'');
   box.querySelectorAll('[data-dpeer]').forEach(b=>b.onclick=()=>dpPickFiles(b.dataset.dpeer));
@@ -3039,8 +3039,7 @@ function dpBindDataConn(conn,rec){
   });
 }
 function dpPickFiles(peerId){
-  const src=dpState.role==='hub'?dpClients:dpPeers;
-  const rec=src[peerId];if(!rec)return;
+  const rec=dpPeers[peerId];if(!rec)return;
   if(!rec.conn.open){toast('与该设备的连接尚未就绪，请稍候',false);return;}
   const inp=dpEl('dpFile');if(!inp)return;
   inp.value='';
@@ -3071,82 +3070,29 @@ async function dpSendFiles(rec,files){
   }
 }
 
-// 加入房间：先尝试以 hub ID 注册；被占用说明房间已存在 → 以客户端身份连入
+// 加入房间（无房主席位制）
 function dpCleanup(){
-  if(dpHubPrune){clearInterval(dpHubPrune);dpHubPrune=null;}
+  if(dpPruneTimer){clearInterval(dpPruneTimer);dpPruneTimer=null;}
+  if(dpProbeTimer){clearInterval(dpProbeTimer);dpProbeTimer=null;}
   if(dpReconnectTimer){clearTimeout(dpReconnectTimer);dpReconnectTimer=null;}
-  dpNames={};
-  try{if(dpHubConn)dpHubConn.close();}catch(e){}
+  dpPending={};
   try{if(dpPeer)dpPeer.destroy();}catch(e){}
   Object.values(dpPeers).forEach(v=>{try{v.conn.close();}catch(e){}});
-  dpHubConn=null;dpPeer=null;dpPeers={};dpClients={};
+  dpPeer=null;dpPeers={};
 }
 // 关闭弹窗即下线：离开房间、断开信令与所有 P2P 连接（其他设备会立刻看到本机离开）
 function dpLeave(){
   dpCleanup();
-  dpState.connected=false;dpState.role=null;
+  dpState.connected=false;dpState.slot=null;
   dpStatus('已离开房间 · 重新打开即可再次加入');
   dpCardSub();
 }
 function dpJoin(){
   dpCleanup();
-  if(typeof Peer==='undefined'){dpStatus('PeerJS 库加载失败，请检查网络后刷新页面','err');return;}  dpState.connected=false;dpState.role=null;
+  if(typeof Peer==='undefined'){dpStatus('PeerJS 库加载失败，请检查网络后刷新页面','err');return;}
+  dpState.connected=false;dpState.slot=null;
   dpCardSub();
-  const hubId=DP_PREFIX+dpState.room.replace(/[^0-9A-Za-z]/g,'')+'-hub';
   dpStatus('正在加入房间 '+dpState.room+' …');
-  const p=new Peer(hubId,DP_PEER_OPTS);
-  dpPeer=p;
-  let fellBack=false;
-  // 看门狗：9 秒仍未握上信令（PeerJS 云偶发无响应）就推倒重来，避免永久卡在"正在加入房间"
-  dpReconnectTimer=setTimeout(()=>{if(dpPeer===p&&!p.open){try{p.destroy();}catch(e){}dpRetry();}},9000);
-  p.on('open',()=>{if(dpPeer!==p)return;dpBecomeHub();});
-  p.on('error',e=>{
-    if(dpPeer!==p)return; // 旧实例的延迟事件，忽略
-    if(e.type==='unavailable-id'&&!fellBack){fellBack=true;dpJoinAsClient(hubId);}
-    else if(e.type!=='peer-unavailable')dpStatus('连接出错：'+(e.type||'未知'),'err');
-  });
-  p.on('disconnected',()=>{if(dpPeer===p){try{p.reconnect();}catch(_){/* 忽略 */}}});
-}
-function dpBecomeHub(){
-  dpState.role='hub';dpState.connected=true;
-  dpStatus('房间 '+dpState.room+' 已创建 · 等待其他设备加入（本机为房主）','ok');
-  dpCardSub();dpRenderPeers();
-  dpPeer.on('connection',conn=>{
-    const rec={name:'未知设备',conn};
-    conn.on('open',()=>{rec.opened=true;dpBindDataConn(conn,rec);});
-    conn.on('data',msg=>{
-      if(msg&&msg.type==='hello'){
-        rec.name=msg.name||'未知设备';
-        rec.dev=msg.dev;
-        dpClients[conn.peer]=rec;
-        dpHubBroadcast();dpRenderPeers();
-        toast(rec.name+' 加入了房间');
-      }
-    });
-    conn.on('close',()=>{
-      const had=dpClients[conn.peer];
-      delete dpClients[conn.peer];
-      if(had){dpHubBroadcast();dpRenderPeers();toast(had.name+' 离开了房间');}
-    });
-    conn.on('error',()=>{delete dpClients[conn.peer];});
-  });
-  // iOS Safari 切后台/锁屏会静默断开 WebSocket 且不触发 close 事件，
-  // 定期剔除已断开的成员，避免向其他人广播"僵尸设备 ID"
-  dpHubPrune=setInterval(()=>{
-    let changed=false;
-    Object.entries(dpClients).forEach(([id,v])=>{
-      if(!v.conn.open&&v.opened){delete dpClients[id];changed=true;}
-    });
-    if(changed){dpHubBroadcast();dpRenderPeers();}
-  },10000);
-}
-function dpHubBroadcast(){
-  const list=Object.entries(dpClients).map(([id,v])=>({id,name:v.name,dev:v.dev}));
-  const hub={id:dpPeer.id,name:dpState.name,dev:dpState.dev};
-  Object.values(dpClients).forEach(v=>{try{v.conn.send({type:'peers',list,hub});}catch(e){/* 忽略 */}});
-}
-function dpJoinAsClient(hubId){
-  try{if(dpPeer)dpPeer.destroy();}catch(e){} // 释放声明 hub 失败的旧实例
   // iOS 切后台/锁屏会暂停 WebSocket，回前台时自动重连信令
   if(!dpVisBound){
     dpVisBound=true;
@@ -3154,101 +3100,113 @@ function dpJoinAsClient(hubId){
       if(!document.hidden&&dpPeer&&dpPeer.disconnected){try{dpPeer.reconnect();}catch(e){/* 忽略 */}}
     });
   }
-  const p=new Peer(DP_PEER_OPTS);
+  dpClaim(1);
+}
+const dpSlotId=i=>DP_PREFIX+dpState.room.replace(/[^0-9A-Za-z]/g,'')+'-s'+i;
+const dpSlotNum=id=>{const m=/-s(\d+)$/.exec(id||'');return m?+m[1]:null;};
+// 占席：从 s1 开始逐个尝试声明席位 ID，被占用就顺延到下一席
+function dpClaim(i){
+  if(!dpState)return;
+  if(i>DP_SLOTS){dpStatus('房间已满 · 最多支持 '+DP_SLOTS+' 台设备','err');return;}
+  const p=new Peer(dpSlotId(i),DP_PEER_OPTS);
   dpPeer=p;
-  // 看门狗：9 秒仍未握上信令就推倒重来（实例守卫保证旧看门狗误触发时无害）
+  // 看门狗：9 秒仍未握上信令（PeerJS 云偶发无响应）就推倒重来，避免永久卡在"正在加入房间"
   dpReconnectTimer=setTimeout(()=>{if(dpPeer===p&&!p.open){try{p.destroy();}catch(e){}dpRetry();}},9000);
-  // 被动接入：其他客户端按"ID 较小方发起"的约定连过来时，绑定数据通道
-  // （此前只有 hub 注册了该处理器，客户端之间互传文件全靠这条路径）
-  p.on('connection',conn=>{
-    const rec={name:(dpNames[conn.peer]&&dpNames[conn.peer].name)||'未知设备',dev:dpNames[conn.peer]&&dpNames[conn.peer].dev,conn};
-    dpPeers[conn.peer]=rec;
-    conn.on('open',()=>{rec.opened=true;dpBindDataConn(conn,rec);dpRenderPeers();});
-    conn.on('close',()=>{
-      if(dpPeers[conn.peer]===rec){delete dpPeers[conn.peer];dpRenderPeers();}
-    });
-  });
   p.on('open',()=>{
-    const conn=p.connect(hubId,{reliable:true});
-    dpHubConn=conn;
-    conn.on('open',()=>{
-      dpState.role='client';dpState.connected=true;
-      conn.send({type:'hello',name:dpState.name,dev:dpState.dev});
-      dpStatus('已加入房间 '+dpState.room+' · 等待成员列表…','ok');
-      dpCardSub();
-    });
-    conn.on('data',msg=>{
-      if(msg&&msg.type==='peers'){
-        // hub 自己也作为可直连的成员（复用与 hub 的连接传文件）
-        if(msg.hub&&msg.hub.id!==p.id&&!dpPeers[msg.hub.id]){
-          dpPeers[msg.hub.id]={name:msg.hub.name,dev:msg.hub.dev,conn:dpHubConn};
-          dpBindDataConn(dpHubConn,dpPeers[msg.hub.id]);
-        }
-        dpSyncPeers(msg.list||[]);
-        dpStatus('已加入房间 '+dpState.room+' · 在线','ok');
-      }
-    });
-    conn.on('close',()=>{
-      if(dpHubConn!==conn)return; // 主动离开(dpLeave)触发的 close，不重连
-      dpState.connected=false;
-      dpStatus('与房间失去连接，正在重连…');
-      dpCardSub();
-      dpRetry();
-    });
+    if(dpPeer!==p)return;
+    dpState.slot=i;dpState.connected=true;
+    dpStatus('已加入房间 '+dpState.room+' · 在线','ok');
+    dpCardSub();dpRenderPeers();
+    dpProbeLower();                                 // 立即探测低席位设备
+    dpProbeTimer=setInterval(dpProbeLower,8000);    // 定期重探，发现新加入的低席位设备
+    dpPruneTimer=setInterval(dpPrune,10000);        // 定期剔除静默掉线的成员
   });
-  // 客户端同样定期剔除静默掉线的成员（iOS 切后台不触发 close，列表里会挂死设备）
-  // opened 标记：只剔除"开过又死了"的连接，避免误杀还在握手的新建连接
-  dpHubPrune=setInterval(()=>{
-    let changed=false;
-    Object.entries(dpPeers).forEach(([id,v])=>{
-      if(!v.conn.open&&v.opened){try{v.conn.close();}catch(e){}delete dpPeers[id];changed=true;}
-    });
-    if(changed)dpRenderPeers();
-  },10000);
   p.on('error',e=>{
     if(dpPeer!==p)return; // 旧实例的延迟事件，忽略
-    // 仅在尚未入房时视为致命（房主已离开）；入房后同步成员时连到已离开的设备属正常情况，静默忽略，
-    // 否则会触发整个房间反复重建的死循环
-    if(e.type==='peer-unavailable'){
-      if(!dpState.connected){dpStatus('房间暂时不可达，正在重试…','err');dpRetry();}
-    }else if(e.type!=='unavailable-id')dpStatus('连接出错：'+(e.type||'未知'),'err');
+    if(e.type==='unavailable-id'){
+      // 席位被占：初次声明 → 顺延到下一席；断线重连时 ID 被抢 → 整个重新加入
+      if(dpState.connected&&dpState.slot===i){dpState.connected=false;dpRetry();}
+      else{try{p.destroy();}catch(_){/* 忽略 */}dpClaim(i+1);}
+    }else if(e.type==='peer-unavailable')dpMarkEmpty(e); // 探测到空席位，正常
+    else dpStatus('连接出错：'+(e.type||'未知'),'err');
   });
   p.on('disconnected',()=>{if(dpPeer===p){try{p.reconnect();}catch(_){/* 忽略 */}}});
-}
-function dpSyncPeers(list){
-  const want={};
-  list.forEach(x=>{if(x&&x.id&&x.id!==dpPeer.id){want[x.id]={name:x.name||'未知设备',dev:x.dev};dpNames[x.id]=want[x.id];}});
-  Object.keys(dpPeers).forEach(id=>{
-    if(!want[id]&&id!==dpHubConn.peer){
-      try{dpPeers[id].conn.close();}catch(e){}
-      delete dpPeers[id];
-    }
-  });
-  Object.keys(want).forEach(id=>{
-    if(dpPeers[id])return;
-    // 防冲突：两台客户端互见时会同时收到广播，若双方都发起 WebRTC 连接会 offer 冲突，
-    // 约定只有 Peer ID 较小的一方主动发起，较大的一方等待被动接入（见 p.on('connection')）
-    if(id<dpPeer.id)return;
-    const c=dpPeer.connect(id,{reliable:true});
-    const rec={name:want[id].name,dev:want[id].dev,conn:c};
-    dpPeers[id]=rec;
-    c.on('open',()=>{rec.opened=true;dpBindDataConn(c,rec);});
-    c.on('open',dpRenderPeers);
-    // 对端可能已离开（尤其 iOS 静默掉线），10 秒仍未连通则移除，避免列表里挂着死设备
-    setTimeout(()=>{
-      if(dpPeers[id]===rec&&!rec.conn.open){
-        delete dpPeers[id];dpRenderPeers();
+  // 被动接入：席位号比自己小的设备永远不会主动连过来（由本机发起），这里接的是席位号更大的设备
+  p.on('connection',conn=>{
+    const rec={name:'…',dev:null,conn,slot:dpSlotNum(conn.peer),opened:false};
+    dpPeers[conn.peer]=rec;
+    conn.on('open',()=>{
+      rec.opened=true;dpBindDataConn(conn,rec);
+      try{conn.send({type:'hello',name:dpState.name,dev:dpState.dev});}catch(e){/* 忽略 */}
+      dpRenderPeers();
+    });
+    conn.on('data',msg=>{
+      if(msg&&msg.type==='hello'){
+        rec.name=msg.name||'未知设备';rec.dev=msg.dev;
+        if(!rec.greeted){rec.greeted=true;toast(rec.name+' 加入了房间');}
+        dpRenderPeers();
       }
-    },10000);
+    });
+    conn.on('close',()=>{if(dpPeers[conn.peer]===rec){delete dpPeers[conn.peer];dpRenderPeers();}});
+    conn.on('error',()=>{if(dpPeers[conn.peer]===rec){delete dpPeers[conn.peer];dpRenderPeers();}});
   });
-  dpRenderPeers();
+}
+// 主动探测所有比自己席位号小的设备（空席位返回 peer-unavailable，属正常）；
+// 对方收到连接后也会回 hello，因此新设备加入时双向都能感知
+function dpProbeLower(){
+  const p=dpPeer;if(!p||!p.open||dpState.slot==null)return;
+  for(let j=1;j<dpState.slot;j++){
+    const id=dpSlotId(j);
+    if(dpPeers[id]&&dpPeers[id].conn.open)continue;
+    if(dpPending[j])continue;
+    const c=p.connect(id,{reliable:true});
+    dpPending[j]=c;
+    const rec={name:'…',dev:null,conn:c,slot:j,opened:false};
+    dpPeers[id]=rec;
+    const giveUp=setTimeout(()=>{ // 对端可能已离开（尤其 iOS 静默掉线），10 秒未连通则放弃
+      delete dpPending[j];
+      if(dpPeers[id]===rec&&!rec.open){try{c.close();}catch(e){/* 忽略 */}delete dpPeers[id];dpRenderPeers();}
+    },10000);
+    c.on('open',()=>{
+      clearTimeout(giveUp);delete dpPending[j];
+      rec.opened=true;dpBindDataConn(c,rec);
+      try{c.send({type:'hello',name:dpState.name,dev:dpState.dev});}catch(e){/* 忽略 */}
+      dpRenderPeers();
+    });
+    c.on('data',msg=>{
+      if(msg&&msg.type==='hello'){
+        rec.name=msg.name||'未知设备';rec.dev=msg.dev;
+        if(!rec.greeted){rec.greeted=true;toast(rec.name+' 加入了房间');}
+        dpRenderPeers();
+      }
+    });
+    c.on('close',()=>{clearTimeout(giveUp);delete dpPending[j];if(dpPeers[id]===rec){delete dpPeers[id];dpRenderPeers();}});
+    c.on('error',()=>{clearTimeout(giveUp);delete dpPending[j];if(dpPeers[id]===rec&&!rec.open){delete dpPeers[id];dpRenderPeers();}});
+  }
+}
+// 探测到空席位：peer-unavailable 错误消息里带目标 ID，取出席位号清掉待定标记
+function dpMarkEmpty(e){
+  const m=/-s(\d+)/.exec(e&&e.message||'');
+  if(!m)return;
+  const j=+m[1],id=dpSlotId(j);
+  delete dpPending[j];
+  if(dpPeers[id]&&!dpPeers[id].conn.open){delete dpPeers[id];dpRenderPeers();}
+}
+// 定期剔除静默掉线的成员（iOS 切后台不触发 close，列表里会挂死设备）
+// opened 标记：只剔除"开过又死了"的连接，避免误杀还在握手的新建连接
+function dpPrune(){
+  let changed=false;
+  Object.entries(dpPeers).forEach(([id,v])=>{
+    if(!v.conn.open&&v.opened){try{v.conn.close();}catch(e){/* 忽略 */}delete dpPeers[id];changed=true;}
+  });
+  if(changed)dpRenderPeers();
 }
 function dpBindWindow(){
   if(typeof Peer==='undefined'){dpStatus('PeerJS 库加载失败，请检查网络后刷新页面','err');return;}
   if(!dpState){
     let saved=null;
     try{saved=JSON.parse(localStorage.getItem('jy-drop')||'null');}catch(e){}
-    dpState={room:(saved&&saved.room)||dpRandomRoom(),name:(saved&&saved.name)||dpDevName(),dev:dpDevType(),connected:false,role:null};
+    dpState={room:(saved&&saved.room)||dpRandomRoom(),name:(saved&&saved.name)||dpDevName(),dev:dpDevType(),connected:false,slot:null};
   }
   const roomEl=dpEl('dpRoom');
   if(roomEl){
@@ -3280,9 +3238,7 @@ function dpBindWindow(){
   dpRenderPeers();dpRenderFiles();
   if(dpState.connected){
     // 重开弹窗时连接仍在：模板占位的"正在加入房间…"需刷新为真实状态
-    dpStatus(dpState.role==='hub'
-      ?'房间 '+dpState.room+' 已创建 · 等待其他设备加入（本机为房主）'
-      :'已加入房间 '+dpState.room+' · 在线','ok');
+    dpStatus('已加入房间 '+dpState.room+' · 在线','ok');
     // 信令若在弹窗关闭期间掉线，回前台重连（成员数据通道不受影响）
     if(dpPeer&&dpPeer.disconnected){try{dpPeer.reconnect();}catch(e){}}
   }else dpJoin();
