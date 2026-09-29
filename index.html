@@ -2928,6 +2928,8 @@ const DP_PEER_OPTS={debug:0};
 let dpState=null;   // {room,name,dev,slot,connected}
 let dpPeer=null;    // 当前 Peer 实例（占用 dpState.slot 号席位）
 let dpPeers={};     // 成员表：slotId -> {name,dev,conn,slot,opened}
+let dpKnown={};     // 名片记忆：slotId -> {name,dev}。连接闪断重连时直接显示旧名片，
+                    // 避免网络抖动时头像反复变回"…"（跨弹窗开关保留，页面刷新才清空）
 let dpEntries=[];   // 传输记录（新的在前）
 let dpRenderTimer=null;
 let dpPruneTimer=null;     // 定期剔除静默掉线成员
@@ -2972,6 +2974,12 @@ const DP_ICONS={
   tv:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12.5" rx="2"/><path d="M8 21.5h8M9.5 9.5l-2.5 3 2.5 3M14.5 9.5l2.5 3-2.5 3"/></svg>'
 };
 const dpAvatar=dev=>'<span class="dp-avatar">'+(DP_ICONS[dev]||DP_ICONS.pc)+'</span>';
+/* 名片记忆的读写 */
+const dpSeed=id=>({name:(dpKnown[id]&&dpKnown[id].name)||'…',dev:(dpKnown[id]&&dpKnown[id].dev)||null});
+const dpLearn=(id,name,dev)=>{
+  if(!name||name==='…')return;
+  dpKnown[id]={name,dev:dev||(dpKnown[id]&&dpKnown[id].dev)||null};
+};
 function dpSave(){try{localStorage.setItem('jy-drop',JSON.stringify({room:dpState.room,name:dpState.name}));}catch(e){}}
 function dpStatus(t,cls){const n=dpEl('dpStatus');if(n){n.textContent=t;n.className='dp-status'+(cls?' '+cls:'');}}
 /* 带随机抖动的重试：多台设备同时失去房主时，若以固定节奏重试会永远同时碰撞
@@ -2988,7 +2996,7 @@ function dpRenderPeers(){
   const box=dpEl('dpPeers');if(!box||!dpState)return;
   const self=`<button class="dp-peer me" type="button">${dpAvatar(dpState.dev)}<span class="nm">${esc(dpState.name||'本机')}（本机）</span></button>`;
   const list=Object.entries(dpPeers).sort((a,b)=>(a[1].slot||99)-(b[1].slot||99)).map(([id,v])=>
-    `<button class="dp-peer" type="button" data-dpeer="${id}">${dpAvatar(v.dev)}<span class="nm">${esc(v.name||'未知设备')}</span></button>`).join('');
+    `<button class="dp-peer" type="button" data-dpeer="${id}">${dpAvatar(v.dev)}<span class="nm">${v.name==='…'?'连接中…':esc(v.name||'未知设备')}</span></button>`).join('');
   box.innerHTML=self+list+(!list&&dpState.connected?'<span class="dp-empty" style="align-self:center;padding:16px 10px">还没有其他设备 · 让对方打开本页并输入相同房间码</span>':'');
   box.querySelectorAll('[data-dpeer]').forEach(b=>b.onclick=()=>dpPickFiles(b.dataset.dpeer));
 }
@@ -3144,7 +3152,7 @@ function dpClaim(i){
   p.on('disconnected',()=>{if(dpPeer===p){try{p.reconnect();}catch(_){/* 忽略 */}}});
   // 被动接入：席位号比自己小的设备永远不会主动连过来（由本机发起），这里接的是席位号更大的设备
   p.on('connection',conn=>{
-    const rec={name:'…',dev:null,conn,slot:dpSlotNum(conn.peer),opened:false};
+    const rec={...dpSeed(conn.peer),conn,slot:dpSlotNum(conn.peer),opened:false};
     dpPeers[conn.peer]=rec;
     const giveUp=setTimeout(()=>{ // 半开连接保护：10 秒仍未打通则移除，不留"未准备就绪"的死头像
       if(rec.open)return; // 已打通，由 close/error 处理器负责
@@ -3159,8 +3167,10 @@ function dpClaim(i){
     });
     conn.on('data',msg=>{
       if(msg&&msg.type==='hello'){
-        rec.name=msg.name||'未知设备';rec.dev=msg.dev;
-        if(!rec.greeted){rec.greeted=true;toast(rec.name+' 加入了房间');}
+        const fresh=!dpKnown[conn.peer];
+        rec.name=msg.name||rec.name;rec.dev=msg.dev||rec.dev;
+        dpLearn(conn.peer,rec.name,rec.dev);
+        if(!rec.greeted){rec.greeted=true;if(fresh)toast(rec.name+' 加入了房间');} // 已知设备重连不重复提示
         // 对方名片丢失自愈：被动方收到问候必回名片（主动方按周期重发，不回信，避免死循环）
         try{conn.send({type:'hello',name:dpState.name,dev:dpState.dev});}catch(e){/* 忽略 */}
         dpRenderPeers();
@@ -3187,7 +3197,7 @@ function dpProbeLower(){
     const c=p.connect(id,{reliable:true});
     dpPending[j]=c;
     if(dpPeers[id]&&!dpPeers[id].conn.open){try{dpPeers[id].conn.close();}catch(e){/* 忽略 */}} // 释放旧死连接
-    const rec={name:'…',dev:null,conn:c,slot:j,opened:false};
+    const rec={...dpSeed(id),conn:c,slot:j,opened:false}; // 用记忆里的名片初始化，重连不再闪回"…"
     dpPeers[id]=rec;
     const giveUp=setTimeout(()=>{ // 对端可能已离开（尤其 iOS 静默掉线），10 秒未连通则放弃
       delete dpPending[j];
@@ -3203,8 +3213,10 @@ function dpProbeLower(){
     });
     c.on('data',msg=>{
       if(msg&&msg.type==='hello'){
-        rec.name=msg.name||'未知设备';rec.dev=msg.dev;
-        if(!rec.greeted){rec.greeted=true;toast(rec.name+' 加入了房间');}
+        const fresh=!dpKnown[id];
+        rec.name=msg.name||rec.name;rec.dev=msg.dev||rec.dev;
+        dpLearn(id,rec.name,rec.dev);
+        if(!rec.greeted){rec.greeted=true;if(fresh)toast(rec.name+' 加入了房间');} // 已知设备重连不重复提示
         dpRenderPeers();
       }
     });
