@@ -2973,6 +2973,10 @@ const DP_ICONS={
 const dpAvatar=dev=>'<span class="dp-avatar">'+(DP_ICONS[dev]||DP_ICONS.pc)+'</span>';
 function dpSave(){try{localStorage.setItem('jy-drop',JSON.stringify({room:dpState.room,name:dpState.name}));}catch(e){}}
 function dpStatus(t,cls){const n=dpEl('dpStatus');if(n){n.textContent=t;n.className='dp-status'+(cls?' '+cls:'');}}
+/* 带随机抖动的重试：多台设备同时失去房主时，若以固定节奏重试会永远同时碰撞
+   （同时抢 hub ID → 同时失败 → 同时转客户端 → 连不存在的房主 → 再同时重试），
+   随机延迟必然让某台设备抢先声明成功，其余设备正常加入 */
+function dpRetry(){dpReconnectTimer=setTimeout(dpJoin,800+Math.random()*1700);}
 function dpCardSub(){
   const n=dpEl('dpSub');if(!n)return;
   n.textContent=dpState&&dpState.room&&dpState.connected
@@ -3093,6 +3097,8 @@ function dpJoin(){
   const p=new Peer(hubId,DP_PEER_OPTS);
   dpPeer=p;
   let fellBack=false;
+  // 看门狗：9 秒仍未握上信令（PeerJS 云偶发无响应）就推倒重来，避免永久卡在"正在加入房间"
+  dpReconnectTimer=setTimeout(()=>{if(dpPeer===p&&!p.open){try{p.destroy();}catch(e){}dpRetry();}},9000);
   p.on('open',()=>{if(dpPeer!==p)return;dpBecomeHub();});
   p.on('error',e=>{
     if(dpPeer!==p)return; // 旧实例的延迟事件，忽略
@@ -3150,6 +3156,8 @@ function dpJoinAsClient(hubId){
   }
   const p=new Peer(DP_PEER_OPTS);
   dpPeer=p;
+  // 看门狗：9 秒仍未握上信令就推倒重来（实例守卫保证旧看门狗误触发时无害）
+  dpReconnectTimer=setTimeout(()=>{if(dpPeer===p&&!p.open){try{p.destroy();}catch(e){}dpRetry();}},9000);
   // 被动接入：其他客户端按"ID 较小方发起"的约定连过来时，绑定数据通道
   // （此前只有 hub 注册了该处理器，客户端之间互传文件全靠这条路径）
   p.on('connection',conn=>{
@@ -3185,7 +3193,7 @@ function dpJoinAsClient(hubId){
       dpState.connected=false;
       dpStatus('与房间失去连接，正在重连…');
       dpCardSub();
-      dpReconnectTimer=setTimeout(dpJoin,1500);
+      dpRetry();
     });
   });
   // 客户端同样定期剔除静默掉线的成员（iOS 切后台不触发 close，列表里会挂死设备）
@@ -3202,7 +3210,7 @@ function dpJoinAsClient(hubId){
     // 仅在尚未入房时视为致命（房主已离开）；入房后同步成员时连到已离开的设备属正常情况，静默忽略，
     // 否则会触发整个房间反复重建的死循环
     if(e.type==='peer-unavailable'){
-      if(!dpState.connected){dpStatus('房间暂时不可达，正在重试…','err');dpReconnectTimer=setTimeout(dpJoin,1500);}
+      if(!dpState.connected){dpStatus('房间暂时不可达，正在重试…','err');dpRetry();}
     }else if(e.type!=='unavailable-id')dpStatus('连接出错：'+(e.type||'未知'),'err');
   });
   p.on('disconnected',()=>{if(dpPeer===p){try{p.reconnect();}catch(_){/* 忽略 */}}});
