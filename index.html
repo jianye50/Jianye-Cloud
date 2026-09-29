@@ -3225,7 +3225,14 @@ function dpBindWindow(){
     dpJoin();
   };
   dpRenderPeers();dpRenderFiles();
-  if(!dpState.connected)dpJoin();
+  if(dpState.connected){
+    // 重开弹窗时连接仍在：模板占位的"正在加入房间…"需刷新为真实状态
+    dpStatus(dpState.role==='hub'
+      ?'房间 '+dpState.room+' 已创建 · 等待其他设备加入（本机为房主）'
+      :'已加入房间 '+dpState.room+' · 在线','ok');
+    // 信令若在弹窗关闭期间掉线，回前台重连（成员数据通道不受影响）
+    if(dpPeer&&dpPeer.disconnected){try{dpPeer.reconnect();}catch(e){}}
+  }else dpJoin();
   dpCardSub();
 }
 
