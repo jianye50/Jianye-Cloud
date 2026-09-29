@@ -2995,8 +2995,9 @@ function dpCardSub(){
 function dpRenderPeers(){
   const box=dpEl('dpPeers');if(!box||!dpState)return;
   const self=`<button class="dp-peer me" type="button">${dpAvatar(dpState.dev)}<span class="nm">${esc(dpState.name||'本机')}（本机）</span></button>`;
-  const list=Object.entries(dpPeers).sort((a,b)=>(a[1].slot||99)-(b[1].slot||99)).map(([id,v])=>
-    `<button class="dp-peer" type="button" data-dpeer="${id}">${dpAvatar(v.dev)}<span class="nm">${v.name==='…'?'连接中…':esc(v.name||'未知设备')}</span></button>`).join('');
+  // 只显示数据通道已打通的设备；还在握手的（连接中）不显示，避免出现半就绪的头像
+  const list=Object.entries(dpPeers).filter(([,v])=>v.conn&&v.conn.open).sort((a,b)=>(a[1].slot||99)-(b[1].slot||99)).map(([id,v])=>
+    `<button class="dp-peer" type="button" data-dpeer="${id}">${dpAvatar(v.dev)}<span class="nm">${esc(v.name||'未知设备')}</span></button>`).join('');
   box.innerHTML=self+list+(!list&&dpState.connected?'<span class="dp-empty" style="align-self:center;padding:16px 10px">还没有其他设备 · 让对方打开本页并输入相同房间码</span>':'');
   box.querySelectorAll('[data-dpeer]').forEach(b=>b.onclick=()=>dpPickFiles(b.dataset.dpeer));
 }
