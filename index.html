@@ -531,6 +531,7 @@ a.social-i{text-decoration:none;color:var(--text-1)}
 .note-i:hover{background:var(--chip)}
 .note-i h5{font-size:14.5px;font-weight:630;display:flex;justify-content:space-between;gap:10px}
 .note-i h5 time{font-size:11.5px;color:var(--text-3);font-weight:400;flex:none}
+.note-i h5 .nt{flex:1;min-width:0}
 .note-i p{font-size:13px;color:var(--text-2);line-height:1.7;margin-top:7px;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .note-full{font-size:14px;line-height:1.95;color:var(--text-2)}
@@ -3383,7 +3384,7 @@ function notesSearchApply(focus){
     const nt=NOTES[+b.dataset.note];if(!nt)return;
     const hit=!q||(nt.t+' '+nt.p.join(' ')).toLowerCase().includes(q.toLowerCase());
     b.style.display=hit?'':'none';
-    const h5=b.querySelector('h5');if(h5)h5.innerHTML=hlMatch(nt.t,q)+'<time>'+esc(nt.d)+'</time>';
+    const h5=b.querySelector('h5');if(h5)h5.innerHTML='<span class="nt">'+hlMatch(nt.t,q)+'</span><time>'+esc(nt.d)+'</time>';
     if(hit)n++;
   });
   const wrap=inp.closest('.dlg-search');if(wrap)wrap.classList.toggle('has-q',!!q);
