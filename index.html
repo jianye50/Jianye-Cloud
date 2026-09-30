@@ -1190,7 +1190,7 @@ mark{background:rgba(110,164,255,.32);color:inherit;border-radius:4px;padding:0 
         <span class="big-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M3 10a4 4 0 0 1 4-4 5 5 0 0 1 9.6-1.5A4.5 4.5 0 0 1 21 13.5 4.5 4.5 0 0 1 16.5 18H7a4 4 0 0 1-4-8z"/></svg></span>
         <h4>项目作品库</h4>
         <p>这里存放着我写过的代码、做过的设计与实验。</p>
-        <span class="mini-link" id="projCount">5 个项目 →</span>
+        <span class="mini-link" id="projCount">6 个项目 →</span>
       </div>
     </article>
 
@@ -1399,7 +1399,8 @@ const PROJECTS = [
   {t:'Jianye File Encryptor',d:'本地文件加密工具，保护你的重要文件安全。',tags:['文件加密','安全工具'],u:'https://jye.mysxl.cn/',ic:'fav',c1:'#ffc24d',c2:'#ff8a1a'},
   {t:'Jianye PE',d:'自维护的 PE 系统，装机维护的好帮手。',tags:['PE 系统','装机维护'],u:'https://jianyepe.mysxl.cn/',ic:'settings',c1:'#8e7bff',c2:'#4a36c4'},
   {t:'鉴业浏览器主页插件',d:'发布在 Edge 扩展商店的浏览器主页插件。',tags:['浏览器扩展','Edge'],u:'https://microsoftedge.microsoft.com/addons/detail/dgejdcchpcbiojhbiebfbpikeejipfbd',ic:'skills',c1:'#4cc8ff',c2:'#1f6fe0'},
-  {t:'Jianye AI 智能助手',d:'接入大模型的智能对话助手。',tags:['AI','智能助手'],u:'https://jianye-ai.mysxl.cn/',ic:'games',c1:'#ff6a8e',c2:'#c01e52'}
+  {t:'Jianye AI 智能助手',d:'接入大模型的智能对话助手。',tags:['AI','智能助手'],u:'https://jianye-ai.mysxl.cn/',ic:'games',c1:'#ff6a8e',c2:'#c01e52'},
+  {t:'鉴业文件传送',d:'手机与电脑之间点对点直传文件，不经过服务器，支持跨平台多语言。',tags:['文件传送','P2P 直连'],u:'https://jianye.pages.dev/drop',ic:'drop',c1:'#40c8e0',c2:'#1f6fe0'}
 ];
 
 /* 备忘录来自「备忘录」文件夹内的 .txt 文件（Markdown 语法排版），
@@ -3560,6 +3561,12 @@ if('IntersectionObserver' in window){
 }else{
   revealAll();
 }
+
+/* 首页「云盘」卡上的项目数直接从 PROJECTS 算，加/删项目不会再对不上 */
+(function syncProjectCount(){
+  const el=$('#projCount');
+  if(el)el.textContent=PROJECTS.length+' 个项目 →';
+})();
 
 /* ========================= 读取图片文件夹 ========================= */
 loadPhotos();
