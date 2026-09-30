@@ -1,0 +1,2199 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>鉴业文件传送</title>
+<meta name="description" content="鉴业文件传送 · 相同房间码的设备点对点直连互传，文件不经过任何服务器">
+<meta name="theme-color" content="#f5f6f9">
+<link rel="icon" id="dpFavicon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230a84ff' stroke-width='2' stroke-linecap='round'><circle cx='12' cy='19' r='1.7' fill='%230a84ff' stroke='none'/><path d='M6.6 14.2a7.6 7.6 0 0 1 10.8 0'/><path d='M3.4 10.6a12.2 12.2 0 0 1 17.2 0'/></svg>">
+<script>
+/* 首屏前置：在样式表生效前就把「已保存的主题 / 强调色 / 文字方向」落到 <html> 上，
+   否则刷新时会先按系统主题闪一下，阿拉伯语还会先左后右跳一下。
+   注意：这里的颜色表必须与下方 JS 里的 DP_COLORS 保持一致。 */
+(function(){
+  try{
+    var d=document.documentElement,ls=window.localStorage;
+    var th=ls.getItem('jy-drop-theme');
+    if(th==='dark'||th==='light')d.setAttribute('data-theme',th);
+    var M={blue:'#0a84ff',indigo:'#5e5ce6',purple:'#bf5af2',pink:'#ff375f',red:'#ff453a',orange:'#ff9f0a',green:'#30d158',teal:'#40c8e0'};
+    var P={blue:'#64d2ff',indigo:'#a9a7ff',purple:'#e3aaff',pink:'#ff93aa',red:'#ff9d95',orange:'#ffd07d',green:'#8ef0a7',teal:'#9ce8f6'};
+    var c=ls.getItem('jy-drop-color')||ls.getItem('jy-drop-color-auto');
+    if(c&&M[c]){
+      var n=parseInt(M[c].slice(1),16);
+      d.style.setProperty('--accent',M[c]);
+      d.style.setProperty('--accent-lt',P[c]);
+      d.style.setProperty('--accent-rgb',((n>>16)&255)+','+((n>>8)&255)+','+(n&255));
+    }
+    var lp=ls.getItem('jy-drop-lang');
+    var cand=(lp&&lp!=='auto')?lp:(((navigator.languages||[])[0])||navigator.language||'');
+    if(/^(ar|fa|he|ur)/i.test(cand))d.setAttribute('dir','rtl');
+    if(/^zh\b/i.test(cand))d.lang=/hant|tw|hk|mo/i.test(cand)?'zh-TW':'zh-CN';
+    else if(cand)d.lang=cand;
+  }catch(e){}
+})();
+</script>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+/* ── 主题变量：浅色为默认；data-theme 手动覆盖；未选择时跟随系统 ── */
+:root{
+  color-scheme:light;
+  --accent:#0a84ff;--accent-rgb:10,132,255;--accent-lt:#64d2ff;--ok:#30d158;--err:#ff453a;
+  --bg:#f4f6fa;--glow:rgba(var(--accent-rgb),.14);
+  --surface:rgba(255,255,255,.78);--solid:#fff;
+  --border:rgba(0,0,0,.07);--border2:rgba(0,0,0,.1);
+  --text:#1d1d1f;--text2:#6e6e73;--text3:#8e8e93;
+  --chip:rgba(118,118,128,.1);--track:rgba(118,118,128,.16);
+  --shadow:0 12px 34px rgba(20,30,60,.09);
+  --bar:rgba(246,248,252,.72);
+}
+html[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#08080a;--glow:rgba(var(--accent-rgb),.22);
+  --surface:rgba(28,28,30,.74);--solid:#1c1c1e;
+  --border:rgba(255,255,255,.085);--border2:rgba(255,255,255,.13);
+  --text:#f5f5f7;--text2:#a1a1a6;--text3:#8e8e93;
+  --chip:rgba(118,118,128,.24);--track:rgba(118,118,128,.28);
+  --shadow:0 12px 34px rgba(0,0,0,.55);
+  --bar:rgba(18,18,20,.72);
+}
+@media (prefers-color-scheme:dark){
+  html:not([data-theme="light"]){color-scheme:dark;--bg:#08080a;--glow:rgba(var(--accent-rgb),.22);
+    --surface:rgba(28,28,30,.74);--solid:#1c1c1e;
+    --border:rgba(255,255,255,.085);--border2:rgba(255,255,255,.13);
+    --text:#f5f5f7;--text2:#a1a1a6;--text3:#8e8e93;
+    --chip:rgba(118,118,128,.24);--track:rgba(118,118,128,.28);
+    --shadow:0 12px 34px rgba(0,0,0,.55);--bar:rgba(18,18,20,.72)}
+}
+html,body{height:100%}
+body{
+  margin:0;background:var(--bg);color:var(--text);min-height:100dvh;
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","PingFang SC","Helvetica Neue","Microsoft YaHei",sans-serif;
+  -webkit-font-smoothing:antialiased;
+  background-image:radial-gradient(90% 55% at 50% 0%,var(--glow),transparent 70%);
+  background-repeat:no-repeat;
+}
+/* 桌面应用式外壳：顶栏通栏，下面三栏铺满整个窗口宽度 */
+.app{width:100%;max-width:1680px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column;
+  padding:0 26px calc(18px + env(safe-area-inset-bottom))}
+
+/* ── 顶栏：左标题 / 右工具 ── */
+.topbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;
+  padding:16px 2px 12px;background:var(--bar);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+.brand{display:flex;align-items:center;gap:12px;min-width:0;flex:1}
+.logo{width:42px;height:42px;flex:none;border-radius:12px;display:grid;place-items:center;color:#fff;
+  background:linear-gradient(150deg,var(--accent-lt),var(--accent));box-shadow:0 8px 20px rgba(var(--accent-rgb),.32)}
+.logo svg{width:23px;height:23px}
+.brand h1{margin:0;font-size:17px;font-weight:650;letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand p{margin:2px 0 0;font-size:11.5px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tools{display:flex;align-items:center;gap:8px;flex:none}
+.icon-btn{position:relative;width:38px;height:38px;flex:none;border-radius:50%;display:grid;place-items:center;cursor:pointer;
+  background:var(--surface);border:1px solid var(--border);color:var(--text2);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:var(--shadow);transition:.18s}
+.icon-btn:hover{color:var(--accent);border-color:var(--accent)}
+.icon-btn:active{transform:scale(.94)}
+.icon-btn svg{width:19px;height:19px}
+.icon-btn.on{color:var(--accent);border-color:rgba(var(--accent-rgb),.5)}
+/* 主题按钮「自动」状态的 A 角标 */
+#dpTheme .auto-a{position:absolute;right:2px;bottom:2px;width:13px;height:13px;border-radius:50%;
+  background:var(--accent);color:#fff;font-size:8.5px;font-weight:700;line-height:13px;text-align:center;
+  letter-spacing:0;box-shadow:0 0 0 2px var(--surface);pointer-events:none}
+
+/* ── 三栏工作区：左房间控制台 / 中设备区 / 右传输记录 ── */
+.layout{flex:1;min-height:0;display:grid;grid-template-columns:300px minmax(0,1fr) 384px;gap:20px;
+  padding:14px 0 4px;align-items:stretch}
+.col{display:flex;flex-direction:column;gap:14px;min-height:0}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:18px;
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:var(--shadow)}
+.card>h2{margin:0 0 12px;font-size:11.5px;font-weight:600;letter-spacing:.6px;color:var(--text3);text-transform:uppercase}
+
+/* ── 左栏：房间控制台 ── */
+.fld{background:var(--chip);border-radius:14px;padding:10px 14px 12px}
+.fld+.fld{margin-top:10px}
+.fld label{display:block;font-size:10.5px;font-weight:600;letter-spacing:.6px;color:var(--text3);text-transform:uppercase;margin-bottom:4px}
+.rline{display:flex;align-items:center;gap:6px}
+.rinput{flex:1;min-width:0;font-family:inherit;font-size:22px;font-weight:700;letter-spacing:2.6px;color:var(--accent);
+  background:none;border:none;outline:none;padding:2px 0;text-transform:uppercase;font-variant-numeric:tabular-nums;direction:ltr}
+.ninput{width:100%;font-family:inherit;font-size:14.5px;font-weight:620;color:var(--text);background:none;border:none;outline:none;padding:3px 0}
+.mini{flex:none;font-family:inherit;font-size:11.5px;font-weight:600;padding:6px 12px;border-radius:999px;
+  background:var(--solid);border:1px solid var(--border2);color:var(--text2);cursor:pointer;transition:.18s}
+.mini:hover{background:var(--accent);color:#fff;border-color:transparent}
+.mini:active{transform:scale(.95)}
+.prow{display:flex;gap:8px;margin-top:10px}
+.prow .mini{flex:1;padding:9px 12px;border-radius:12px}
+/* ── 鼠标停在「复制邀请链接」上时弹出的邀请二维码 ── */
+.qrw{flex:1;position:relative;display:flex}
+.qrpop{position:absolute;left:0;bottom:100%;z-index:25;display:flex;flex-direction:column;align-items:center;gap:7px;
+  padding:11px 11px 9px;margin-bottom:7px;background:#fff;border-radius:14px;
+  box-shadow:0 16px 40px rgba(0,0,0,.3);opacity:0;visibility:hidden;pointer-events:none;
+  transform:translateY(6px);transition:opacity .16s,transform .16s,visibility .16s}
+/* 按钮与浮层之间的 7px 空隙也吃悬停，鼠标挪上去时不会中途掉出去 */
+.qrpop::after{content:'';position:absolute;top:100%;left:0;right:0;height:7px}
+/* 显示条件只有两个：鼠标悬停，或键盘聚焦（.on 由脚本加，鼠标点出来的焦点不算，
+   ——用 :focus-within 的话点完按钮焦点赖着不走，鼠标移开二维码就不消失了） */
+.qrw:hover .qrpop,.qrw.on .qrpop{opacity:1;visibility:visible;pointer-events:auto;transform:none}
+.qrcode{width:132px;height:132px}
+.qrcode svg{display:block;width:100%;height:100%;border-radius:3px}
+.qrtip{font-size:11px;font-weight:600;color:#333;white-space:nowrap}
+.qrpop.qr-none{display:none}          /* 链接太长放不下二维码时，干脆不弹 */
+@media (max-width:860px){.qrtip{font-size:10.5px}}
+.phint{margin:12px 0 0;font-size:11.5px;color:var(--text3);line-height:1.65}
+.side-l .spacer{flex:1}
+
+/* ── 右栏：传输记录（通栏高度，内部滚动） ── */
+.files-card{flex:1;display:flex;flex-direction:column;min-height:0}
+.dp-files{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:9px;padding-right:2px}
+.dp-file{display:flex;align-items:center;gap:12px;background:var(--chip);border:1px solid var(--border);
+  border-radius:16px;padding:11px 14px}
+.dp-file .fi{width:38px;height:38px;flex:none;border-radius:11px;display:grid;place-items:center;background:var(--solid);font-size:18px}
+.dp-file .fm{flex:1;min-width:0}
+.dp-file .fm b{display:block;font-size:13px;font-weight:620;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dp-file .fm span{display:block;font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dp-bar{height:4px;border-radius:2px;background:var(--track);margin-top:6px;overflow:hidden}
+.dp-bar i{display:block;height:100%;width:0;border-radius:2px;background:linear-gradient(90deg,var(--ok),var(--accent-lt));transition:width .2s}
+.dp-save{flex:none;font-family:inherit;font-size:12px;font-weight:600;padding:7px 15px;border-radius:999px;border:none;color:#fff;
+  background:linear-gradient(145deg,var(--accent-lt),var(--accent));cursor:pointer;box-shadow:0 4px 12px rgba(var(--accent-rgb),.3)}
+.dp-save:active{transform:scale(.96)}
+.dp-empty{font-size:12px;color:var(--text3);text-align:center;padding:6px 0;line-height:1.6}
+.foot{margin:10px 2px 0;font-size:11px;color:var(--text3);line-height:1.7}
+
+/* ── 中间：设备区 ── */
+.stage{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+  min-height:0;padding:10px 0 16px}
+.radar{position:relative;width:150px;height:150px;display:grid;place-items:center}
+.ring{position:absolute;inset:14px;border-radius:50%;border:1.5px solid var(--accent);opacity:0}
+.radar.live .ring{animation:radar 3.4s cubic-bezier(.24,.62,.34,1) infinite}
+.radar.live .ring:nth-of-type(2){animation-delay:1.13s}
+.radar.live .ring:nth-of-type(3){animation-delay:2.26s}
+@keyframes radar{0%{transform:scale(.68);opacity:.5}72%{opacity:0}100%{transform:scale(1.32);opacity:0}}
+.self{position:relative;z-index:1;width:100px;height:100px;border-radius:50%;display:grid;place-items:center;color:#fff;
+  background:linear-gradient(150deg,var(--accent-lt),var(--accent));box-shadow:0 14px 32px rgba(var(--accent-rgb),.4)}
+.self svg{width:46px;height:46px}
+.self-name{font-size:15px;font-weight:620;margin-top:-4px}
+.dp-status{font-size:12.5px;color:var(--text3);text-align:center;min-height:17px;line-height:1.5}
+.dp-status.ok{color:var(--ok)}
+.dp-status.err{color:var(--err)}
+.peer-wrap{display:flex;flex-direction:column;gap:12px;width:100%;max-width:720px;margin-top:4px}
+.peer-wrap h2{margin:0;font-size:11.5px;font-weight:600;letter-spacing:.6px;color:var(--text3);text-align:center;text-transform:uppercase}
+.dp-peers{display:flex;flex-wrap:wrap;gap:12px 28px;justify-content:center;min-height:26px}
+.dp-peer{display:flex;flex-direction:column;align-items:center;gap:8px;background:none;border:none;padding:8px 10px;
+  border-radius:16px;cursor:pointer;font-family:inherit;transition:transform .18s,background .18s}
+.dp-peer:hover{background:var(--chip)}
+.dp-peer:active{transform:scale(.96)}
+.dp-avatar{width:78px;height:78px;border-radius:50%;display:grid;place-items:center;color:#fff;
+  background:linear-gradient(150deg,var(--dc-lt,var(--accent-lt)),var(--dc,var(--accent)));
+  box-shadow:0 8px 20px rgba(var(--dc-rgb,var(--accent-rgb)),.32);
+  transition:transform .18s,box-shadow .18s}
+.dp-avatar svg{width:38px;height:38px}
+.dp-peer span.nm{font-size:12px;color:var(--text2);max-width:110px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}
+.dp-peer.dp-drag{background:var(--chip)}
+.dp-peer.dp-drag .dp-avatar{transform:scale(1.13);box-shadow:0 0 0 3px rgba(var(--dc-rgb,var(--accent-rgb)),.45),0 10px 24px rgba(var(--dc-rgb,var(--accent-rgb)),.5)}
+
+/* ── 设置面板 ── */
+.panel{position:fixed;top:70px;right:26px;width:328px;z-index:30;max-height:calc(100dvh - 96px);overflow:auto;
+  background:var(--solid);border:1px solid var(--border);border-radius:20px;padding:18px;
+  box-shadow:0 24px 60px rgba(0,0,0,.22);display:flex;flex-direction:column;gap:14px;
+  opacity:0;transform:translateY(-8px) scale(.98);pointer-events:none;transition:.2s}
+.panel.open{opacity:1;transform:none;pointer-events:auto}
+.panel h3{margin:0;font-size:13px;font-weight:650;letter-spacing:.4px;color:var(--text3);text-transform:uppercase}
+.seg{display:flex;background:var(--chip);border-radius:12px;padding:3px;gap:2px}
+.seg button{flex:1;font-family:inherit;font-size:12.5px;font-weight:600;color:var(--text2);background:none;border:none;
+  border-radius:10px;padding:7px 0;cursor:pointer;transition:.18s;white-space:nowrap}
+.seg button.on{background:var(--solid);color:var(--accent);box-shadow:0 2px 8px rgba(0,0,0,.12)}
+.selwrap{position:relative}
+.selwrap svg{position:absolute;right:12px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--text3);pointer-events:none}
+select.sel{width:100%;appearance:none;-webkit-appearance:none;font-family:inherit;font-size:13.5px;font-weight:600;
+  color:var(--text);background:var(--solid);border:1px solid var(--border);border-radius:12px;
+  padding:10px 34px 10px 12px;cursor:pointer;outline:none;transition:.18s}
+select.sel:hover{border-color:var(--accent)}
+/* ── 主题颜色色板 ── */
+.swatches{display:flex;flex-wrap:wrap;gap:10px 11px;padding:2px 0 1px}
+.sw{position:relative;width:26px;height:26px;flex:none;padding:0;border:none;border-radius:50%;cursor:pointer;
+  display:grid;place-items:center;color:#fff;background:linear-gradient(150deg,var(--sw-lt),var(--sw));
+  box-shadow:0 2px 8px rgba(0,0,0,.18);transition:transform .16s,box-shadow .16s}
+.sw:hover{transform:scale(1.12)}
+.sw svg{width:13px;height:13px;opacity:0;transition:opacity .14s}
+.sw.on{transform:scale(1.06);box-shadow:0 0 0 2px var(--solid),0 0 0 4px var(--sw)}
+.sw.on svg{opacity:1}
+select.sel option{background:var(--solid);color:var(--text)}
+
+/* ── 传输记录：卡片头 / 行内操作 ── */
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
+.card-head h2{margin:0;font-size:11.5px;font-weight:600;letter-spacing:.6px;color:var(--text3);text-transform:uppercase}
+.dp-act{display:flex;align-items:center;gap:6px;flex:none}
+.dp-pct{font-size:11.5px;color:var(--text3);font-variant-numeric:tabular-nums;white-space:nowrap}
+.dp-tag{font-size:11.5px;color:var(--text3);white-space:nowrap}
+.dp-sm{font-family:inherit;font-size:11px;font-weight:600;padding:5px 11px;border-radius:999px;cursor:pointer;white-space:nowrap;
+  background:var(--solid);border:1px solid var(--border2);color:var(--text2);transition:.16s}
+.dp-sm:hover{background:var(--accent);color:#fff;border-color:transparent}
+.dp-sm:active{transform:scale(.95)}
+.dp-x{width:26px;height:26px;flex:none;display:grid;place-items:center;padding:0;border-radius:50%;cursor:pointer;
+  background:none;border:none;color:var(--text3);transition:.16s}
+.dp-x:hover{background:var(--chip);color:var(--err)}
+.dp-x svg{width:14px;height:14px}
+
+/* ── Toast ── */
+.toast{position:fixed;left:50%;bottom:calc(28px + env(safe-area-inset-bottom));transform:translate(-50%,16px);
+  display:flex;align-items:center;gap:7px;max-width:86vw;
+  background:rgba(28,28,30,.92);color:#fff;font-size:13px;font-weight:500;padding:11px 18px;border-radius:999px;
+  box-shadow:0 12px 34px rgba(0,0,0,.3);opacity:0;pointer-events:none;transition:opacity .24s,transform .24s;
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);z-index:99}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.toast svg{width:15px;height:15px;flex:none;color:var(--ok)}
+
+/* ── 阿拉伯语等从右向左（RTL）排版 ── */
+html[dir="rtl"] .panel{right:auto;left:26px}
+html[dir="rtl"] .rinput{text-align:right}
+html[dir="rtl"] .selwrap svg{right:auto;left:12px}
+html[dir="rtl"] select.sel{padding:10px 12px 10px 34px}
+
+/* ── 中窄屏：传输记录先收成固定高度 ── */
+@media (max-width:1180px){
+  .layout{grid-template-columns:280px minmax(0,1fr)}
+  .side-r{grid-column:1 / -1}
+  .files-card{flex:none}
+  .dp-files{max-height:240px}
+}
+/* ── 窄屏（手机）：回落为单列竖排 ── */
+@media (max-width:860px){
+  .app{padding:0 15px calc(20px + env(safe-area-inset-bottom))}
+  .topbar{padding:12px 0 10px}
+  .layout{display:flex;flex-direction:column;gap:14px;padding-top:8px}
+  .stage{order:1;min-height:56vh;padding:0}
+  .side-l{order:2}
+  .side-r{order:3}
+  .side-l .spacer{display:none}
+  .panel{top:60px;left:15px;right:15px;width:auto}
+  html[dir="rtl"] .panel{left:15px;right:15px}
+  .brand h1{font-size:16px}
+  .brand p{font-size:11px}
+  .radar{width:132px;height:132px}
+  .self{width:88px;height:88px}
+  .dp-avatar{width:68px;height:68px}
+  .dp-avatar svg{width:33px;height:33px}
+}
+@media (max-width:520px){
+  .dp-files{max-height:200px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- 顶栏：左上网站名称 / 右上主题 + 设置 -->
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="19" r="1.7" fill="currentColor" stroke="none"/><path d="M6.6 14.2a7.6 7.6 0 0 1 10.8 0"/><path d='M3.4 10.6a12.2 12.2 0 0 1 17.2 0'/></svg></span>
+      <div style="min-width:0">
+        <h1 data-i18n="brand">鉴业文件传送</h1>
+        <p id="dpSub" data-i18n="init">正在初始化…</p>
+      </div>
+    </div>
+    <div class="tools">
+      <button class="icon-btn" id="dpTheme" type="button" data-i18n-aria="ariaTheme" aria-label="切换深浅色模式"></button>
+      <button class="icon-btn" id="dpSettings" type="button" data-i18n-aria="ariaSettings" aria-label="设置" aria-haspopup="true" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 7h9M18.5 7H20M4 12h3.5M13 12h7M4 17h9M18.5 17H20"/><circle cx="15.5" cy="7" r="2.2"/><circle cx="10" cy="12" r="2.2"/><circle cx="15.5" cy="17" r="2.2"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- 三栏工作区 -->
+  <div class="layout">
+
+    <!-- 左栏：房间控制台 -->
+    <aside class="col side-l">
+      <section class="card">
+        <h2 data-i18n="secRoom">房间</h2>
+        <div class="fld">
+          <label data-i18n="roomCode">房间码</label>
+          <div class="rline">
+            <input id="dpRoom" class="rinput" maxlength="7" spellcheck="false" autocomplete="off" autocapitalize="characters" data-i18n-aria="ariaRoom" aria-label="房间码">
+            <button class="mini" id="dpNewRoom" type="button" data-i18n="random">随机</button>
+          </div>
+        </div>
+        <div class="fld">
+          <label data-i18n="deviceName">本机名称</label>
+          <input id="dpName" class="ninput" maxlength="20" autocomplete="off" data-i18n-ph="namePh" placeholder="给这台设备起个名字">
+        </div>
+        <div class="prow">
+          <div class="qrw" id="dpQrWrap">
+            <button class="mini" id="dpCopy" type="button" data-i18n="copyLink">复制邀请链接</button>
+            <div class="qrpop" id="dpQrPop">
+              <div class="qrcode" id="dpQrCode"></div>
+              <span class="qrtip" data-i18n="qrHint">扫码加入房间</span>
+            </div>
+          </div>
+          <button class="mini" id="dpLeave" type="button">离开房间</button>
+        </div>
+        <p class="phint" data-i18n="roomHint">相同房间码的设备会自动互相发现 · 文件在设备之间点对点直传，不经过任何服务器。</p>
+      </section>
+      <div class="spacer"></div>
+    </aside>
+
+    <!-- 中栏：设备区 -->
+    <main class="stage">
+      <div class="radar" id="dpRadar">
+        <span class="ring"></span><span class="ring"></span><span class="ring"></span>
+        <div class="self" id="dpSelf"></div>
+      </div>
+      <div class="self-name" id="dpSelfName">本机</div>
+      <div class="dp-status" id="dpStatus" data-i18n="statusInit">正在加入房间…</div>
+      <div class="peer-wrap">
+        <h2 data-i18n="peers">附近的设备</h2>
+        <div class="dp-peers" id="dpPeers"></div>
+      </div>
+    </main>
+
+    <!-- 右栏：传输记录 -->
+    <aside class="col side-r">
+      <section class="card files-card">
+        <div class="card-head">
+          <h2 data-i18n="files">传输记录</h2>
+          <button class="mini" id="dpClear" type="button" data-i18n="clearAll">清空记录</button>
+        </div>
+        <div class="dp-files" id="dpFiles"></div>
+      </section>
+      <p class="foot"><span data-i18n="foot1">WebRTC 点对点直连 · 仅连接握手经过中继</span><br><span data-i18n="foot2">点击设备圆圈选择文件，或把文件拖到圆圈上发送</span></p>
+    </aside>
+  </div>
+</div>
+
+<!-- 设置面板 -->
+<div class="panel" id="dpPanel" role="dialog" data-i18n-aria="ariaSettings" aria-label="设置">
+  <h3 data-i18n="settings">设置</h3>
+  <div class="fld">
+    <label data-i18n="language">界面语言</label>
+    <div class="selwrap">
+      <select class="sel" id="dpLang" data-i18n-aria="ariaLang" aria-label="界面语言"></select>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+    </div>
+  </div>
+  <div class="fld">
+    <label data-i18n="theme">外观主题</label>
+    <div class="seg" id="dpThemeSeg">
+      <button type="button" data-t="auto" data-i18n="themeAuto">自动</button>
+      <button type="button" data-t="light" data-i18n="themeLight">浅色</button>
+      <button type="button" data-t="dark" data-i18n="themeDark">深色</button>
+    </div>
+  </div>
+  <div class="fld">
+    <label data-i18n="accentColor">主题颜色</label>
+    <div class="swatches" id="dpSwatches" role="group" data-i18n-aria="accentColor" aria-label="主题颜色"></div>
+  </div>
+  <div class="fld">
+    <label data-i18n="sound">提示音</label>
+    <div class="seg" id="dpSoundSeg">
+      <button type="button" data-s="on" data-i18n="soundOn">开启</button>
+      <button type="button" data-s="off" data-i18n="soundOff">关闭</button>
+    </div>
+    <p class="phint" data-i18n="soundHint">收到文件时播放提示音。</p>
+  </div>
+</div>
+
+<input type="file" id="dpFile" multiple hidden>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ========================= 工具 ========================= */
+const dpEl=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+function toast(msg,ok=true){
+  const t=dpEl('toast');
+  t.innerHTML=(ok?'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>':'')+esc(msg);
+  t.classList.add('show');
+  clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2400);
+}
+const dpFmtSize=b=>b==null?'--':b<1024?b+' B':b<1048576?(b/1024).toFixed(1)+' KB':b<1073741824?(b/1048576).toFixed(1)+' MB':(b/1073741824).toFixed(2)+' GB';
+/* 剩余时间：用 s/m 这种语言无关的短格式，外层再套各语言的「剩余 …」词条 */
+const dpFmtDur=s=>{
+  s=Math.max(0,Math.round(s||0));
+  if(s<60)return s+'s';
+  const m=Math.floor(s/60);
+  return m+'m'+(s%60?s%60+'s':'');
+};
+/* 每收/发一个数据块就更新一次速度：指数滑动平均，避免数字乱跳 */
+function dpTick(e){
+  const now=Date.now();
+  if(e._t0==null){e._t0=now;e._b0=e.done;return;}
+  const dt=(now-e._t0)/1000;
+  if(dt<0.3)return;
+  const inst=(e.done-e._b0)/dt;
+  e._spd=e._spd?e._spd*.72+inst*.28:inst;
+  e._t0=now;e._b0=e.done;
+  e._eta=(e.size>e.done&&e._spd>120)?(e.size-e.done)/e._spd:null;
+}
+/* 复制到剪贴板：优先异步 API，非安全上下文回退到 execCommand */
+async function dpCopyText(txt){
+  if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(txt);return;}
+  const ta=document.createElement('textarea');ta.value=txt;ta.style.position='fixed';ta.style.opacity='0';
+  document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();
+}
+const dpRandomRoom=()=>{
+  const ab='23456789ABCDEFGHJKMNPQRSTUVWXYZ';
+  const pick=n=>Array.from({length:n},()=>ab[Math.floor(Math.random()*ab.length)]).join('');
+  return pick(3)+'-'+pick(3);
+};
+
+/* ========================= 二维码（离线自绘，不依赖任何外部服务） =========================
+   只做「字节模式 + 版本 1~10」：一条邀请链接最长也就一百多字节，够用。
+   放得下优先用 M 级纠错，太长退到 L 级；仍放不下（超过 271 字节）返回 null，由界面自己兜底。
+   分区表 / 校正图形坐标按 QR Code 规范写死在这里，不联网取图，断网也能用。 */
+const DP_QR_RS=[
+  [[1,26,19],[1,26,16],[1,26,13],[1,26,9]],                                          // v1
+  [[1,44,34],[1,44,28],[1,44,22],[1,44,16]],                                          // v2
+  [[1,70,55],[1,70,44],[2,35,17],[2,35,13]],                                          // v3
+  [[1,100,80],[2,50,32],[2,50,24],[4,25,9]],                                          // v4
+  [[1,134,108],[2,67,43],[2,33,15,2,34,16],[2,33,11,2,34,12]],                        // v5
+  [[2,86,68],[4,43,27],[4,43,19],[4,43,15]],                                          // v6
+  [[2,98,78],[4,49,31],[2,32,14,4,33,15],[4,39,13,1,40,14]],                          // v7
+  [[2,121,97],[2,60,38,2,61,39],[4,40,18,2,41,19],[4,40,14,2,41,15]],                 // v8
+  [[2,146,116],[3,58,36,2,59,37],[4,36,16,4,37,17],[4,36,12,4,37,13]],                // v9
+  [[2,86,68,2,87,69],[4,69,43,1,70,44],[6,43,19,2,44,20],[6,43,15,2,44,16]]           // v10
+]; // [版本-1][纠错级别 L,M,Q,H]，每 3 个数字一组：(块数, 每块总码字, 每块数据码字)
+const DP_QR_ALIGN=[[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],[6,24,42],[6,26,46],[6,28,50]];
+/* GF(256)，本原多项式 0x11D */
+const DP_QR_EXP=new Uint8Array(512),DP_QR_LOG=new Uint8Array(256);
+(()=>{
+  let x=1;
+  for(let i=0;i<255;i++){DP_QR_EXP[i]=x;DP_QR_LOG[x]=i;x=(x<<1)^((x&0x80)?0x11d:0);}
+  for(let i=255;i<512;i++)DP_QR_EXP[i]=DP_QR_EXP[i-255];
+})();
+const dpQrMul=(a,b)=>(a&&b)?DP_QR_EXP[DP_QR_LOG[a]+DP_QR_LOG[b]]:0;
+/* 纠错生成多项式 (x-α⁰)(x-α¹)…(x-αⁿ⁻¹) */
+function dpQrGenPoly(n){
+  let g=[1];
+  for(let i=0;i<n;i++){
+    const ng=new Array(g.length+1).fill(0),root=DP_QR_EXP[i];
+    for(let j=0;j<g.length;j++){ng[j]^=g[j];ng[j+1]^=dpQrMul(g[j],root);}
+    g=ng;
+  }
+  return g;
+}
+/* 多项式除法取余，得到 n 个纠错码字 */
+function dpQrEcc(data,n){
+  const g=dpQrGenPoly(n),res=new Uint8Array(data.length+n);
+  res.set(data);
+  for(let i=0;i<data.length;i++){
+    const c=res[i];
+    if(!c)continue;
+    for(let j=1;j<g.length;j++)res[i+j]^=dpQrMul(g[j],c);
+  }
+  return res.subarray(data.length);
+}
+/* 8 种掩码图案 */
+const DP_QR_MASK=[
+  (r,c)=>(r+c)%2===0,
+  (r,c)=>r%2===0,
+  (r,c)=>c%3===0,
+  (r,c)=>(r+c)%3===0,
+  (r,c)=>((r>>1)+Math.floor(c/3))%2===0,
+  (r,c)=>((r*c)%2)+((r*c)%3)===0,
+  (r,c)=>(((r*c)%2)+((r*c)%3))%2===0,
+  (r,c)=>(((r+c)%2)+((r*c)%3))%2===0
+];
+/* 掩码罚分（规范的 4 条规则）：越小越好 */
+function dpQrPenalty(m){
+  const n=m.length;let p=0;
+  for(let i=0;i<n;i++){                       // 规则 1：连续 5 个以上同色
+    let runC=1,runR=1;
+    for(let j=1;j<n;j++){
+      if(m[i][j]===m[i][j-1])runC++;else{if(runC>=5)p+=runC-2;runC=1;}
+      if(m[j][i]===m[j-1][i])runR++;else{if(runR>=5)p+=runR-2;runR=1;}
+    }
+    if(runC>=5)p+=runC-2;
+    if(runR>=5)p+=runR-2;
+  }
+  for(let r=0;r<n-1;r++)for(let c=0;c<n-1;c++){   // 规则 2：2×2 同色方块
+    const v=m[r][c];
+    if(v===m[r][c+1]&&v===m[r+1][c]&&v===m[r+1][c+1])p+=3;
+  }
+  const pat=[1,0,1,1,1,0,1,0,0,0,0];          // 规则 3：像定位图形的条带
+  for(let r=0;r<n;r++)for(let c=0;c+11<=n;c++){
+    let a=true,b=true;
+    for(let k=0;k<11;k++){
+      if(m[r][c+k]!==pat[k])a=false;
+      if(m[r][c+k]!==pat[10-k])b=false;
+    }
+    if(a)p+=40;
+    if(b)p+=40;
+  }
+  for(let c=0;c<n;c++)for(let r=0;r+11<=n;r++){
+    let a=true,b=true;
+    for(let k=0;k<11;k++){
+      if(m[r+k][c]!==pat[k])a=false;
+      if(m[r+k][c]!==pat[10-k])b=false;
+    }
+    if(a)p+=40;
+    if(b)p+=40;
+  }
+  let dark=0;                                 // 规则 4：黑块占比偏离 50%
+  for(let r=0;r<n;r++)for(let c=0;c<n;c++)dark+=m[r][c];
+  const total=n*n;
+  p+=Math.floor(Math.abs(dark*20-total*10)/total)*10;
+  return p;
+}
+/* 格式信息：2 bit 纠错级别 + 3 bit 掩码 → BCH(15,5) → 异或 0x5412 */
+function dpQrFormat(m,n,lvl,k){
+  const ec=[1,0,3,2][lvl];                    // L=01 M=00 Q=11 H=10
+  const d=(ec<<3)|k;
+  let rem=d;
+  for(let i=0;i<10;i++)rem=(rem<<1)^(((rem>>9)&1)?0x537:0);
+  const f=((d<<10)|rem)^0x5412,bit=i=>(f>>i)&1;
+  for(let i=0;i<6;i++)m[i][8]=bit(i);            // 左上竖列
+  m[7][8]=bit(6);m[8][8]=bit(7);m[8][7]=bit(8);  // 拐角三格（含左上横行首格）
+  for(let i=9;i<15;i++)m[8][14-i]=bit(i);        // 左上横行其余各格（第 6 列是时序图形，跳过）
+  for(let i=0;i<8;i++)m[8][n-1-i]=bit(i);        // 右上横行
+  for(let i=8;i<15;i++)m[n-15+i][8]=bit(i);      // 左下竖列
+}
+/* 数据码字总数：分组记法是 (块数, 每块总码字, 每块数据码字)，别忘了乘块数 */
+const dpQrDataCw=spec=>{
+  let n=0;
+  for(let i=0;i<spec.length;i+=3)n+=spec[i]*spec[i+2];
+  return n;
+};
+/* 生成模块矩阵：成功返回 0/1 二维数组，链接太长返回 null */
+function dpQrMatrix(text,forceMask){
+  let bytes;
+  try{bytes=new TextEncoder().encode(text);}catch(e){bytes=null;}
+  if(!bytes)return null;
+  let ver=0,lvl=1,spec=null;                  // 默认 M 级纠错
+  for(const L of [1,0]){
+    for(let v=1;v<=10;v++){
+      const s=DP_QR_RS[v-1][L],cc=v<10?8:16;
+      if(bytes.length<=Math.floor((dpQrDataCw(s)*8-4-cc)/8)){ver=v;lvl=L;spec=s;break;}
+    }
+    if(ver)break;
+  }
+  if(!ver)return null;
+  const n=ver*4+17,ccBits=ver<10?8:16,dcw=dpQrDataCw(spec);
+  /* 1. 比特流：模式 0100 + 长度 + 数据 + 结束符 + 补齐 + 填充码字 */
+  const bits=[];
+  const push=(val,len)=>{for(let i=len-1;i>=0;i--)bits.push((val>>i)&1);};
+  push(4,4);push(bytes.length,ccBits);
+  for(const b of bytes)push(b,8);
+  for(let i=0;i<4&&bits.length<dcw*8;i++)bits.push(0);
+  while(bits.length%8)bits.push(0);
+  const data=[];
+  for(let i=0;i<bits.length;i+=8){let b=0;for(let j=0;j<8;j++)b=(b<<1)|bits[i+j];data.push(b);}
+  for(let i=data.length,alt=0;i<dcw;i++,alt++)data.push(alt%2?0x11:0xEC);
+  /* 2. 分块算纠错，再按规范交错 */
+  const blk=[];
+  for(let i=0;i<spec.length;i+=3){
+    for(let k=0;k<spec[i];k++)blk.push({data:new Uint8Array(spec[i+2]),ec:new Uint8Array(spec[i+1]-spec[i+2])});
+  }
+  let off=0;
+  blk.forEach(b=>{b.data.set(data.slice(off,off+b.data.length));off+=b.data.length;});
+  blk.forEach(b=>b.ec.set(dpQrEcc(b.data,b.ec.length)));
+  const inter=[],maxD=Math.max(...blk.map(b=>b.data.length));
+  for(let i=0;i<maxD;i++)blk.forEach(b=>{if(i<b.data.length)inter.push(b.data[i]);});
+  for(let i=0;i<blk[0].ec.length;i++)blk.forEach(b=>inter.push(b.ec[i]));
+  /* 3. 固定图形（定位、时序、校正、暗点）先占位，数据绕开它们 */
+  const base=[],fn=[];
+  for(let r=0;r<n;r++){base.push(new Uint8Array(n));fn.push(new Uint8Array(n));}
+  const set=(r,c,dark)=>{if(r<0||c<0||r>=n||c>=n)return;base[r][c]=dark?1:0;fn[r][c]=1;};
+  const finder=(r0,c0)=>{
+    for(let r=-1;r<=7;r++)for(let c=-1;c<=7;c++){
+      const inRing=(r>=0&&r<=6&&(c===0||c===6))||(c>=0&&c<=6&&(r===0||r===6));
+      set(r0+r,c0+c,inRing||(r>=2&&r<=4&&c>=2&&c<=4));
+    }
+  };
+  finder(0,0);finder(0,n-7);finder(n-7,0);
+  for(let i=8;i<n-8;i++){set(6,i,i%2===0);set(i,6,i%2===0);}
+  const ap=DP_QR_ALIGN[ver-1],al=ap[ap.length-1];
+  for(const r0 of ap)for(const c0 of ap){
+    if((r0===6&&c0===6)||(r0===6&&c0===al)||(r0===al&&c0===6))continue;
+    for(let r=-2;r<=2;r++)for(let c=-2;c<=2;c++)set(r0+r,c0+c,Math.max(Math.abs(r),Math.abs(c))!==1);
+  }
+  set(n-8,8,true);                            // 固定暗点
+  const reserve=(r,c)=>{if(r>=0&&c>=0&&r<n&&c<n)fn[r][c]=1;};
+  for(let i=0;i<9;i++){reserve(8,i);reserve(i,8);}
+  for(let i=0;i<8;i++){reserve(8,n-1-i);reserve(n-1-i,8);}
+  if(ver>=7){                                 // 版本信息（BCH(18,6)）
+    let rem=ver;
+    for(let i=0;i<12;i++)rem=(rem<<1)^(((rem>>11)&1)?0x1f25:0);
+    const vi=(ver<<12)|rem;
+    for(let i=0;i<18;i++){
+      const b=(vi>>i)&1,a=n-11+i%3;
+      set(i/3|0,a,b);set(a,i/3|0,b);
+    }
+  }
+  /* 4. 从右下角起、左右成对之字形填数据；多余的剩余位补 0 */
+  let dir=-1,r=n-1,idx=0;
+  for(let c=n-1;c>0;c-=2){
+    if(c===6)c=5;                             // 第 6 列是时序图形，跳过去
+    for(;;){
+      for(let k=0;k<2;k++){
+        const cc=c-k;
+        if(!fn[r][cc]){
+          base[r][cc]=idx<inter.length*8?(inter[idx>>3]>>(7-(idx&7)))&1:0;
+          idx++;
+        }
+      }
+      r+=dir;
+      if(r<0||r>=n){r-=dir;dir=-dir;break;}
+    }
+  }
+  /* 5. 逐个试 8 种掩码，取罚分最低的那张 */
+  let best=null,bestP=Infinity;
+  for(let k=0;k<8;k++){
+    if(forceMask!=null&&k!==forceMask)continue;
+    const m=base.map(row=>Uint8Array.from(row));
+    for(let r2=0;r2<n;r2++)for(let c2=0;c2<n;c2++)if(!fn[r2][c2]&&DP_QR_MASK[k](r2,c2))m[r2][c2]^=1;
+    dpQrFormat(m,n,lvl,k);
+    const p=dpQrPenalty(m);
+    if(p<bestP){bestP=p;best=m;}
+  }
+  return best;
+}
+/* 矩阵 → 内联 SVG（外面留 4 模块静默区，黑白固定色，深浅主题都能扫） */
+function dpQrSvg(m){
+  const n=m.length,q=4,s=n+q*2;
+  let d='';
+  for(let r=0;r<n;r++)for(let c=0;c<n;c++)if(m[r][c])d+='M'+(c+q)+' '+(r+q)+'h1v1h-1z';
+  return `<svg viewBox="0 0 ${s} ${s}" shape-rendering="crispEdges" aria-hidden="true"><rect width="${s}" height="${s}" fill="#fff"/><path d="${d}" fill="#000"/></svg>`;
+}
+
+/* ── PeerJS 按需加载 ──
+   以前它写在 <head> 里且在样式表之前：CDN 一旦慢或连不上，整页要等到超时才出画面。
+   现在改成首屏先渲染、后台异步加载，并按顺序在多个镜像间回退。 */
+const DP_PEER_VER='1.5.4';
+const DP_PEER_CDNS=[
+  'https://unpkg.com/peerjs@'+DP_PEER_VER+'/dist/peerjs.min.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/peerjs/'+DP_PEER_VER+'/peerjs.min.js',
+  'https://cdn.bootcdn.net/ajax/libs/peerjs/'+DP_PEER_VER+'/peerjs.min.js'
+];
+let dpPeerWaiters=null;
+function dpLoadPeer(cb){
+  if(typeof Peer!=='undefined'){cb(true);return;}
+  if(dpPeerWaiters){dpPeerWaiters.push(cb);return;}
+  dpPeerWaiters=[cb];
+  const done=ok=>{const q=dpPeerWaiters;dpPeerWaiters=null;q.forEach(f=>{try{f(ok);}catch(e){}});};
+  let i=0;
+  const next=()=>{
+    if(typeof Peer!=='undefined'){done(true);return;}
+    if(i>=DP_PEER_CDNS.length){done(false);return;}
+    const s=document.createElement('script');
+    s.async=true;s.src=DP_PEER_CDNS[i++];
+    s.onload=()=>{if(typeof Peer!=='undefined')done(true);else{s.remove();next();}};
+    s.onerror=()=>{s.remove();next();};
+    document.head.appendChild(s);
+  };
+  next();
+}
+
+/* ========================= 提示音（收到文件时） ========================= */
+const DP_SOUND_KEY='jy-drop-sound';
+let dpSoundOn=true,dpAC=null;
+/* 两段小音符用 WebAudio 现场合成，不依赖任何音频文件 */
+function dpChime(){
+  if(!dpSoundOn)return;
+  try{
+    const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+    if(!dpAC)dpAC=new AC();
+    if(dpAC.state==='suspended')dpAC.resume();
+    const t=dpAC.currentTime;
+    [[880,0],[1318.5,.13]].forEach(pair=>{
+      const o=dpAC.createOscillator(),g=dpAC.createGain();
+      o.type='sine';o.frequency.value=pair[0];
+      g.gain.setValueAtTime(.0001,t+pair[1]);
+      g.gain.linearRampToValueAtTime(.16,t+pair[1]+.015);
+      g.gain.exponentialRampToValueAtTime(.0001,t+pair[1]+.28);
+      o.connect(g);g.connect(dpAC.destination);
+      o.start(t+pair[1]);o.stop(t+pair[1]+.3);
+    });
+  }catch(e){}
+}
+function dpSyncSound(){
+  const seg=dpEl('dpSoundSeg');if(!seg)return;
+  seg.querySelectorAll('button').forEach(b=>{
+    const on=(b.dataset.s==='on')===dpSoundOn;
+    b.classList.toggle('on',on);
+    b.setAttribute('aria-pressed',on?'true':'false');
+  });
+}
+function dpInitSound(){
+  try{const v=localStorage.getItem(DP_SOUND_KEY);if(v==='off')dpSoundOn=false;}catch(e){}
+  const seg=dpEl('dpSoundSeg');
+  if(seg)seg.querySelectorAll('button').forEach(b=>b.onclick=()=>{
+    dpSoundOn=b.dataset.s==='on';
+    try{localStorage.setItem(DP_SOUND_KEY,dpSoundOn?'on':'off');}catch(e){}
+    dpSyncSound();
+    if(dpSoundOn)dpChime(); // 立刻试听一下
+  });
+  dpSyncSound();
+}
+
+/* ========================= 多语言（i18n） ========================= */
+const DP_LANG_KEY='jy-drop-lang';
+/* 下拉里用各自母语显示语言名，任何人都能找到自己的语言 */
+const DP_LANGS=[
+  {c:'zh-CN',n:'简体中文'},{c:'zh-TW',n:'繁體中文'},{c:'en',n:'English'},{c:'ja',n:'日本語'},
+  {c:'ko',n:'한국어'},{c:'es',n:'Español'},{c:'fr',n:'Français'},{c:'de',n:'Deutsch'},
+  {c:'it',n:'Italiano'},{c:'pt',n:'Português'},{c:'ru',n:'Русский'},{c:'nl',n:'Nederlands'},
+  {c:'pl',n:'Polski'},{c:'tr',n:'Türkçe'},{c:'ar',n:'العربية'},{c:'hi',n:'हिन्दी'},
+  {c:'th',n:'ไทย'},{c:'vi',n:'Tiếng Việt'},{c:'id',n:'Bahasa Indonesia'}
+];
+const DP_DICT={
+'zh-CN':{
+  brand:'鉴业文件传送',metaDesc:'鉴业文件传送 · 相同房间码的设备点对点直连互传，文件不经过任何服务器',
+  init:'正在初始化…',statusInit:'正在加入房间…',
+  secRoom:'房间',roomCode:'房间码',random:'随机',deviceName:'本机名称',namePh:'给这台设备起个名字',
+  copyLink:'复制邀请链接',leave:'离开房间',rejoin:'重新加入',
+  roomHint:'相同房间码的设备会自动互相发现 · 文件在设备之间点对点直传，不经过任何服务器。',
+  self:'本机',peers:'附近的设备',files:'传输记录',
+  foot1:'WebRTC 点对点直连 · 仅连接握手经过中继',foot2:'点击设备圆圈选择文件，或把文件拖到圆圈上发送',
+  settings:'设置',theme:'外观主题',themeAuto:'自动',themeLight:'浅色',themeDark:'深色',
+  accentColor:'主题颜色',
+  language:'界面语言',langAuto:'自动（跟随系统）',ariaTheme:'切换深浅色模式',ariaSettings:'设置',ariaRoom:'房间码',ariaLang:'界面语言',
+  subOnline:r=>`房间 ${r} · 在线，等待同房间设备加入`,subOffline:'输入相同房间码 · P2P 直连互传',
+  joining:r=>`正在加入房间 ${r} …`,joined:r=>`已加入房间 ${r} · 在线`,
+  roomFull:n=>`房间已满 · 最多支持 ${n} 台设备，有设备离开后会自动加入`,
+  left:'已离开房间 · 点「重新加入」即可回到房间',connErr:t=>`连接出错：${t}`,
+  libFail:'PeerJS 库加载失败，请检查网络后刷新页面',
+  peerEmpty1:'还没有发现其他设备',peerEmpty2:'让对方打开本页，输入同一个房间码',unknownDev:'未知设备',
+  fileEmpty1:'暂无传输记录',fileEmpty2:'发送与接收的文件都会显示在这里',
+  to:n=>`发送至 ${n}`,from:n=>`来自 ${n}`,save:'保存',fail:'失败',done:'已完成',
+  retryConn:'与该设备的连接正在重试，请稍候再试',gotFile:n=>`收到文件：${n}`,peerJoined:n=>`${n} 加入了房间`,
+  roomCopied:'邀请链接已复制 · 对方打开即自动加入',
+  copyFail:r=>`复制失败，请手动记录房间码 ${r}`,roomShort:'房间码至少 3 位数字/字母',
+  dev_iphone:'iPhone',dev_ipad:'iPad',dev_android:'Android 设备',dev_mac:'Mac',dev_windows:'Windows 电脑',dev_linux:'Linux 设备',dev_mine:'我的设备'
+},
+'en':{
+  brand:'JianYe File Transfer',metaDesc:'JianYe File Transfer · Devices with the same room code connect directly, peer to peer — files never pass through a server',
+  init:'Initializing…',statusInit:'Joining room…',
+  secRoom:'Room',roomCode:'Room code',random:'Random',deviceName:'Device name',namePh:'Name this device',
+  copyLink:'Copy invite link',leave:'Leave room',rejoin:'Rejoin',
+  roomHint:'Devices with the same room code find each other automatically · Files are sent peer-to-peer between devices and never pass through a server.',
+  self:'This device',peers:'Nearby devices',files:'Transfer history',
+  foot1:'WebRTC peer-to-peer · only the handshake goes through a relay',foot2:'Click a device to choose files, or drop files onto it',
+  settings:'Settings',theme:'Appearance',themeAuto:'Auto',themeLight:'Light',themeDark:'Dark',
+  accentColor:'Accent color',
+  language:'Language',langAuto:'Auto (follow system)',ariaTheme:'Toggle light / dark mode',ariaSettings:'Settings',ariaRoom:'Room code',ariaLang:'Language',
+  subOnline:r=>`Room ${r} · online, waiting for devices`,subOffline:'Enter the same room code · direct P2P transfer',
+  joining:r=>`Joining room ${r} …`,joined:r=>`Joined room ${r} · online`,
+  roomFull:n=>`Room is full · up to ${n} devices; you'll join automatically once one leaves`,
+  left:'Left the room · tap “Rejoin” to come back',connErr:t=>`Connection error: ${t}`,
+  libFail:'Failed to load PeerJS. Check your network and refresh the page.',
+  peerEmpty1:'No other devices yet',peerEmpty2:'Open this page on another device and enter the same room code',unknownDev:'Unknown device',
+  fileEmpty1:'No transfers yet',fileEmpty2:'Sent and received files will appear here',
+  to:n=>`To ${n}`,from:n=>`From ${n}`,save:'Save',fail:'Failed',done:'Done',
+  retryConn:'Still connecting to this device, please try again shortly',gotFile:n=>`Received file: ${n}`,peerJoined:n=>`${n} joined the room`,
+  roomCopied:'Invite link copied · opening it joins this room',
+  copyFail:r=>`Copy failed — please note the room code ${r}`,roomShort:'Room code needs at least 3 letters or digits',
+  dev_iphone:'iPhone',dev_ipad:'iPad',dev_android:'Android device',dev_mac:'Mac',dev_windows:'Windows PC',dev_linux:'Linux device',dev_mine:'My device'
+}
+,
+'zh-TW':{
+  brand:'鑑業檔案傳送',metaDesc:'鑑業檔案傳送 · 相同房間碼的裝置點對點直連互傳，檔案不經過任何伺服器',
+  init:'正在初始化…',statusInit:'正在加入房間…',
+  secRoom:'房間',roomCode:'房間碼',random:'隨機',deviceName:'本機名稱',namePh:'給這台裝置取個名字',
+  copyLink:'複製邀請連結',leave:'離開房間',rejoin:'重新加入',
+  roomHint:'相同房間碼的裝置會自動互相發現 · 檔案在裝置之間點對點直傳，不經過任何伺服器。',
+  self:'本機',peers:'附近的裝置',files:'傳輸記錄',
+  foot1:'WebRTC 點對點直連 · 僅連線握手經過中繼',foot2:'點擊裝置圓圈選擇檔案，或把檔案拖到圓圈上傳送',
+  settings:'設定',theme:'外觀主題',themeAuto:'自動',themeLight:'淺色',themeDark:'深色',
+  accentColor:'主題顏色',
+  language:'介面語言',langAuto:'自動（跟隨系統）',ariaTheme:'切換深淺色模式',ariaSettings:'設定',ariaRoom:'房間碼',ariaLang:'介面語言',
+  subOnline:r=>`房間 ${r} · 線上，等待同房間裝置加入`,subOffline:'輸入相同房間碼 · P2P 直連互傳',
+  joining:r=>`正在加入房間 ${r} …`,joined:r=>`已加入房間 ${r} · 線上`,
+  roomFull:n=>`房間已滿 · 最多支援 ${n} 台裝置，有裝置離開後會自動加入`,
+  left:'已離開房間 · 點「重新加入」即可回到房間',connErr:t=>`連線錯誤：${t}`,
+  libFail:'PeerJS 函式庫載入失敗，請檢查網路後重新整理頁面',
+  peerEmpty1:'還沒有發現其他裝置',peerEmpty2:'讓對方開啟本頁，輸入同一個房間碼',unknownDev:'未知裝置',
+  fileEmpty1:'尚無傳輸記錄',fileEmpty2:'傳送與接收的檔案都會顯示在這裡',
+  to:n=>`傳送至 ${n}`,from:n=>`來自 ${n}`,save:'儲存',fail:'失敗',done:'已完成',
+  retryConn:'與該裝置的連線正在重試，請稍候再試',gotFile:n=>`收到檔案：${n}`,peerJoined:n=>`${n} 加入了房間`,
+  roomCopied:'邀請連結已複製 · 對方打開即自動加入',
+  copyFail:r=>`複製失敗，請手動記錄房間碼 ${r}`,roomShort:'房間碼至少 3 位數字/字母',
+  dev_iphone:'iPhone',dev_ipad:'iPad',dev_android:'Android 裝置',dev_mac:'Mac',dev_windows:'Windows 電腦',dev_linux:'Linux 裝置',dev_mine:'我的裝置'
+},
+'ja':{
+  brand:'JianYe ファイル転送',metaDesc:'JianYe ファイル転送 · 同じルームコードの端末が P2P で直接つながり、ファイルはサーバーを経由しません',
+  init:'初期化しています…',statusInit:'ルームに参加しています…',
+  secRoom:'ルーム',roomCode:'ルームコード',random:'ランダム',deviceName:'この端末の名前',namePh:'この端末に名前を付ける',
+  copyLink:'招待リンクをコピー',leave:'ルームを退出',rejoin:'再参加',
+  roomHint:'同じルームコードの端末は自動的に見つかります · ファイルは端末間で直接転送され、サーバーを経由しません。',
+  self:'この端末',peers:'近くの端末',files:'転送履歴',
+  foot1:'WebRTC による P2P 直結 · 中継されるのは接続のハンドシェイクのみ',foot2:'端末をタップしてファイルを選択、またはファイルを端末にドロップして送信',
+  settings:'設定',theme:'外観テーマ',themeAuto:'自動',themeLight:'ライト',themeDark:'ダーク',
+  accentColor:'アクセントカラー',
+  language:'表示言語',langAuto:'自動（システムに従う）',ariaTheme:'ライト／ダークを切り替え',ariaSettings:'設定',ariaRoom:'ルームコード',ariaLang:'表示言語',
+  subOnline:r=>`ルーム ${r} ・オンライン、同じルームの端末を待機中`,subOffline:'同じルームコードを入力 · P2P で直接転送',
+  joining:r=>`ルーム ${r} に参加しています …`,joined:r=>`ルーム ${r} に参加しました ・オンライン`,
+  roomFull:n=>`ルームが満員です · 最大 ${n} 台。端末が退出すると自動的に参加します`,
+  left:'ルームを退出しました ・「再参加」で戻れます',connErr:t=>`接続エラー：${t}`,
+  libFail:'PeerJS の読み込みに失敗しました。ネットワークを確認して再読み込みしてください。',
+  peerEmpty1:'まだ他の端末が見つかりません',peerEmpty2:'相手にこのページを開いてもらい、同じルームコードを入力してください',unknownDev:'不明な端末',
+  fileEmpty1:'転送履歴はまだありません',fileEmpty2:'送受信したファイルがここに表示されます',
+  to:n=>`${n} へ送信`,from:n=>`${n} から受信`,save:'保存',fail:'失敗',done:'完了',
+  retryConn:'この端末との接続を再試行しています。しばらくしてからお試しください',gotFile:n=>`ファイルを受信：${n}`,peerJoined:n=>`${n} がルームに参加しました`,
+  roomCopied:'招待リンクをコピーしました · 開くだけで自動参加します',
+  copyFail:r=>`コピーに失敗しました。ルームコード ${r} を控えてください`,roomShort:'ルームコードは3文字以上必要です',
+  dev_iphone:'iPhone',dev_ipad:'iPad',dev_android:'Android 端末',dev_mac:'Mac',dev_windows:'Windows パソコン',dev_linux:'Linux 端末',dev_mine:'マイ端末'
+},
+'ko':{
+  brand:'JianYe 파일 전송',metaDesc:'JianYe 파일 전송 · 같은 방 코드를 입력한 기기가 P2P로 직접 연결되며 파일은 서버를 거치지 않습니다',
+  init:'초기화 중…',statusInit:'방에 참가하는 중…',
+  secRoom:'방',roomCode:'방 코드',random:'무작위',deviceName:'기기 이름',namePh:'이 기기에 이름 붙이기',
+  copyLink:'초대 링크 복사',leave:'방 나가기',rejoin:'다시 참가',
+  roomHint:'같은 방 코드를 입력한 기기는 자동으로 서로를 찾습니다 · 파일은 기기 간에 직접 전송되며 서버를 거치지 않습니다.',
+  self:'이 기기',peers:'주변 기기',files:'전송 기록',
+  foot1:'WebRTC P2P 직결 · 연결 핸드셰이크만 중계를 거칩니다',foot2:'기기를 눌러 파일을 선택하거나, 파일을 기기 위로 끌어다 놓으세요',
+  settings:'설정',theme:'화면 테마',themeAuto:'자동',themeLight:'라이트',themeDark:'다크',
+  accentColor:'강조 색상',
+  language:'표시 언어',langAuto:'자동(시스템 설정)',ariaTheme:'라이트/다크 모드 전환',ariaSettings:'설정',ariaRoom:'방 코드',ariaLang:'표시 언어',
+  subOnline:r=>`방 ${r} · 온라인, 같은 방 기기를 기다리는 중`,subOffline:'같은 방 코드를 입력하세요 · P2P 직접 전송',
+  joining:r=>`방 ${r} 에 참가하는 중 …`,joined:r=>`방 ${r} 에 참가했습니다 · 온라인`,
+  roomFull:n=>`방이 가득 찼습니다 · 최대 ${n}대까지, 기기가 나가면 자동으로 참가합니다`,
+  left:'방에서 나왔습니다 · “다시 참가”를 누르면 돌아갑니다',connErr:t=>`연결 오류: ${t}`,
+  libFail:'PeerJS 로드에 실패했습니다. 네트워크를 확인한 뒤 새로고침하세요.',
+  peerEmpty1:'아직 다른 기기가 없습니다',peerEmpty2:'상대 기기에서 이 페이지를 열고 같은 방 코드를 입력하세요',unknownDev:'알 수 없는 기기',
+  fileEmpty1:'전송 기록이 없습니다',fileEmpty2:'보내고 받은 파일이 여기에 표시됩니다',
+  to:n=>`${n}에게 보내기`,from:n=>`${n}에서 받음`,save:'저장',fail:'실패',done:'완료',
+  retryConn:'이 기기와 연결을 다시 시도하는 중입니다. 잠시 후 다시 시도하세요',gotFile:n=>`파일 수신: ${n}`,peerJoined:n=>`${n} 님이 방에 참가했습니다`,
+  roomCopied:'초대 링크를 복사했습니다 · 열면 자동으로 참가합니다',
+  copyFail:r=>`복사 실패 — 방 코드 ${r} 를 직접 기록하세요`,roomShort:'방 코드는 3자 이상이어야 합니다',
+  dev_iphone:'iPhone',dev_ipad:'iPad',dev_android:'Android 기기',dev_mac:'Mac',dev_windows:'Windows PC',dev_linux:'Linux 기기',dev_mine:'내 기기'
+}
+,
+'es':{
+  brand:'JianYe · Envío de archivos',metaDesc:'JianYe · Envío de archivos: los dispositivos con el mismo código de sala se conectan directamente entre sí, sin pasar por ningún servidor',
+  init:'Iniciando…',statusInit:'Entrando en la sala…',
+  secRoom:'Sala',roomCode:'Código de sala',random:'Aleatorio',deviceName:'Nombre del dispositivo',namePh:'Nombra este dispositivo',
+  copyLink:'Copiar enlace de invitación',leave:'Salir de la sala',rejoin:'Volver a entrar',
+  roomHint:'Los dispositivos con el mismo código se encuentran automáticamente · Los archivos se envían de dispositivo a dispositivo, sin pasar por ningún servidor.',
+  self:'Este dispositivo',peers:'Dispositivos cercanos',files:'Historial de transferencias',
+  foot1:'WebRTC de dispositivo a dispositivo · solo el enlace de conexión pasa por un relé',foot2:'Haz clic en un dispositivo para elegir archivos, o arrastra archivos sobre él',
+  settings:'Ajustes',theme:'Apariencia',themeAuto:'Automático',themeLight:'Claro',themeDark:'Oscuro',
+  accentColor:'Color de acento',
+  language:'Idioma',langAuto:'Automático (según el sistema)',ariaTheme:'Cambiar modo claro/oscuro',ariaSettings:'Ajustes',ariaRoom:'Código de sala',ariaLang:'Idioma',
+  subOnline:r=>`Sala ${r} · en línea, esperando dispositivos`,subOffline:'Introduce el mismo código · transferencia P2P directa',
+  joining:r=>`Entrando en la sala ${r} …`,joined:r=>`En la sala ${r} · en línea`,
+  roomFull:n=>`Sala llena · máximo ${n} dispositivos; entrarás automáticamente cuando salga uno`,
+  left:'Has salido de la sala · pulsa «Volver a entrar»',connErr:t=>`Error de conexión: ${t}`,
+  libFail:'No se pudo cargar PeerJS. Comprueba tu red y recarga la página.',
+  peerEmpty1:'Aún no hay otros dispositivos',peerEmpty2:'Abre esta página en otro dispositivo e introduce el mismo código',unknownDev:'Dispositivo desconocido',
+  fileEmpty1:'Sin transferencias todavía',fileEmpty2:'Los archivos enviados y recibidos aparecerán aquí',
+  to:n=>`Para ${n}`,from:n=>`De ${n}`,save:'Guardar',fail:'Error',done:'Completado',
+  retryConn:'Seguimos conectando con este dispositivo, inténtalo en un momento',gotFile:n=>`Archivo recibido: ${n}`,peerJoined:n=>`${n} se ha unido a la sala`,
+  roomCopied:'Enlace de invitación copiado · al abrirlo se une a la sala',
+  copyFail:r=>`No se pudo copiar — anota el código ${r}`,roomShort:'El código necesita al menos 3 letras o números',
+  dev_iphone:'iPhone',dev_ipad:'iPad',dev_android:'Dispositivo Android',dev_mac:'Mac',dev_windows:'PC con Windows',dev_linux:'Dispositivo Linux',dev_mine:'Mi dispositivo'
+},
+'fr':{
+  brand:'JianYe · Transfert de fichiers',metaDesc:'JianYe · Transfert de fichiers : les appareils partageant le même code de salon se connectent directement, sans passer par un serveur',
+  init:'Initialisation…',statusInit:'Connexion au salon…',
+  secRoom:'Salon',roomCode:'Code du salon',random:'Aléatoire',deviceName:"Nom de l'appareil",namePh:'Nommez cet appareil',
+  copyLink:'Copier le lien d’invitation',leave:'Quitter le salon',rejoin:'Rejoindre',
+  roomHint:'Les appareils avec le même code se trouvent automatiquement · Les fichiers sont transférés d’appareil à appareil, sans passer par un serveur.',
+  self:'Cet appareil',peers:'Appareils à proximité',files:'Historique des transferts',
+  foot1:'WebRTC pair à pair · seule la négociation passe par un relais',foot2:'Cliquez sur un appareil pour choisir des fichiers, ou déposez-les dessus',
+  settings:'Réglages',theme:'Apparence',themeAuto:'Auto',themeLight:'Clair',themeDark:'Sombre',
+  accentColor:'Couleur d’accent',
+  language:'Langue',langAuto:'Auto (système)',ariaTheme:'Basculer clair/sombre',ariaSettings:'Réglages',ariaRoom:'Code du salon',ariaLang:'Langue',
+  subOnline:r=>`Salon ${r} · en ligne, en attente d'appareils`,subOffline:'Saisissez le même code · transfert P2P direct',
+  joining:r=>`Connexion au salon ${r} …`,joined:r=>`Salon ${r} rejoint · en ligne`,
+  roomFull:n=>`Salon complet · ${n} appareils maximum ; vous rejoindrez automatiquement dès qu’un appareil part`,
+  left:'Vous avez quitté le salon · appuyez sur « Rejoindre »',connErr:t=>`Erreur de connexion : ${t}`,
+  libFail:'Échec du chargement de PeerJS. Vérifiez le réseau puis rechargez la page.',
+  peerEmpty1:'Aucun autre appareil pour le moment',peerEmpty2:'Ouvrez cette page sur un autre appareil et saisissez le même code',unknownDev:'Appareil inconnu',
+  fileEmpty1:'Aucun transfert pour le moment',fileEmpty2:'Les fichiers envoyés et reçus apparaîtront ici',
+  to:n=>`Vers ${n}`,from:n=>`De ${n}`,save:'Enregistrer',fail:'Échec',done:'Terminé',
+  retryConn:'Connexion en cours avec cet appareil, réessayez dans un instant',gotFile:n=>`Fichier reçu : ${n}`,peerJoined:n=>`${n} a rejoint le salon`,
+  roomCopied:'Lien d’invitation copié · il rejoint le salon à l’ouverture',
+  copyFail:r=>`Copie impossible — notez le code ${r}`,roomShort:'Le code doit contenir au moins 3 lettres ou chiffres',
+  dev_iphone:'iPhone',dev_ipad:'iPad',dev_android:'Appareil Android',dev_mac:'Mac',dev_windows:'PC Windows',dev_linux:'Appareil Linux',dev_mine:'Mon appareil'
+},
+'de':{
+  brand:'JianYe · Dateiübertragung',metaDesc:'JianYe · Dateiübertragung: Geräte mit demselben Raumcode verbinden sich direkt – Dateien laufen nie über einen Server',
+  init:'Wird initialisiert…',statusInit:'Raum wird betreten…',
+  secRoom:'Raum',roomCode:'Raumcode',random:'Zufall',deviceName:'Gerätename',namePh:'Diesem Gerät einen Namen geben',
+  copyLink:'Einladungslink kopieren',leave:'Raum verlassen',rejoin:'Wieder beitreten',
+  roomHint:'Geräte mit demselben Raumcode finden sich automatisch · Dateien werden direkt zwischen den Geräten übertragen, ohne Server.',
+  self:'Dieses Gerät',peers:'Geräte in der Nähe',files:'Übertragungsverlauf',
+  foot1:'WebRTC Peer-to-Peer · nur der Verbindungsaufbau läuft über einen Relay',foot2:'Gerät anklicken, um Dateien zu wählen – oder Dateien darauf ziehen',
+  settings:'Einstellungen',theme:'Erscheinungsbild',themeAuto:'Automatisch',themeLight:'Hell',themeDark:'Dunkel',
+  accentColor:'Akzentfarbe',
+  language:'Sprache',langAuto:'Automatisch (System)',ariaTheme:'Hell/Dunkel umschalten',ariaSettings:'Einstellungen',ariaRoom:'Raumcode',ariaLang:'Sprache',
+  subOnline:r=>`Raum ${r} · online, warte auf Geräte`,subOffline:'Gleichen Raumcode eingeben · direkte P2P-Übertragung',
+  joining:r=>`Raum ${r} wird betreten …`,joined:r=>`Raum ${r} beigetreten · online`,
+  roomFull:n=>`Raum voll · maximal ${n} Geräte; du trittst automatisch bei, sobald eines geht`,
+  left:'Raum verlassen · „Wieder beitreten“ drücken',connErr:t=>`Verbindungsfehler: ${t}`,
+  libFail:'PeerJS konnte nicht geladen werden. Netzwerk prüfen und Seite neu laden.',
+  peerEmpty1:'Noch keine anderen Geräte',peerEmpty2:'Diese Seite auf einem anderen Gerät öffnen und denselben Raumcode eingeben',unknownDev:'Unbekanntes Gerät',
+  fileEmpty1:'Noch keine Übertragungen',fileEmpty2:'Gesendete und empfangene Dateien erscheinen hier',
+  to:n=>`An ${n}`,from:n=>`Von ${n}`,save:'Speichern',fail:'Fehlgeschlagen',done:'Fertig',
+  retryConn:'Verbindung zu diesem Gerät wird erneut versucht, bitte kurz warten',gotFile:n=>`Datei empfangen: ${n}`,peerJoined:n=>`${n} ist dem Raum beigetreten`,
+  roomCopied:'Einladungslink kopiert · beim Öffnen wird der Raum betreten',
+  copyFail:r=>`Kopieren fehlgeschlagen — Raumcode ${r} notieren`,roomShort:'Der Raumcode braucht mindestens 3 Zeichen',
+  dev_iphone:'iPhone',dev_ipad:'iPad',dev_android:'Android-Gerät',dev_mac:'Mac',dev_windows:'Windows-PC',dev_linux:'Linux-Gerät',dev_mine:'Mein Gerät'
+}
+,
+'it':{
+  brand:'JianYe · Trasferimento file',metaDesc:'JianYe · Trasferimento file: i dispositivi con lo stesso codice si collegano direttamente, senza passare da alcun server',
+  init:'Avvio…',statusInit:'Accesso alla stanza…',
+  secRoom:'Stanza',roomCode:'Codice stanza',random:'Casuale',deviceName:'Nome dispositivo',namePh:'Dai un nome a questo dispositivo',
+  copyLink:'Copia link di invito',leave:'Esci dalla stanza',rejoin:'Rientra',
+  roomHint:'I dispositivi con lo stesso codice si trovano automaticamente · I file viaggiano da dispositivo a dispositivo, senza passare da alcun server.',
+  self:'Questo dispositivo',peers:'Dispositivi vicini',files:'Cronologia trasferimenti',
+  foot1:'WebRTC peer-to-peer · solo l’handshake passa da un relay',foot2:'Fai clic su un dispositivo per scegliere i file, oppure trascinali sopra di esso',
+  settings:'Impostazioni',theme:'Aspetto',themeAuto:'Automatico',themeLight:'Chiaro',themeDark:'Scuro',
+  accentColor:'Colore principale',
+  language:'Lingua',langAuto:'Automatico (sistema)',ariaTheme:'Passa a chiaro/scuro',ariaSettings:'Impostazioni',ariaRoom:'Codice stanza',ariaLang:'Lingua',
+  subOnline:r=>`Stanza ${r} · online, in attesa di dispositivi`,subOffline:'Inserisci lo stesso codice · trasferimento P2P diretto',
+  joining:r=>`Accesso alla stanza ${r} …`,joined:r=>`Stanza ${r} · online`,
+  roomFull:n=>`Stanza piena · massimo ${n} dispositivi; entrerai automaticamente quando uno esce`,
+  left:'Hai lasciato la stanza · premi «Rientra»',connErr:t=>`Errore di connessione: ${t}`,
+  libFail:'Impossibile caricare PeerJS. Controlla la rete e ricarica la pagina.',
+  peerEmpty1:'Nessun altro dispositivo',peerEmpty2:'Apri questa pagina su un altro dispositivo e inserisci lo stesso codice',unknownDev:'Dispositivo sconosciuto',
+  fileEmpty1:'Nessun trasferimento',fileEmpty2:'I file inviati e ricevuti appariranno qui',
+  to:n=>`A ${n}`,from:n=>`Da ${n}`,save:'Salva',fail:'Non riuscito',done:'Completato',
+  retryConn:'Connessione a questo dispositivo in corso, riprova tra poco',gotFile:n=>`File ricevuto: ${n}`,peerJoined:n=>`${n} è entrato nella stanza`,
+  roomCopied:'Link di invito copiato · aprendolo si entra nella stanza',
+  copyFail:r=>`Copia non riuscita — annota il codice ${r}`,roomShort:'Il codice richiede almeno 3 lettere o numeri',
+  dev_iphone:'iPhone',dev_ipad:'iPad',dev_android:'Dispositivo Android',dev_mac:'Mac',dev_windows:'PC Windows',dev_linux:'Dispositivo Linux',dev_mine:'Il mio dispositivo'
+},
+'pt':{
+  brand:'JianYe · Envio de arquivos',metaDesc:'JianYe · Envio de arquivos: dispositivos com o mesmo código de sala se conectam diretamente, sem passar por servidores',
+  init:'Iniciando…',statusInit:'Entrando na sala…',
+  secRoom:'Sala',roomCode:'Código da sala',random:'Aleatório',deviceName:'Nome do dispositivo',namePh:'Dê um nome a este dispositivo',
+  copyLink:'Copiar link de convite',leave:'Sair da sala',rejoin:'Entrar novamente',
+  roomHint:'Dispositivos com o mesmo código se encontram automaticamente · Os arquivos são enviados diretamente entre dispositivos, sem passar por servidores.',
+  self:'Este dispositivo',peers:'Dispositivos próximos',files:'Histórico de transferências',
+  foot1:'WebRTC ponto a ponto · apenas o handshake passa por um relay',foot2:'Clique em um dispositivo para escolher arquivos, ou arraste arquivos até ele',
+  settings:'Ajustes',theme:'Aparência',themeAuto:'Automático',themeLight:'Claro',themeDark:'Escuro',
+  accentColor:'Cor de destaque',
+  language:'Idioma',langAuto:'Automático (sistema)',ariaTheme:'Alternar modo claro/escuro',ariaSettings:'Ajustes',ariaRoom:'Código da sala',ariaLang:'Idioma',
+  subOnline:r=>`Sala ${r} · online, aguardando dispositivos`,subOffline:'Digite o mesmo código · transferência P2P direta',
+  joining:r=>`Entrando na sala ${r} …`,joined:r=>`Na sala ${r} · online`,
+  roomFull:n=>`Sala cheia · máximo de ${n} dispositivos; você entra automaticamente quando um sair`,
+  left:'Você saiu da sala · toque em «Entrar novamente»',connErr:t=>`Erro de conexão: ${t}`,
+  libFail:'Falha ao carregar o PeerJS. Verifique a rede e recarregue a página.',
+  peerEmpty1:'Nenhum outro dispositivo ainda',peerEmpty2:'Abra esta página em outro dispositivo e digite o mesmo código',unknownDev:'Dispositivo desconhecido',
+  fileEmpty1:'Nenhuma transferência ainda',fileEmpty2:'Arquivos enviados e recebidos aparecerão aqui',
+  to:n=>`Para ${n}`,from:n=>`De ${n}`,save:'Salvar',fail:'Falhou',done:'Concluído',
+  retryConn:'Ainda conectando a este dispositivo, tente novamente em instantes',gotFile:n=>`Arquivo recebido: ${n}`,peerJoined:n=>`${n} entrou na sala`,
+  roomCopied:'Link de convite copiado · ao abrir, entra na sala',
+  copyFail:r=>`Falha ao copiar — anote o código ${r}`,roomShort:'O código precisa de pelo menos 3 letras ou números',
+  dev_iphone:'iPhone',dev_ipad:'iPad',dev_android:'Dispositivo Android',dev_mac:'Mac',dev_windows:'PC com Windows',dev_linux:'Dispositivo Linux',dev_mine:'Meu dispositivo'
+},
+'ru':{
+  brand:'JianYe · Передача файлов',metaDesc:'JianYe · Передача файлов: устройства с одинаковым кодом комнаты соединяются напрямую, минуя серверы',
+  init:'Инициализация…',statusInit:'Подключение к комнате…',
+  secRoom:'Комната',roomCode:'Код комнаты',random:'Случайно',deviceName:'Имя устройства',namePh:'Назовите это устройство',
+  copyLink:'Скопировать ссылку-приглашение',leave:'Покинуть комнату',rejoin:'Вернуться',
+  roomHint:'Устройства с одинаковым кодом находят друг друга автоматически · Файлы передаются напрямую между устройствами, минуя серверы.',
+  self:'Это устройство',peers:'Устройства рядом',files:'История передач',
+  foot1:'WebRTC напрямую · через ретранслятор идёт только рукопожатие',foot2:'Нажмите на устройство, чтобы выбрать файлы, или перетащите файлы на него',
+  settings:'Настройки',theme:'Оформление',themeAuto:'Авто',themeLight:'Светлая',themeDark:'Тёмная',
+  accentColor:'Акцентный цвет',
+  language:'Язык',langAuto:'Авто (как в системе)',ariaTheme:'Переключить светлую/тёмную тему',ariaSettings:'Настройки',ariaRoom:'Код комнаты',ariaLang:'Язык',
+  subOnline:r=>`Комната ${r} · онлайн, ждём устройства`,subOffline:'Введите тот же код · прямая P2P-передача',
+  joining:r=>`Подключение к комнате ${r} …`,joined:r=>`Комната ${r} · онлайн`,
+  roomFull:n=>`Комната заполнена · максимум ${n} устройств; вы подключитесь автоматически, когда одно выйдет`,
+  left:'Вы покинули комнату · нажмите «Вернуться»',connErr:t=>`Ошибка соединения: ${t}`,
+  libFail:'Не удалось загрузить PeerJS. Проверьте сеть и обновите страницу.',
+  peerEmpty1:'Других устройств пока нет',peerEmpty2:'Откройте эту страницу на другом устройстве и введите тот же код',unknownDev:'Неизвестное устройство',
+  fileEmpty1:'Передач пока нет',fileEmpty2:'Отправленные и полученные файлы появятся здесь',
+  to:n=>`Кому: ${n}`,from:n=>`От: ${n}`,save:'Сохранить',fail:'Ошибка',done:'Готово',
+  retryConn:'Соединение с этим устройством переподключается, попробуйте чуть позже',gotFile:n=>`Получен файл: ${n}`,peerJoined:n=>`${n} подключился к комнате`,
+  roomCopied:'Ссылка-приглашение скопирована · при открытии вход в комнату',
+  copyFail:r=>`Не удалось скопировать — запишите код ${r}`,roomShort:'Код должен содержать минимум 3 символа',
+  dev_iphone:'iPhone',dev_ipad:'iPad',dev_android:'Устройство Android',dev_mac:'Mac',dev_windows:'Компьютер Windows',dev_linux:'Устройство Linux',dev_mine:'Моё устройство'
+},
+'nl':{
+  brand:'JianYe · Bestanden verzenden',metaDesc:'JianYe · Bestanden verzenden: apparaten met dezelfde kamercode verbinden rechtstreeks, zonder server',
+  init:'Initialiseren…',statusInit:'Deelnemen aan kamer…',
+  secRoom:'Kamer',roomCode:'Kamercode',random:'Willekeurig',deviceName:'Apparaatnaam',namePh:'Geef dit apparaat een naam',
+  copyLink:'Uitnodigingslink kopiëren',leave:'Kamer verlaten',rejoin:'Opnieuw deelnemen',
+  roomHint:'Apparaten met dezelfde kamercode vinden elkaar automatisch · Bestanden gaan rechtstreeks tussen apparaten, zonder server.',
+  self:'Dit apparaat',peers:'Apparaten in de buurt',files:'Overdrachtsgeschiedenis',
+  foot1:'WebRTC peer-to-peer · alleen de verbindingsopbouw loopt via een relay',foot2:'Klik op een apparaat om bestanden te kiezen, of sleep bestanden erop',
+  settings:'Instellingen',theme:'Weergave',themeAuto:'Automatisch',themeLight:'Licht',themeDark:'Donker',
+  accentColor:'Accentkleur',
+  language:'Taal',langAuto:'Automatisch (systeem)',ariaTheme:'Licht/donker wisselen',ariaSettings:'Instellingen',ariaRoom:'Kamercode',ariaLang:'Taal',
+  subOnline:r=>`Kamer ${r} · online, wacht op apparaten`,subOffline:'Voer dezelfde code in · directe P2P-overdracht',
+  joining:r=>`Deelnemen aan kamer ${r} …`,joined:r=>`Kamer ${r} · online`,
+  roomFull:n=>`Kamer vol · maximaal ${n} apparaten; je doet automatisch mee zodra er een weggaat`,
+  left:'Kamer verlaten · tik op «Opnieuw deelnemen»',connErr:t=>`Verbindingsfout: ${t}`,
+  libFail:'PeerJS laden mislukt. Controleer je netwerk en herlaad de pagina.',
+  peerEmpty1:'Nog geen andere apparaten',peerEmpty2:'Open deze pagina op een ander apparaat en voer dezelfde code in',unknownDev:'Onbekend apparaat',
+  fileEmpty1:'Nog geen overdrachten',fileEmpty2:'Verzonden en ontvangen bestanden verschijnen hier',
+  to:n=>`Naar ${n}`,from:n=>`Van ${n}`,save:'Opslaan',fail:'Mislukt',done:'Voltooid',
+  retryConn:'Nog bezig met verbinden met dit apparaat, probeer het zo opnieuw',gotFile:n=>`Bestand ontvangen: ${n}`,peerJoined:n=>`${n} is de kamer binnengekomen`,
+  roomCopied:'Uitnodigingslink gekopieerd · bij openen wordt deelgenomen',
+  copyFail:r=>`Kopiëren mislukt — noteer code ${r}`,roomShort:'De code heeft minstens 3 letters of cijfers nodig',
+  dev_iphone:'iPhone',dev_ipad:'iPad',dev_android:'Android-apparaat',dev_mac:'Mac',dev_windows:'Windows-pc',dev_linux:'Linux-apparaat',dev_mine:'Mijn apparaat'
+}
+,
+'pl':{
+  brand:'JianYe · Przesyłanie plików',metaDesc:'JianYe · Przesyłanie plików: urządzenia z tym samym kodem pokoju łączą się bezpośrednio, z pominięciem serwera',
+  init:'Inicjowanie…',statusInit:'Dołączanie do pokoju…',
+  secRoom:'Pokój',roomCode:'Kod pokoju',random:'Losuj',deviceName:'Nazwa urządzenia',namePh:'Nazwij to urządzenie',
+  copyLink:'Kopiuj link zaproszenia',leave:'Opuść pokój',rejoin:'Dołącz ponownie',
+  roomHint:'Urządzenia z tym samym kodem znajdują się automatycznie · Pliki są przesyłane bezpośrednio między urządzeniami, z pominięciem serwera.',
+  self:'To urządzenie',peers:'Urządzenia w pobliżu',files:'Historia transferów',
+  foot1:'WebRTC bezpośrednio · przez przekaźnik idzie tylko uzgadnianie połączenia',foot2:'Kliknij urządzenie, aby wybrać pliki, albo przeciągnij na nie pliki',
+  settings:'Ustawienia',theme:'Wygląd',themeAuto:'Automatyczny',themeLight:'Jasny',themeDark:'Ciemny',
+  accentColor:'Kolor akcentu',
+  language:'Język',langAuto:'Automatyczny (system)',ariaTheme:'Przełącz jasny/ciemny',ariaSettings:'Ustawienia',ariaRoom:'Kod pokoju',ariaLang:'Język',
+  subOnline:r=>`Pokój ${r} · online, czekam na urządzenia`,subOffline:'Wpisz ten sam kod · bezpośredni transfer P2P',
+  joining:r=>`Dołączanie do pokoju ${r} …`,joined:r=>`Pokój ${r} · online`,
+  roomFull:n=>`Pokój pełny · maksymalnie ${n} urządzeń; dołączysz automatycznie, gdy ktoś wyjdzie`,
+  left:'Opuszczono pokój · naciśnij „Dołącz ponownie”',connErr:t=>`Błąd połączenia: ${t}`,
+  libFail:'Nie udało się wczytać PeerJS. Sprawdź sieć i odśwież stronę.',
+  peerEmpty1:'Brak innych urządzeń',peerEmpty2:'Otwórz tę stronę na innym urządzeniu i wpisz ten sam kod',unknownDev:'Nieznane urządzenie',
+  fileEmpty1:'Brak transferów',fileEmpty2:'Wysłane i odebrane pliki pojawią się tutaj',
+  to:n=>`Do ${n}`,from:n=>`Od ${n}`,save:'Zapisz',fail:'Niepowodzenie',done:'Gotowe',
+  retryConn:'Trwa ponowne łączenie z tym urządzeniem, spróbuj za chwilę',gotFile:n=>`Odebrano plik: ${n}`,peerJoined:n=>`${n} dołączył do pokoju`,
+  roomCopied:'Link zaproszenia skopiowany · po otwarciu dołącza do pokoju',
+  copyFail:r=>`Kopiowanie nie udało się — zapisz kod ${r}`,roomShort:'Kod musi mieć co najmniej 3 znaki',
+  dev_iphone:'iPhone',dev_ipad:'iPad',dev_android:'Urządzenie Android',dev_mac:'Mac',dev_windows:'Komputer Windows',dev_linux:'Urządzenie Linux',dev_mine:'Moje urządzenie'
+},
+'tr':{
+  brand:'JianYe · Dosya Aktarımı',metaDesc:'JianYe · Dosya Aktarımı: aynı oda koduna sahip cihazlar doğrudan bağlanır, dosyalar sunucudan geçmez',
+  init:'Başlatılıyor…',statusInit:'Odaya katılınıyor…',
+  secRoom:'Oda',roomCode:'Oda kodu',random:'Rastgele',deviceName:'Cihaz adı',namePh:'Bu cihaza bir ad verin',
+  copyLink:'Davet bağlantısını kopyala',leave:'Odadan ayrıl',rejoin:'Yeniden katıl',
+  roomHint:'Aynı oda koduna sahip cihazlar birbirini otomatik bulur · Dosyalar cihazlar arasında doğrudan aktarılır, hiçbir sunucudan geçmez.',
+  self:'Bu cihaz',peers:'Yakındaki cihazlar',files:'Aktarım geçmişi',
+  foot1:'WebRTC eşler arası · yalnızca bağlantı el sıkışması aktarıcıdan geçer',foot2:'Dosya seçmek için bir cihaza dokunun veya dosyaları üzerine sürükleyin',
+  settings:'Ayarlar',theme:'Görünüm',themeAuto:'Otomatik',themeLight:'Açık',themeDark:'Koyu',
+  accentColor:'Vurgu rengi',
+  language:'Dil',langAuto:'Otomatik (sisteme göre)',ariaTheme:'Açık/koyu arasında geçiş yap',ariaSettings:'Ayarlar',ariaRoom:'Oda kodu',ariaLang:'Dil',
+  subOnline:r=>`Oda ${r} · çevrimiçi, cihaz bekleniyor`,subOffline:'Aynı kodu girin · doğrudan P2P aktarım',
+  joining:r=>`Oda ${r} · katılınıyor …`,joined:r=>`Oda ${r} · çevrimiçi`,
+  roomFull:n=>`Oda dolu · en fazla ${n} cihaz; biri ayrılınca otomatik katılırsınız`,
+  left:'Odadan ayrıldınız · «Yeniden katıl» düğmesine dokunun',connErr:t=>`Bağlantı hatası: ${t}`,
+  libFail:'PeerJS yüklenemedi. Ağı kontrol edip sayfayı yenileyin.',
+  peerEmpty1:'Henüz başka cihaz yok',peerEmpty2:'Bu sayfayı başka bir cihazda açıp aynı oda kodunu girin',unknownDev:'Bilinmeyen cihaz',
+  fileEmpty1:'Henüz aktarım yok',fileEmpty2:'Gönderilen ve alınan dosyalar burada görünür',
+  to:n=>`${n} cihazına`,from:n=>`${n} cihazından`,save:'Kaydet',fail:'Başarısız',done:'Tamamlandı',
+  retryConn:'Bu cihazla bağlantı yeniden deneniyor, birazdan tekrar deneyin',gotFile:n=>`Dosya alındı: ${n}`,peerJoined:n=>`${n} odaya katıldı`,
+  roomCopied:'Davet bağlantısı kopyalandı · açıldığında odaya katılır',
+  copyFail:r=>`Kopyalanamadı — ${r} kodunu not alın`,roomShort:'Kod en az 3 harf veya rakam olmalı',
+  dev_iphone:'iPhone',dev_ipad:'iPad',dev_android:'Android cihaz',dev_mac:'Mac',dev_windows:'Windows PC',dev_linux:'Linux cihaz',dev_mine:'Cihazım'
+},
+'ar':{
+  brand:'JianYe · نقل الملفات',metaDesc:'JianYe · نقل الملفات: الأجهزة التي تستخدم رمز الغرفة نفسه تتصل مباشرة، ولا تمر الملفات بأي خادم',
+  init:'جارٍ التهيئة…',statusInit:'جارٍ الانضمام إلى الغرفة…',
+  secRoom:'الغرفة',roomCode:'رمز الغرفة',random:'عشوائي',deviceName:'اسم الجهاز',namePh:'أعطِ هذا الجهاز اسماً',
+  copyLink:'نسخ رابط الدعوة',leave:'مغادرة الغرفة',rejoin:'إعادة الانضمام',
+  roomHint:'الأجهزة التي تستخدم الرمز نفسه تتعرّف على بعضها تلقائياً · تُنقل الملفات مباشرة بين الأجهزة دون المرور بأي خادم.',
+  self:'هذا الجهاز',peers:'الأجهزة القريبة',files:'سجل النقل',
+  foot1:'WebRTC اتصال مباشر · المصافحة فقط تمر عبر وسيط',foot2:'اضغط على جهاز لاختيار الملفات، أو اسحب الملفات وأفلتها عليه',
+  settings:'الإعدادات',theme:'المظهر',themeAuto:'تلقائي',themeLight:'فاتح',themeDark:'داكن',
+  accentColor:'لون التمييز',
+  language:'اللغة',langAuto:'تلقائي (حسب النظام)',ariaTheme:'تبديل الوضع الفاتح/الداكن',ariaSettings:'الإعدادات',ariaRoom:'رمز الغرفة',ariaLang:'اللغة',
+  subOnline:r=>`الغرفة ${r} · متصل، في انتظار الأجهزة`,subOffline:'أدخل الرمز نفسه · نقل مباشر بين الأجهزة',
+  joining:r=>`جارٍ الانضمام إلى الغرفة ${r} …`,joined:r=>`انضممت إلى الغرفة ${r} · متصل`,
+  roomFull:n=>`الغرفة ممتلئة · بحد أقصى ${n} أجهزة؛ ستُنضمّ تلقائياً عند خروج أحدها`,
+  left:'غادرت الغرفة · اضغط «إعادة الانضمام»',connErr:t=>`خطأ في الاتصال: ${t}`,
+  libFail:'تعذّر تحميل PeerJS. تحقّق من الشبكة ثم أعد تحميل الصفحة.',
+  peerEmpty1:'لا توجد أجهزة أخرى بعد',peerEmpty2:'افتح هذه الصفحة على جهاز آخر وأدخل الرمز نفسه',unknownDev:'جهاز غير معروف',
+  fileEmpty1:'لا عمليات نقل بعد',fileEmpty2:'ستظهر الملفات المُرسلة والمستلمة هنا',
+  to:n=>`إلى ${n}`,from:n=>`من ${n}`,save:'حفظ',fail:'فشل',done:'اكتمل',
+  retryConn:'جارٍ إعادة الاتصال بهذا الجهاز، حاول بعد قليل',gotFile:n=>`تم استلام الملف: ${n}`,peerJoined:n=>`انضم ${n} إلى الغرفة`,
+  roomCopied:'تم نسخ رابط الدعوة · سينضم إلى الغرفة عند فتحه',
+  copyFail:r=>`تعذّر النسخ — سجّل الرمز ${r} يدوياً`,roomShort:'يجب أن يتكوّن الرمز من 3 أحرف أو أرقام على الأقل',
+  dev_iphone:'iPhone',dev_ipad:'iPad',dev_android:'جهاز أندرويد',dev_mac:'Mac',dev_windows:'كمبيوتر ويندوز',dev_linux:'جهاز لينكس',dev_mine:'جهازي'
+},
+'hi':{
+  brand:'JianYe · फ़ाइल ट्रांसफ़र',metaDesc:'JianYe · फ़ाइल ट्रांसफ़र: एक ही रूम कोड वाले डिवाइस सीधे जुड़ते हैं, फ़ाइलें किसी सर्वर से नहीं गुज़रतीं',
+  init:'शुरू हो रहा है…',statusInit:'रूम से जुड़ रहे हैं…',
+  secRoom:'रूम',roomCode:'रूम कोड',random:'रैंडम',deviceName:'डिवाइस का नाम',namePh:'इस डिवाइस को नाम दें',
+  copyLink:'इनवाइट लिंक कॉपी करें',leave:'रूम छोड़ें',rejoin:'फिर से जुड़ें',
+  roomHint:'एक ही रूम कोड वाले डिवाइस अपने आप एक-दूसरे को ढूँढ लेते हैं · फ़ाइलें डिवाइसों के बीच सीधे भेजी जाती हैं, किसी सर्वर से नहीं गुज़रतीं।',
+  self:'यह डिवाइस',peers:'आस-पास के डिवाइस',files:'ट्रांसफ़र इतिहास',
+  foot1:'WebRTC पीयर-टू-पीयर · सिर्फ़ कनेक्शन हैंडशेक रिले से जाता है',foot2:'फ़ाइल चुनने के लिए डिवाइस पर टैप करें, या फ़ाइलें उस पर ड्रॉप करें',
+  settings:'सेटिंग्स',theme:'थीम',themeAuto:'ऑटो',themeLight:'लाइट',themeDark:'डार्क',
+  accentColor:'एक्सेंट रंग',
+  language:'भाषा',langAuto:'ऑटो (सिस्टम के अनुसार)',ariaTheme:'लाइट/डार्क बदलें',ariaSettings:'सेटिंग्स',ariaRoom:'रूम कोड',ariaLang:'भाषा',
+  subOnline:r=>`रूम ${r} · ऑनलाइन, डिवाइस का इंतज़ार`,subOffline:'वही कोड डालें · सीधा P2P ट्रांसफ़र',
+  joining:r=>`रूम ${r} से जुड़ रहे हैं …`,joined:r=>`रूम ${r} में शामिल · ऑनलाइन`,
+  roomFull:n=>`रूम भरा है · ज़्यादा से ज़्यादा ${n} डिवाइस; कोई निकले तो अपने आप जुड़ जाएँगे`,
+  left:'रूम छोड़ दिया · «फिर से जुड़ें» दबाएँ',connErr:t=>`कनेक्शन त्रुटि: ${t}`,
+  libFail:'PeerJS लोड नहीं हुआ। नेटवर्क जाँचें और पेज रीफ़्रेश करें।',
+  peerEmpty1:'अभी कोई दूसरा डिवाइस नहीं',peerEmpty2:'दूसरे डिवाइस पर यह पेज खोलें और वही रूम कोड डालें',unknownDev:'अज्ञात डिवाइस',
+  fileEmpty1:'अभी कोई ट्रांसफ़र नहीं',fileEmpty2:'भेजी और मिली फ़ाइलें यहाँ दिखेंगी',
+  to:n=>`${n} को`,from:n=>`${n} से`,save:'सेव',fail:'विफल',done:'पूरा हुआ',
+  retryConn:'इस डिवाइस से दोबारा जुड़ रहे हैं, थोड़ी देर बाद कोशिश करें',gotFile:n=>`फ़ाइल मिली: ${n}`,peerJoined:n=>`${n} रूम में शामिल हुआ`,
+  roomCopied:'इनवाइट लिंक कॉपी हुआ · खोलने पर रूम से जुड़ जाएगा',
+  copyFail:r=>`कॉपी नहीं हुआ — रूम कोड ${r} नोट कर लें`,roomShort:'कोड कम से कम 3 अक्षर या अंक का होना चाहिए',
+  dev_iphone:'iPhone',dev_ipad:'iPad',dev_android:'Android डिवाइस',dev_mac:'Mac',dev_windows:'Windows पीसी',dev_linux:'Linux डिवाइस',dev_mine:'मेरा डिवाइस'
+},
+'th':{
+  brand:'JianYe · ส่งไฟล์',metaDesc:'JianYe · ส่งไฟล์: อุปกรณ์ที่ใช้รหัสห้องเดียวกันจะเชื่อมต่อกันโดยตรง ไฟล์ไม่ผ่านเซิร์ฟเวอร์ใด ๆ',
+  init:'กำลังเริ่มต้น…',statusInit:'กำลังเข้าห้อง…',
+  secRoom:'ห้อง',roomCode:'รหัสห้อง',random:'สุ่ม',deviceName:'ชื่ออุปกรณ์',namePh:'ตั้งชื่อให้อุปกรณ์นี้',
+  copyLink:'คัดลอกลิงก์เชิญ',leave:'ออกจากห้อง',rejoin:'เข้าร่วมอีกครั้ง',
+  roomHint:'อุปกรณ์ที่ใช้รหัสห้องเดียวกันจะค้นหากันอัตโนมัติ · ไฟล์ถูกส่งตรงระหว่างอุปกรณ์ ไม่ผ่านเซิร์ฟเวอร์ใด ๆ',
+  self:'อุปกรณ์นี้',peers:'อุปกรณ์ใกล้เคียง',files:'ประวัติการโอน',
+  foot1:'WebRTC เชื่อมต่อตรงแบบเพียร์ทูเพียร์ · เฉพาะการจับมือเชื่อมต่อที่ผ่านรีเลย์',foot2:'แตะที่อุปกรณ์เพื่อเลือกไฟล์ หรือลากไฟล์มาวางบนอุปกรณ์',
+  settings:'การตั้งค่า',theme:'ธีม',themeAuto:'อัตโนมัติ',themeLight:'สว่าง',themeDark:'มืด',
+  accentColor:'สีหลัก',
+  language:'ภาษา',langAuto:'อัตโนมัติ (ตามระบบ)',ariaTheme:'สลับโหมดสว่าง/มืด',ariaSettings:'การตั้งค่า',ariaRoom:'รหัสห้อง',ariaLang:'ภาษา',
+  subOnline:r=>`ห้อง ${r} · ออนไลน์ รออุปกรณ์อื่น`,subOffline:'กรอกรหัสเดียวกัน · ส่งตรงแบบ P2P',
+  joining:r=>`กำลังเข้าห้อง ${r} …`,joined:r=>`เข้าห้อง ${r} แล้ว · ออนไลน์`,
+  roomFull:n=>`ห้องเต็ม · รองรับสูงสุด ${n} เครื่อง จะเข้าร่วมอัตโนมัติเมื่อมีเครื่องออก`,
+  left:'ออกจากห้องแล้ว · กด «เข้าร่วมอีกครั้ง»',connErr:t=>`เชื่อมต่อผิดพลาด: ${t}`,
+  libFail:'โหลด PeerJS ไม่สำเร็จ ตรวจสอบเครือข่ายแล้วรีเฟรชหน้า',
+  peerEmpty1:'ยังไม่พบอุปกรณ์อื่น',peerEmpty2:'เปิดหน้านี้บนอุปกรณ์อื่นแล้วกรอกรหัสห้องเดียวกัน',unknownDev:'อุปกรณ์ที่ไม่รู้จัก',
+  fileEmpty1:'ยังไม่มีประวัติการโอน',fileEmpty2:'ไฟล์ที่ส่งและรับจะแสดงที่นี่',
+  to:n=>`ส่งถึง ${n}`,from:n=>`จาก ${n}`,save:'บันทึก',fail:'ล้มเหลว',done:'เสร็จสิ้น',
+  retryConn:'กำลังเชื่อมต่ออุปกรณ์นี้อีกครั้ง โปรดลองใหม่ภายหลัง',gotFile:n=>`ได้รับไฟล์: ${n}`,peerJoined:n=>`${n} เข้าร่วมห้องแล้ว`,
+  roomCopied:'คัดลอกลิงก์เชิญแล้ว · เปิดแล้วเข้าร่วมห้องทันที',
+  copyFail:r=>`คัดลอกไม่สำเร็จ — จดรหัส ${r} ไว้`,roomShort:'รหัสต้องมีอย่างน้อย 3 ตัวอักษรหรือตัวเลข',
+  dev_iphone:'iPhone',dev_ipad:'iPad',dev_android:'อุปกรณ์ Android',dev_mac:'Mac',dev_windows:'คอมพิวเตอร์ Windows',dev_linux:'อุปกรณ์ Linux',dev_mine:'อุปกรณ์ของฉัน'
+},
+'vi':{
+  brand:'JianYe · Truyền tệp',metaDesc:'JianYe · Truyền tệp: các thiết bị cùng mã phòng kết nối trực tiếp với nhau, tệp không đi qua máy chủ',
+  init:'Đang khởi tạo…',statusInit:'Đang tham gia phòng…',
+  secRoom:'Phòng',roomCode:'Mã phòng',random:'Ngẫu nhiên',deviceName:'Tên thiết bị',namePh:'Đặt tên cho thiết bị này',
+  copyLink:'Sao chép liên kết mời',leave:'Rời phòng',rejoin:'Tham gia lại',
+  roomHint:'Các thiết bị cùng mã phòng sẽ tự động tìm thấy nhau · Tệp được truyền trực tiếp giữa các thiết bị, không qua máy chủ nào.',
+  self:'Thiết bị này',peers:'Thiết bị gần đây',files:'Lịch sử truyền',
+  foot1:'WebRTC kết nối trực tiếp · chỉ phần bắt tay kết nối đi qua máy chủ trung chuyển',foot2:'Nhấn vào thiết bị để chọn tệp, hoặc kéo tệp thả vào thiết bị',
+  settings:'Cài đặt',theme:'Giao diện',themeAuto:'Tự động',themeLight:'Sáng',themeDark:'Tối',
+  accentColor:'Màu nhấn',
+  language:'Ngôn ngữ',langAuto:'Tự động (theo hệ thống)',ariaTheme:'Chuyển chế độ sáng/tối',ariaSettings:'Cài đặt',ariaRoom:'Mã phòng',ariaLang:'Ngôn ngữ',
+  subOnline:r=>`Phòng ${r} · trực tuyến, đang chờ thiết bị`,subOffline:'Nhập cùng mã phòng · truyền P2P trực tiếp',
+  joining:r=>`Đang tham gia phòng ${r} …`,joined:r=>`Đã vào phòng ${r} · trực tuyến`,
+  roomFull:n=>`Phòng đã đầy · tối đa ${n} thiết bị; bạn sẽ tự vào khi có thiết bị rời`,
+  left:'Đã rời phòng · nhấn «Tham gia lại»',connErr:t=>`Lỗi kết nối: ${t}`,
+  libFail:'Không tải được PeerJS. Kiểm tra mạng rồi tải lại trang.',
+  peerEmpty1:'Chưa có thiết bị khác',peerEmpty2:'Mở trang này trên thiết bị khác và nhập cùng mã phòng',unknownDev:'Thiết bị không xác định',
+  fileEmpty1:'Chưa có lần truyền nào',fileEmpty2:'Tệp đã gửi và nhận sẽ hiện ở đây',
+  to:n=>`Gửi tới ${n}`,from:n=>`Từ ${n}`,save:'Lưu',fail:'Thất bại',done:'Hoàn tất',
+  retryConn:'Đang kết nối lại tới thiết bị này, vui lòng thử lại sau',gotFile:n=>`Đã nhận tệp: ${n}`,peerJoined:n=>`${n} đã vào phòng`,
+  roomCopied:'Đã sao chép liên kết mời · mở lên là vào phòng ngay',
+  copyFail:r=>`Sao chép thất bại — hãy ghi lại mã ${r}`,roomShort:'Mã phòng cần ít nhất 3 ký tự',
+  dev_iphone:'iPhone',dev_ipad:'iPad',dev_android:'Thiết bị Android',dev_mac:'Mac',dev_windows:'Máy tính Windows',dev_linux:'Thiết bị Linux',dev_mine:'Thiết bị của tôi'
+},
+'id':{
+  brand:'JianYe · Kirim File',metaDesc:'JianYe · Kirim File: perangkat dengan kode ruang yang sama terhubung langsung, file tidak lewat server',
+  init:'Menyiapkan…',statusInit:'Bergabung ke ruang…',
+  secRoom:'Ruang',roomCode:'Kode ruang',random:'Acak',deviceName:'Nama perangkat',namePh:'Beri nama perangkat ini',
+  copyLink:'Salin tautan undangan',leave:'Keluar ruang',rejoin:'Gabung lagi',
+  roomHint:'Perangkat dengan kode ruang sama akan saling menemukan otomatis · File dikirim langsung antarperangkat, tanpa melewati server.',
+  self:'Perangkat ini',peers:'Perangkat terdekat',files:'Riwayat transfer',
+  foot1:'WebRTC peer-to-peer · hanya jabat tangan koneksi lewat relay',foot2:'Klik perangkat untuk memilih file, atau tarik file ke atasnya',
+  settings:'Pengaturan',theme:'Tema tampilan',themeAuto:'Otomatis',themeLight:'Terang',themeDark:'Gelap',
+  accentColor:'Warna aksen',
+  language:'Bahasa',langAuto:'Otomatis (ikuti sistem)',ariaTheme:'Ganti mode terang/gelap',ariaSettings:'Pengaturan',ariaRoom:'Kode ruang',ariaLang:'Bahasa',
+  subOnline:r=>`Ruang ${r} · online, menunggu perangkat`,subOffline:'Masukkan kode yang sama · transfer P2P langsung',
+  joining:r=>`Bergabung ke ruang ${r} …`,joined:r=>`Bergabung di ruang ${r} · online`,
+  roomFull:n=>`Ruang penuh · maksimal ${n} perangkat; Anda akan bergabung otomatis saat ada yang keluar`,
+  left:'Anda keluar dari ruang · tekan «Gabung lagi»',connErr:t=>`Kesalahan koneksi: ${t}`,
+  libFail:'Gagal memuat PeerJS. Periksa jaringan lalu muat ulang halaman.',
+  peerEmpty1:'Belum ada perangkat lain',peerEmpty2:'Buka halaman ini di perangkat lain dan masukkan kode ruang yang sama',unknownDev:'Perangkat tidak dikenal',
+  fileEmpty1:'Belum ada transfer',fileEmpty2:'File yang dikirim dan diterima akan muncul di sini',
+  to:n=>`Ke ${n}`,from:n=>`Dari ${n}`,save:'Simpan',fail:'Gagal',done:'Selesai',
+  retryConn:'Masih menghubungkan ke perangkat ini, coba lagi sebentar lagi',gotFile:n=>`File diterima: ${n}`,peerJoined:n=>`${n} bergabung ke ruang`,
+  roomCopied:'Tautan undangan disalin · dibuka langsung bergabung',
+  copyFail:r=>`Gagal menyalin — catat kode ${r}`,roomShort:'Kode perlu minimal 3 huruf atau angka',
+  dev_iphone:'iPhone',dev_ipad:'iPad',dev_android:'Perangkat Android',dev_mac:'Mac',dev_windows:'PC Windows',dev_linux:'Perangkat Linux',dev_mine:'Perangkat saya'
+}
+
+};
+
+/* 功能扩展词条：单独放一张表，启动时按语言并入 DP_DICT，
+   这样上面的 19 个语言块可以保持原样不动。 */
+const DP_DICT_EXTRA={
+'zh-CN':{clearAll:'清空记录',delRec:'删除这条记录',cancel:'取消',retry:'重试',canceled:'已取消',
+  eta:s=>`剩余 ${s}`,resume:p=>`从 ${p} 处继续`,
+  sound:'提示音',soundHint:'收到文件时播放提示音。',soundOn:'开启',soundOff:'关闭'},
+'zh-TW':{clearAll:'清空記錄',delRec:'刪除這筆記錄',cancel:'取消',retry:'重試',canceled:'已取消',
+  eta:s=>`剩餘 ${s}`,resume:p=>`從 ${p} 處繼續`,
+  sound:'提示音',soundHint:'收到檔案時播放提示音。',soundOn:'開啟',soundOff:'關閉'},
+'en':{clearAll:'Clear',delRec:'Delete this record',cancel:'Cancel',retry:'Retry',canceled:'Canceled',
+  eta:s=>`${s} left`,resume:p=>`Resuming from ${p}`,
+  sound:'Sound',soundHint:'Play a chime when a file arrives.',soundOn:'On',soundOff:'Off'},
+'ja':{clearAll:'履歴を消去',delRec:'この履歴を削除',cancel:'キャンセル',retry:'再試行',canceled:'キャンセル済み',
+  eta:s=>`残り ${s}`,resume:p=>`${p} から再開`,
+  sound:'通知音',soundHint:'ファイル受信時に通知音を鳴らします。',soundOn:'オン',soundOff:'オフ'},
+'ko':{clearAll:'기록 지우기',delRec:'이 기록 삭제',cancel:'취소',retry:'다시 시도',canceled:'취소됨',
+  eta:s=>`${s} 남음`,resume:p=>`${p}부터 이어서`,
+  sound:'알림음',soundHint:'파일을 받으면 알림음을 재생합니다.',soundOn:'켜기',soundOff:'끄기'},
+'es':{clearAll:'Borrar todo',delRec:'Eliminar este registro',cancel:'Cancelar',retry:'Reintentar',canceled:'Cancelado',
+  eta:s=>`Quedan ${s}`,resume:p=>`Se reanuda desde ${p}`,
+  sound:'Sonido',soundHint:'Reproducir un aviso al recibir un archivo.',soundOn:'Activado',soundOff:'Desactivado'},
+'fr':{clearAll:'Tout effacer',delRec:'Supprimer cet élément',cancel:'Annuler',retry:'Réessayer',canceled:'Annulé',
+  eta:s=>`${s} restantes`,resume:p=>`Reprise à ${p}`,
+  sound:'Son',soundHint:'Jouer un son à la réception d’un fichier.',soundOn:'Activé',soundOff:'Désactivé'},
+'de':{clearAll:'Liste leeren',delRec:'Diesen Eintrag löschen',cancel:'Abbrechen',retry:'Erneut versuchen',canceled:'Abgebrochen',
+  eta:s=>`noch ${s}`,resume:p=>`Fortsetzung ab ${p}`,
+  sound:'Ton',soundHint:'Beim Empfang einer Datei einen Ton abspielen.',soundOn:'Ein',soundOff:'Aus'},
+'it':{clearAll:'Svuota',delRec:'Elimina questa voce',cancel:'Annulla',retry:'Riprova',canceled:'Annullato',
+  eta:s=>`${s} rimanenti`,resume:p=>`Ripresa da ${p}`,
+  sound:'Suono',soundHint:'Riproduci un suono all’arrivo di un file.',soundOn:'Attivo',soundOff:'Disattivo'},
+'pt':{clearAll:'Limpar',delRec:'Excluir este registro',cancel:'Cancelar',retry:'Tentar de novo',canceled:'Cancelado',
+  eta:s=>`Faltam ${s}`,resume:p=>`Retomando de ${p}`,
+  sound:'Som',soundHint:'Tocar um aviso ao receber um arquivo.',soundOn:'Ativado',soundOff:'Desativado'},
+'ru':{clearAll:'Очистить',delRec:'Удалить эту запись',cancel:'Отмена',retry:'Повторить',canceled:'Отменено',
+  eta:s=>`осталось ${s}`,resume:p=>`Продолжение с ${p}`,
+  sound:'Звук',soundHint:'Проигрывать звук при получении файла.',soundOn:'Вкл.',soundOff:'Выкл.'},
+'nl':{clearAll:'Wissen',delRec:'Dit item verwijderen',cancel:'Annuleren',retry:'Opnieuw',canceled:'Geannuleerd',
+  eta:s=>`nog ${s}`,resume:p=>`Hervat vanaf ${p}`,
+  sound:'Geluid',soundHint:'Speel een geluid bij ontvangst van een bestand.',soundOn:'Aan',soundOff:'Uit'},
+'pl':{clearAll:'Wyczyść',delRec:'Usuń ten wpis',cancel:'Anuluj',retry:'Ponów',canceled:'Anulowano',
+  eta:s=>`pozostało ${s}`,resume:p=>`Wznowienie od ${p}`,
+  sound:'Dźwięk',soundHint:'Odtwarzaj dźwięk po odebraniu pliku.',soundOn:'Wł.',soundOff:'Wył.'},
+'tr':{clearAll:'Temizle',delRec:'Bu kaydı sil',cancel:'İptal',retry:'Yeniden dene',canceled:'İptal edildi',
+  eta:s=>`${s} kaldı`,resume:p=>`${p} konumundan devam`,
+  sound:'Ses',soundHint:'Dosya alındığında ses çal.',soundOn:'Açık',soundOff:'Kapalı'},
+'ar':{clearAll:'مسح السجل',delRec:'حذف هذا السجل',cancel:'إلغاء',retry:'إعادة المحاولة',canceled:'أُلغيت',
+  eta:s=>`متبقٍ ${s}`,resume:p=>`الاستئناف من ${p}`,
+  sound:'الصوت',soundHint:'تشغيل نغمة عند استلام ملف.',soundOn:'تشغيل',soundOff:'إيقاف'},
+'hi':{clearAll:'साफ़ करें',delRec:'यह रिकॉर्ड हटाएँ',cancel:'रद्द करें',retry:'फिर कोशिश करें',canceled:'रद्द किया गया',
+  eta:s=>`${s} शेष`,resume:p=>`${p} से जारी`,
+  sound:'आवाज़',soundHint:'फ़ाइल मिलने पर आवाज़ बजाएँ।',soundOn:'चालू',soundOff:'बंद'},
+'th':{clearAll:'ล้างประวัติ',delRec:'ลบรายการนี้',cancel:'ยกเลิก',retry:'ลองใหม่',canceled:'ยกเลิกแล้ว',
+  eta:s=>`เหลือ ${s}`,resume:p=>`ทำต่อจาก ${p}`,
+  sound:'เสียง',soundHint:'เล่นเสียงเมื่อได้รับไฟล์',soundOn:'เปิด',soundOff:'ปิด'},
+'vi':{clearAll:'Xóa lịch sử',delRec:'Xóa mục này',cancel:'Hủy',retry:'Thử lại',canceled:'Đã hủy',
+  eta:s=>`còn ${s}`,resume:p=>`Tiếp tục từ ${p}`,
+  sound:'Âm thanh',soundHint:'Phát âm báo khi nhận tệp.',soundOn:'Bật',soundOff:'Tắt'},
+'id':{clearAll:'Bersihkan',delRec:'Hapus catatan ini',cancel:'Batal',retry:'Coba lagi',canceled:'Dibatalkan',
+  eta:s=>`sisa ${s}`,resume:p=>`Dilanjutkan dari ${p}`,
+  sound:'Suara',soundHint:'Putar nada saat berkas diterima.',soundOn:'Aktif',soundOff:'Nonaktif'}
+};
+/* 二维码提示语：只有一条词条，单独列一张小表，先并进 EXTRA 再走同一套合并，
+   这样上面 19 个语言块一个字都不用动。 */
+const DP_DICT_QR={
+'zh-CN':'扫码加入房间','zh-TW':'掃碼加入房間','en':'Scan to join','ja':'スキャンして参加','ko':'스캔하여 참여',
+'es':'Escanea para unirte','fr':'Scannez pour rejoindre','de':'Zum Beitreten scannen','it':'Scansiona per unirti',
+'pt':'Escaneie para entrar','ru':'Отсканируйте, чтобы войти','nl':'Scan om deel te nemen','pl':'Zeskanuj, aby dołączyć',
+'tr':'Katılmak için tarayın','ar':'امسح الرمز للانضمام','hi':'शामिल होने के लिए स्कैन करें','th':'สแกนเพื่อเข้าร่วม',
+'vi':'Quét mã để tham gia','id':'Pindai untuk bergabung'
+};
+Object.keys(DP_DICT_EXTRA).forEach(l=>{DP_DICT_EXTRA[l].qrHint=DP_DICT_QR[l]||DP_DICT_QR.en;});
+Object.keys(DP_DICT_EXTRA).forEach(l=>{
+  if(!DP_DICT[l])DP_DICT[l]={};
+  Object.assign(DP_DICT[l],DP_DICT_EXTRA[l]);
+});
+
+let dpLang='zh-CN';      // 当前生效的语言
+let dpLangPref='auto';   // 用户选择（'auto' 或具体语言代码）
+/* 取词：缺失时回退到英文，再回退到 key 本身；函数型词条支持插值 */
+function dpT(k,...a){
+  const d=DP_DICT[dpLang]||DP_DICT.en;
+  let v=d[k];
+  if(v===undefined)v=DP_DICT.en[k];
+  if(v===undefined)return k;
+  return typeof v==='function'?v(...a):v;
+}
+/* 浏览器语言 → 支持的语言（含中文简繁特判、前缀匹配） */
+function dpDetectLang(){
+  const cands=[...(navigator.languages||[]),navigator.language||''].map(s=>String(s).toLowerCase());
+  for(const c of cands){
+    if(!c)continue;
+    const exact=DP_LANGS.find(l=>l.c.toLowerCase()===c);
+    if(exact)return exact.c;
+    const base=c.split('-')[0];
+    if(base==='zh')return /hant|tw|hk|mo/.test(c)?'zh-TW':'zh-CN';
+    const hit=DP_LANGS.find(l=>l.c.toLowerCase().split('-')[0]===base);
+    if(hit)return hit.c;
+  }
+  return 'en';
+}
+function dpApplyLang(pref,persist=true){
+  dpLangPref=(pref==='auto'||DP_DICT[pref])?pref:'auto';
+  dpLang=dpLangPref==='auto'?dpDetectLang():dpLangPref;
+  if(persist){try{localStorage.setItem(DP_LANG_KEY,dpLangPref);}catch(e){}}
+  const root=document.documentElement;
+  root.lang=dpLang;
+  root.dir=/^(ar|fa|he|ur)/i.test(dpLang)?'rtl':'ltr';
+  document.title=dpT('brand');
+  const md=document.querySelector('meta[name="description"]');
+  if(md)md.setAttribute('content',dpT('metaDesc'));
+  // 静态文案
+  document.querySelectorAll('[data-i18n]').forEach(el=>{el.textContent=dpT(el.dataset.i18n);});
+  document.querySelectorAll('[data-i18n-ph]').forEach(el=>{el.setAttribute('placeholder',dpT(el.dataset.i18nPh));});
+  document.querySelectorAll('[data-i18n-aria]').forEach(el=>{el.setAttribute('aria-label',dpT(el.dataset.i18nAria));});
+  // 语言下拉：选项名用各自母语，不随界面语言变化
+  const sel=dpEl('dpLang');
+  if(sel){
+    sel.innerHTML='<option value="auto"></option>'+DP_LANGS.map(l=>`<option value="${l.c}">${esc(l.n)}</option>`).join('');
+    const o=sel.querySelector('option[value="auto"]');if(o)o.textContent=dpT('langAuto');
+    sel.value=dpLangPref;
+  }
+  // 动态区域
+  if(dpState){
+    if(dpNameAuto){ // 自动生成的设备名跟随界面语言
+      dpState.name=dpDevName();
+      const n=dpEl('dpName');if(n)n.value=dpState.name;
+      dpSave();
+    }
+    dpSyncChrome();dpRenderPeers();dpRenderFiles();
+    const st=dpEl('dpStatus');
+    if(st){st.textContent=dpT(dpStatusState.k,...dpStatusState.args);st.className='dp-status'+(dpStatusState.cls?' '+dpStatusState.cls:'');}
+  }
+  dpApplyTheme(dpThemeMode); // 刷新主题按钮的图标角标与标题文案
+  dpSyncSwatchLabels();      // 色板按钮的无障碍文案跟随语言
+}
+function dpInitLang(){
+  let saved=null;try{saved=localStorage.getItem(DP_LANG_KEY);}catch(e){}
+  dpApplyLang(saved||'auto',false);
+  const sel=dpEl('dpLang');
+  if(sel)sel.onchange=()=>dpApplyLang(sel.value);
+  // 系统语言变化时，仅"自动"模式下跟随
+  window.addEventListener('languagechange',()=>{if(dpLangPref==='auto')dpApplyLang('auto',false);});
+}
+
+/* ========================= 主题（自动 / 浅色 / 深色，默认跟随系统） ========================= */
+const DP_THEME_KEY='jy-drop-theme';
+const DP_ICON_MOON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.6A8.6 8.6 0 0 1 9.4 3.5a8.6 8.6 0 1 0 11.1 11.1Z"/></svg>';
+const DP_ICON_SUN='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="12" cy="12" r="4.1"/><path d="M12 2.6v2.1M12 19.3v2.1M2.6 12h2.1M19.3 12h2.1M5.4 5.4l1.5 1.5M17.1 17.1l1.5 1.5M18.6 5.4l-1.5 1.5M6.9 17.1l-1.5 1.5"/></svg>';
+/* 自动模式图标：右半填充的圆（浅色深色各占一半） */
+const DP_ICON_AUTO='<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.3" stroke="currentColor" stroke-width="1.9"/><path d="M12 3.7a8.3 8.3 0 0 1 0 16.6Z" fill="currentColor"/></svg>';
+const dpSysDark=()=>matchMedia('(prefers-color-scheme:dark)').matches;
+function dpResolvedDark(){
+  const t=document.documentElement.getAttribute('data-theme');
+  return t==='dark'||(t!=='light'&&dpSysDark());
+}
+let dpThemeMode='auto'; // 当前按钮所处模式：'auto' | 'light' | 'dark'
+function dpApplyTheme(t){ // t: 'light' | 'dark' | 'auto'
+  dpThemeMode=t;
+  const root=document.documentElement;
+  if(t==='auto')root.removeAttribute('data-theme');else root.setAttribute('data-theme',t);
+  const dark=dpResolvedDark();
+  const btn=dpEl('dpTheme');
+  if(btn){
+    /* 图标表示当前模式：自动 = 半圆 + A 角标；浅色 = 太阳；深色 = 月亮 */
+    btn.innerHTML=t==='auto'?DP_ICON_AUTO+'<span class="auto-a">A</span>':(t==='dark'?DP_ICON_MOON:DP_ICON_SUN);
+    const label=dpT(t==='auto'?'themeAuto':t==='dark'?'themeDark':'themeLight');
+    btn.title=dpT('ariaTheme')+' · '+label;
+    btn.setAttribute('aria-label',btn.title);
+  }
+  const meta=document.querySelector('meta[name="theme-color"]');
+  if(meta)meta.setAttribute('content',dark?'#08080a':'#f5f6f9');
+  const seg=dpEl('dpThemeSeg');
+  if(seg)seg.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
+}
+function dpInitTheme(){
+  let saved=null;
+  try{saved=localStorage.getItem(DP_THEME_KEY);}catch(e){}
+  dpApplyTheme(saved==='light'||saved==='dark'?saved:'auto');
+  matchMedia('(prefers-color-scheme:dark)').addEventListener('change',()=>{
+    if(dpThemeMode==='auto')dpApplyTheme('auto'); // 仅跟随系统时同步
+  });
+  const btn=dpEl('dpTheme');
+  /* 按钮三态循环：自动 → 浅色 → 深色 → 自动 */
+  if(btn)btn.onclick=()=>{
+    const order=['auto','light','dark'];
+    const next=order[(order.indexOf(dpThemeMode)+1)%order.length];
+    try{localStorage.setItem(DP_THEME_KEY,next);}catch(e){}
+    dpApplyTheme(next);
+  };
+  const seg=dpEl('dpThemeSeg');
+  if(seg)seg.querySelectorAll('button').forEach(b=>b.onclick=()=>{
+    try{localStorage.setItem(DP_THEME_KEY,b.dataset.t);}catch(e){}
+    dpApplyTheme(b.dataset.t);
+  });
+}
+
+/* ========================= 主题颜色（强调色；同时就是本机设备球的颜色） ========================= */
+const DP_COLOR_KEY='jy-drop-color';
+/* id 会随 hello 名片发给同一房间的其他设备，所以用稳定的短字符串 */
+const DP_COLORS=[
+  {id:'blue',   hex:'#0a84ff', lt:'#64d2ff'},
+  {id:'indigo', hex:'#5e5ce6', lt:'#a9a7ff'},
+  {id:'purple', hex:'#bf5af2', lt:'#e3aaff'},
+  {id:'pink',   hex:'#ff375f', lt:'#ff93aa'},
+  {id:'red',    hex:'#ff453a', lt:'#ff9d95'},
+  {id:'orange', hex:'#ff9f0a', lt:'#ffd07d'},
+  {id:'green',  hex:'#30d158', lt:'#8ef0a7'},
+  {id:'teal',   hex:'#40c8e0', lt:'#9ce8f6'}
+];
+const dpHexRgb=h=>{const n=parseInt(h.slice(1),16);return ((n>>16)&255)+','+((n>>8)&255)+','+(n&255);};
+const dpColorById=id=>DP_COLORS.find(c=>c.id===id)||DP_COLORS[0];
+let dpColorId='blue';
+const DP_CHECK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
+/* 对端设备球的颜色：优先用对方自己上报的颜色，否则按席位号给一个互不相同的兜底色 */
+function dpPeerColor(rec){
+  const own=rec&&rec.color&&DP_COLORS.find(c=>c.id===rec.color);
+  if(own)return own;
+  const slot=(rec&&rec.slot)||1;
+  return DP_COLORS[(slot-1+DP_COLORS.length)%DP_COLORS.length];
+}
+const dpAvatarVars=c=>`--dc:${c.hex};--dc-lt:${c.lt};--dc-rgb:${dpHexRgb(c.hex)}`;
+/* 浏览器标签页图标也跟着强调色走（原来写死蓝色，换了颜色标签页还是蓝的） */
+function dpFavicon(hex){
+  const el=dpEl('dpFavicon');if(!el)return;
+  const c=encodeURIComponent(hex);
+  el.href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='"+c+"' stroke-width='2' stroke-linecap='round'><circle cx='12' cy='19' r='1.7' fill='"+c+"' stroke='none'/><path d='M6.6 14.2a7.6 7.6 0 0 1 10.8 0'/><path d='M3.4 10.6a12.2 12.2 0 0 1 17.2 0'/></svg>";
+}
+function dpApplyColor(id,save=true){
+  const c=dpColorById(id);
+  dpColorId=c.id;
+  const root=document.documentElement.style;
+  root.setProperty('--accent',c.hex);
+  root.setProperty('--accent-lt',c.lt);
+  root.setProperty('--accent-rgb',dpHexRgb(c.hex));
+  dpFavicon(c.hex);
+  if(save){try{localStorage.setItem(DP_COLOR_KEY,c.id);}catch(e){}}
+  const box=dpEl('dpSwatches');
+  if(box)box.querySelectorAll('[data-color]').forEach(b=>{
+    const on=b.dataset.color===c.id;
+    b.classList.toggle('on',on);
+    b.setAttribute('aria-pressed',on?'true':'false');
+  });
+  dpAnnounce(); // 颜色变了立刻把新名片推给已连上的设备
+}
+function dpInitColor(){
+  let saved=null;try{saved=localStorage.getItem(DP_COLOR_KEY);}catch(e){}
+  const box=dpEl('dpSwatches');
+  if(box){
+    box.innerHTML=DP_COLORS.map(c=>`<button class="sw" type="button" data-color="${c.id}" aria-pressed="false" style="--sw:${c.hex};--sw-lt:${c.lt}">${DP_CHECK}</button>`).join('');
+    box.querySelectorAll('[data-color]').forEach(b=>b.onclick=()=>dpApplyColor(b.dataset.color));
+  }
+  // 手动选过就用选的；否则先默认蓝，占席后由 dpClaimAutoColor 按席位定色
+  dpApplyColor(saved||dpAutoColorId()||'blue',false);
+  dpSyncSwatchLabels();
+}
+const DP_COLOR_AUTO_KEY='jy-drop-color-auto';
+const dpExplicitColor=()=>{try{return localStorage.getItem(DP_COLOR_KEY);}catch(e){return null;}};
+function dpAutoColorId(){
+  try{const v=localStorage.getItem(DP_COLOR_AUTO_KEY);return DP_COLORS.some(c=>c.id===v)?v:null;}catch(e){return null;}
+}
+/* 首次使用：按席位号分一个颜色并记住，同房间各设备天然不同色 */
+function dpClaimAutoColor(){
+  if(!dpState||dpState.slot==null)return;
+  if(dpExplicitColor()||dpAutoColorId())return;
+  const c=DP_COLORS[(dpState.slot-1+DP_COLORS.length)%DP_COLORS.length];
+  try{localStorage.setItem(DP_COLOR_AUTO_KEY,c.id);}catch(e){}
+  dpApplyColor(c.id,false);
+}
+/* 色板按钮的无障碍文案跟随界面语言 */
+function dpSyncSwatchLabels(){
+  const box=dpEl('dpSwatches');if(!box)return;
+  box.querySelectorAll('[data-color]').forEach((b,i)=>{
+    const t=dpT('accentColor')+' '+(i+1);
+    b.title=t;b.setAttribute('aria-label',t);
+  });
+}
+
+/* ========================= 设备识别 ========================= */
+function dpDevName(){
+  const ua=navigator.userAgent;
+  if(/iPhone/.test(ua))return dpT('dev_iphone');
+  if(/iPad/.test(ua))return dpT('dev_ipad');
+  if(/Android/.test(ua))return dpT('dev_android');
+  if(/Macintosh/.test(ua))return dpT('dev_mac');
+  if(/Windows/.test(ua))return dpT('dev_windows');
+  if(/Linux/.test(ua))return dpT('dev_linux');
+  return dpT('dev_mine');
+}
+function dpDevType(){
+  const ua=navigator.userAgent;
+  const touch=(navigator.maxTouchPoints||0)>1;
+  if(/iPad/.test(ua)||(touch&&/Macintosh/.test(ua)))return 'tablet';
+  if(/iPhone|iPod/.test(ua))return 'phone';
+  if(/Android/.test(ua))return /Tab|Pad|Fold|SM-X/i.test(ua)?'tablet':'phone';
+  if(/Macintosh/.test(ua))return 'laptop';
+  if(/Windows|Linux|X11|CrOS/i.test(ua))return 'pc';
+  return 'pc';
+}
+const DP_ICONS={
+  pc:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="1.8"/><path d="M9 20h6M12 16v4"/><path d="M7 8.5h6M7 11.5h4" opacity=".55"/></svg>',
+  laptop:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="5" width="14" height="9.5" rx="1.6"/><path d="M2.5 18.5h19M4 18.5l1-2.6M20 18.5l-1-2.6"/><path d="M9 8h6" opacity=".55"/></svg>',
+  phone:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2.5" width="10" height="19" rx="2.4"/><path d="M10.5 5h3"/><circle cx="12" cy="18.2" r=".9" fill="currentColor" stroke="none"/></svg>',
+  tablet:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2.4"/><path d="M8.5 6h7" opacity=".55"/><circle cx="12" cy="17.8" r=".9" fill="currentColor" stroke="none"/></svg>',
+  tv:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12.5" rx="2"/><path d="M8 21.5h8M9.5 9.5l-2.5 3 2.5 3M14.5 9.5l2.5 3-2.5 3"/></svg>'
+};
+const dpAvatar=(dev,c)=>'<span class="dp-avatar"'+((c&&c.hex)?' style="'+dpAvatarVars(c)+'"':'')+'>'+(DP_ICONS[dev]||DP_ICONS.pc)+'</span>';
+
+/* ========================= 状态 ========================= */
+/* 与个人网站「文件传送」组件协议完全一致（jydrop-v2），两边可以同房间互传 */
+const DP_PREFIX='jydrop-v2-';
+const DP_SLOTS=8;
+const DP_PEER_OPTS={debug:0};
+let dpState=null;          // {room,name,dev,slot,connected}
+let dpNameAuto=true;       // 名称是否为自动生成（用户没手动改过）
+let dpPeer=null;           // 当前 Peer 实例（占用 dpState.slot 号席位）
+let dpPeers={};            // 成员表：slotId -> {name,dev,conn,slot,opened}
+let dpKnown={};            // 名片记忆：slotId -> {name,dev}，断线重连不闪回"…"
+let dpEntries=[];          // 传输记录（新的在前）
+let dpRenderTimer=null;
+let dpPruneTimer=null;
+let dpProbeTimer=null;
+let dpReconnectTimer=null;
+let dpVisBound=false;
+let dpPending={};          // 正在探测中的席位号 -> conn
+let dpStatusState={k:'statusInit',args:[],cls:''}; // 状态文案记成词条，切语言时重渲染
+
+/* ── 断点续传用的两张会话表 ──
+   dpSrc     ：发送方留存源文件（重试 / 对端要求重发时用），只在本次打开期间有效
+   dpPartial ：接收方留存半截文件的已收数据块，连接中断后再发同一个文件可以接着收 */
+const dpKey=(name,size)=>String(name)+'\u0000'+String(size);
+const dpSrc={};
+const dpPartial={};
+const DP_SRC_MAX=10,DP_PART_MAX=6; // 上限，避免大文件把内存吃光
+
+const dpSeed=id=>({name:(dpKnown[id]&&dpKnown[id].name)||'…',dev:(dpKnown[id]&&dpKnown[id].dev)||null,color:(dpKnown[id]&&dpKnown[id].color)||null});
+const dpLearn=(id,name,dev,color)=>{
+  if(!name||name==='…')return;
+  dpKnown[id]={name,dev:dev||(dpKnown[id]&&dpKnown[id].dev)||null,color:color||(dpKnown[id]&&dpKnown[id].color)||null};
+};
+/* 把本机名片（名称/设备类型/主题颜色）推给所有已连通的设备 */
+function dpAnnounce(){
+  if(!dpState)return;
+  Object.values(dpPeers).forEach(v=>{
+    if(v.conn&&v.conn.open){
+      try{v.conn.send({type:'hello',name:dpState.name,dev:dpState.dev,color:dpColorId});}catch(e){}
+    }
+  });
+}
+/* 只持久化「用户手填」的名称：自动生成的名称要随界面语言变化，不能被固化 */
+function dpSave(){
+  try{localStorage.setItem('jy-drop',JSON.stringify({room:dpState.room,name:dpNameAuto?null:dpState.name}));}catch(e){}
+}
+function dpStatusSet(k,args,cls){
+  dpStatusState={k,args:args||[],cls:cls||''};
+  const n=dpEl('dpStatus');
+  if(n){n.textContent=dpT(k,...(args||[]));n.className='dp-status'+(cls?' '+cls:'');}
+}
+/* 带随机抖动的重试：多台设备同时掉线时，固定节奏重试会永远同步碰撞 */
+const dpRetry=()=>{dpReconnectTimer=setTimeout(dpJoin,800+Math.random()*1700);};
+/* 邀请链接：当前页面地址 + 房间码，对方打开即自动加入（dpRoomFromUrl 会读取 ?room=） */
+function dpInviteUrl(){
+  const room=(dpState&&dpState.room)||'';
+  let base=location.href.split('#')[0].split('?')[0];
+  if(!base)base=location.href;
+  return base+'?room='+encodeURIComponent(room);
+}
+function dpSyncLink(){
+  if(!dpState)return;
+  // 让地址栏本身就是一条可分享的邀请链接（file:// 等场景可能受限，失败忽略）
+  try{
+    const u=new URL(dpInviteUrl());
+    if(u.protocol==='http:'||u.protocol==='https:')history.replaceState(null,'',u.href);
+  }catch(e){}
+}
+/* 同步页面上的状态相关元素：顶栏副标题 / 雷达动画 / 离开按钮 */
+function dpSyncChrome(){
+  const sub=dpEl('dpSub');
+  if(sub)sub.textContent=dpState&&dpState.connected?dpT('subOnline',dpState.room):dpT('subOffline');
+  const radar=dpEl('dpRadar');
+  if(radar)radar.classList.toggle('live',!!(dpState&&dpState.connected));
+  const lv=dpEl('dpLeave');
+  if(lv)lv.textContent=dpState&&dpState.connected?dpT('leave'):dpT('rejoin');
+  dpRenderSelf();
+  dpSyncLink();
+}
+function dpRenderSelf(){
+  const box=dpEl('dpSelf'),nm=dpEl('dpSelfName');
+  if(box)box.innerHTML=DP_ICONS[(dpState&&dpState.dev)||'pc'];
+  if(nm)nm.textContent=(dpState&&dpState.name)||dpT('self');
+}
+
+/* ========================= 渲染 ========================= */
+function dpRenderPeers(){
+  const box=dpEl('dpPeers');if(!box||!dpState)return;
+  // 只显示数据通道已打通的设备，还在握手的（连接中）不显示，避免半就绪头像
+  const list=Object.entries(dpPeers).filter(([,v])=>v.conn&&v.conn.open)
+    .sort((a,b)=>(a[1].slot||99)-(b[1].slot||99))
+    .map(([id,v])=>`<button class="dp-peer" type="button" data-dpeer="${id}">${dpAvatar(v.dev,dpPeerColor(v))}<span class="nm">${esc(v.name||dpT('unknownDev'))}</span></button>`).join('');
+  box.innerHTML=list||`<span class="dp-empty">${esc(dpT('peerEmpty1'))}<br>${esc(dpT('peerEmpty2'))}</span>`;
+  // 点击选文件 + 拖放文件到设备圆圈，两条路径都支持
+  box.querySelectorAll('[data-dpeer]').forEach(b=>{
+    const id=b.dataset.dpeer;
+    b.onclick=()=>dpPickFiles(id);
+    b.addEventListener('dragover',e=>{e.preventDefault();e.dataTransfer.dropEffect='copy';b.classList.add('dp-drag');});
+    // relatedTarget 判断：光标移到球内部子元素（图标/名字）时不算离开，否则高亮会疯狂闪烁
+    b.addEventListener('dragleave',e=>{if(!b.contains(e.relatedTarget))b.classList.remove('dp-drag');});
+    b.addEventListener('drop',e=>{
+      e.preventDefault();b.classList.remove('dp-drag');
+      const rec=dpPeers[id];if(!rec)return;
+      if(!rec.conn.open){dpProbeLower();toast(dpT('retryConn'),false);return;}
+      const files=[...(e.dataTransfer.files||[])];
+      if(files.length)dpQueueFiles(rec,files);
+    });
+  });
+}
+const DP_XICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>';
+/* 失败/取消的记录还有没有救：发送方本地还留着源文件、接收方对端还在线 */
+function dpCanRetry(e){
+  if(!e||e.state==='run'||e.state==='done')return false;
+  const rec=dpPeers[e._peerId];
+  if(e.dir==='out')return !!(e._file&&rec&&rec.conn&&rec.conn.open);
+  return !!(rec&&rec.conn&&rec.conn.open);
+}
+function dpFileRow(e,i){
+  const pct=e.size?Math.min(100,Math.round(e.done/e.size*100)):0;
+  const icon=e.dir==='out'?'📤':'📥';
+  const dirTxt=e.dir==='out'?dpT('to',e.peerName||'—'):dpT('from',e.peerName||'—');
+  let meta=`${dirTxt} · ${dpFmtSize(e.size)}`;
+  if(e.state==='run'){
+    let s=`${dpFmtSize(e.done)} / ${dpFmtSize(e.size)}`;
+    if(e._spd>120)s+=' · '+dpFmtSize(Math.round(e._spd))+'/s';        // 实时速度
+    if(e._eta!=null&&e._eta<3600)s+=' · '+dpT('eta',dpFmtDur(e._eta));   // 预计剩余
+    meta=`${dirTxt} · ${s}`;
+  }
+  const act=[];
+  if(e.state==='run'){
+    act.push(`<span class="dp-pct">${pct}%</span>`);
+    act.push(`<button class="dp-sm" type="button" data-dcancel="${i}">${esc(dpT('cancel'))}</button>`);
+  }else if(e.state==='done'&&e.dir==='in'&&e.url){
+    act.push(`<button class="dp-save" type="button" data-dsave="${i}">${esc(dpT('save'))}</button>`);
+  }else if(e.state==='done'){
+    act.push(`<span class="dp-tag">${esc(dpT('done'))}</span>`);
+  }else{
+    act.push(`<span class="dp-tag">${esc(e.state==='canceled'?dpT('canceled'):dpT('fail'))}</span>`);
+    if(dpCanRetry(e))act.push(`<button class="dp-sm" type="button" data-dretry="${i}">${esc(dpT('retry'))}</button>`);
+  }
+  act.push(`<button class="dp-x" type="button" data-ddel="${i}" title="${esc(dpT('delRec'))}" aria-label="${esc(dpT('delRec'))}">${DP_XICON}</button>`);
+  return `<div class="dp-file"><span class="fi">${icon}</span><div class="fm"><b>${esc(e.name)}</b>
+    <span>${esc(meta)}</span>
+    ${e.state==='run'?'<div class="dp-bar"><i style="width:'+pct+'%"></i></div>':''}</div>
+    <span class="dp-act">${act.join('')}</span></div>`;
+}
+function dpRenderFiles(){
+  const box=dpEl('dpFiles');if(!box)return;
+  if(!dpEntries.length){box.innerHTML=`<span class="dp-empty">${esc(dpT('fileEmpty1'))}<br>${esc(dpT('fileEmpty2'))}</span>`;return;}
+  box.innerHTML=dpEntries.map(dpFileRow).join('');
+  box.querySelectorAll('[data-dsave]').forEach(b=>b.onclick=()=>{
+    const e=dpEntries[+b.dataset.dsave];if(!e||!e.url)return;
+    const a=document.createElement('a');a.href=e.url;a.download=e.name;document.body.appendChild(a);a.click();a.remove();
+  });
+  box.querySelectorAll('[data-dretry]').forEach(b=>b.onclick=()=>dpRetryEntry(dpEntries[+b.dataset.dretry]));
+  box.querySelectorAll('[data-dcancel]').forEach(b=>b.onclick=()=>dpCancelEntry(dpEntries[+b.dataset.dcancel]));
+  box.querySelectorAll('[data-ddel]').forEach(b=>b.onclick=()=>dpDeleteEntry(dpEntries[+b.dataset.ddel]));
+}
+function dpThrottleRender(){
+  if(dpRenderTimer)return;
+  dpRenderTimer=setTimeout(()=>{dpRenderTimer=null;dpRenderFiles();dpSaveEntries();},150);
+}
+const DP_MAX_ENTRIES=60; // 记录上限：超过就丢掉最旧的，并释放它占着的 Blob 内存
+/* 记录被移除时，顺手把它对应的续传缓冲也丢掉，别让内存越攒越多 */
+function dpReleaseEntry(e){
+  if(e.url){try{URL.revokeObjectURL(e.url);}catch(_){}}
+  if(e._key&&dpPartial[e._key]&&dpPartial[e._key].entry===e){
+    delete dpPartial[e._key];
+    if(e.state==='run')e.state='canceled';
+  }
+}
+const dpAddEntry=e=>{
+  dpEntries.unshift(e);
+  if(dpEntries.length>DP_MAX_ENTRIES){
+    dpEntries.splice(DP_MAX_ENTRIES).forEach(dpReleaseEntry);
+  }
+  dpSaveEntries();
+  dpRenderFiles();
+};
+/* ── 传输记录落盘：刷新、关掉重开都还在，只有点「清空记录」才真的删掉 ──
+   能落盘的只有纯数据字段；_file（源文件）和 url/blob（已收文件内容）都是本次会话的临时对象，
+   刷新后拿不回来，所以读回来的记录一律不再显示「保存」按钮，进行中的也降级成失败，不假装还能续传。 */
+const DP_LOG_KEY='jy-drop-log';
+let dpLogTimer=null;
+function dpSaveEntries(now){
+  const write=()=>{
+    dpLogTimer=null;
+    try{
+      localStorage.setItem(DP_LOG_KEY,JSON.stringify(dpEntries.map(e=>({
+        dir:e.dir,name:e.name,size:e.size,done:e.done,state:e.state,
+        peerName:e.peerName,_t:e._t
+      }))));
+    }catch(e){}
+  };
+  if(now){if(dpLogTimer)clearTimeout(dpLogTimer);write();return;}
+  if(dpLogTimer)return;
+  dpLogTimer=setTimeout(write,600); // 传输中的连续进度只落一次盘，别把 localStorage 写爆
+}
+function dpLoadEntries(){
+  let arr=null;
+  try{arr=JSON.parse(localStorage.getItem(DP_LOG_KEY)||'null');}catch(e){}
+  if(!Array.isArray(arr))return;
+  dpEntries=arr.filter(e=>e&&e.name).slice(0,DP_MAX_ENTRIES).map(e=>({
+    dir:e.dir==='out'?'out':'in',
+    name:String(e.name),size:+e.size||0,done:+e.done||0,
+    state:e.state==='done'?'done':(e.state==='canceled'?'canceled':'fail'),
+    peerName:e.peerName||'',_t:+e._t||0,_key:null,_peerId:null
+  }));
+}
+function dpTrimStore(){
+  const sk=Object.keys(dpSrc);
+  while(sk.length>DP_SRC_MAX)delete dpSrc[sk.shift()];
+  const pk=Object.keys(dpPartial);
+  while(pk.length>DP_PART_MAX)delete dpPartial[pk.shift()];
+}
+
+/* ========================= 数据通道协议 ========================= */
+/* {type:'fmeta',name,size,key} → 对端回 {type:'fack',key,done}（已收到多少字节）
+   → ArrayBuffer 分块 → {type:'fend'}；失败 {type:'ferr'}；中途取消 {type:'fcancel'}
+   对端要求重发：{type:'fretry'}。老版本网页不认识后三种消息，会直接忽略，互传仍然正常。 */
+function dpBindDataConn(conn,rec){
+  if(rec.bound)return;rec.bound=true;
+  rec.peerId=conn.peer;
+  conn.on('data',data=>{
+    if(data&&data.type==='fmeta'){
+      const key=data.key||dpKey(data.name,data.size);
+      let part=dpPartial[key];
+      // 同名同大小且已经收了一部分 → 接着上次收，不新建记录
+      if(!part||part.done<=0||part.done>=data.size||part.entry.state==='done'){
+        const entry={dir:'in',name:data.name,size:data.size,done:0,state:'run',peerName:data.from||rec.name,
+          _t:Date.now(),_key:key,_peerId:conn.peer};
+        part={entry,chunks:[],done:0};
+        dpPartial[key]=part;
+        dpTrimStore();
+        dpAddEntry(entry);
+      }else{
+        part.entry.state='run';
+        part.entry.peerName=data.from||part.entry.peerName;
+        part.entry._t=Date.now();part.entry._t0=null;part.entry._b0=part.entry.done;
+        part.entry._spd=0;part.entry._eta=null;
+      }
+      rec.in={entry:part.entry,chunks:part.chunks,key};
+      try{conn.send({type:'fack',key,done:part.entry.done});}catch(e){} // 告诉对方从哪继续
+      dpRenderFiles();
+    }else if(data&&data.type==='fack'&&rec.ask&&rec.ask.key===data.key){
+      const fin=rec.ask.resolve;rec.ask=null;fin(data.done||0);
+    }else if(data&&data.type==='fcancel'&&rec.out&&rec.out._key===data.key){
+      rec.out.canceled=true; // 对端点了取消，发送循环下一轮就停
+    }else if(data&&data.type==='fretry'){
+      const k=data.key||dpKey(data.name,data.size);
+      const f=dpSrc[k];
+      if(f&&conn.open&&!(rec.out&&rec.out.state==='run'))dpQueueFiles(rec,[f]);
+    }else if(data&&data.type==='fend'&&rec.in){
+      const e=rec.in.entry;
+      e.blob=new Blob(rec.in.chunks);
+      e.url=URL.createObjectURL(e.blob);
+      e.state='done';e._spd=0;e._eta=null;
+      delete dpPartial[rec.in.key];rec.in=null;
+      dpSaveEntries(true);
+      dpRenderFiles();
+      toast(dpT('gotFile',e.name));
+      dpChime();
+    }else if(data&&data.type==='ferr'&&rec.in){
+      // 发送方中途失败会主动告知，避免这边进度条永远停在某个百分比
+      rec.in.entry.state='fail';rec.in=null;
+      dpSaveEntries(true);
+      dpRenderFiles();
+    }else if(rec.in&&(data instanceof ArrayBuffer||data instanceof Uint8Array)){
+      const u=data instanceof Uint8Array?data:new Uint8Array(data);
+      rec.in.chunks.push(u);
+      rec.in.entry.done+=u.byteLength;
+      rec.in.entry._t=Date.now(); // 心跳时间戳：dpPrune 用它判断接收是否卡死
+      dpTick(rec.in.entry);
+      const p=dpPartial[rec.in.key];if(p)p.done=rec.in.entry.done;
+      dpThrottleRender();
+    }
+  });
+  conn.on('close',()=>{
+    // 收到的半截数据留在 dpPartial 里，点「重试」可以从断点接着收
+    if(rec.in){rec.in.entry.state='fail';rec.in=null;dpSaveEntries(true);dpRenderFiles();}
+    if(rec.out&&rec.out.state==='run'){rec.out.state='fail';rec.out=null;dpSaveEntries(true);dpRenderFiles();}
+  });
+}
+function dpPickFiles(peerId){
+  const rec=dpPeers[peerId];if(!rec)return;
+  if(!rec.conn.open){dpProbeLower();toast(dpT('retryConn'),false);return;}
+  const inp=dpEl('dpFile');if(!inp)return;
+  inp.value='';
+  // onchange 时重新查表：选文件期间连接可能已被重探替换成新 rec
+  inp.onchange=()=>{const files=[...(inp.files||[])];if(files.length)dpQueueFiles(dpPeers[peerId]||rec,files);};
+  inp.click();
+}
+/* 同一个连接上的多批文件必须串行发送，否则两种数据块会交错，接收端拼出来的文件是坏的 */
+function dpQueueFiles(rec,files){
+  rec.q=(rec.q||Promise.resolve()).then(()=>dpSendFiles(rec,files)).catch(()=>{});
+  return rec.q;
+}
+/* 等对端回报「已经收到多少字节」；老版本对端不回 fack，超时就从 0 开始，依旧兼容 */
+function dpAskOffset(rec,key,ms){
+  return new Promise(res=>{
+    let fin=null,done=false;
+    fin=v=>{if(done)return;done=true;if(rec.ask&&rec.ask.key===key)rec.ask=null;res(v);};
+    rec.ask={key,resolve:fin};
+    setTimeout(()=>fin(0),ms);
+  });
+}
+async function dpSendFiles(rec,files){
+  for(const f of files){
+    const key=dpKey(f.name,f.size);
+    dpSrc[key]=f;dpTrimStore();          // 留一份源文件，供重试 / 对端要求重发
+    const entry={dir:'out',name:f.name,size:f.size,done:0,state:'run',peerName:rec.name,
+      _t:Date.now(),_key:key,_peerId:rec.peerId,_file:f};
+    dpAddEntry(entry);
+    rec.out=entry;
+    try{
+      rec.conn.send({type:'fmeta',name:f.name,size:f.size,from:dpState.name,key});
+      const from=await dpAskOffset(rec,key,300);   // 对端已有进度 → 从断点续传
+      if(entry.canceled)throw new Error('canceled');
+      if(from>0&&from<f.size){
+        entry.done=from;entry._b0=from;entry._t0=null;
+        toast(dpT('resume',dpFmtSize(from)));
+      }
+      const CH=65536;
+      for(let o=entry.done;o<f.size;o+=CH){
+        if(entry.canceled)throw new Error('canceled');
+        const buf=await f.slice(o,o+CH).arrayBuffer();
+        // 背压控制：缓冲区积压超过 1MB 时暂停，避免内存暴涨。
+        // 看门狗判的是「缓冲区连续 15 秒毫无下降」而不是总耗时，慢速链路不会被误判；
+        // 若对端中途消失，bufferedAmount 永远不会排空，靠它跳出死等。
+        let guard=0,last=Infinity;
+        while(rec.conn.dataChannel&&rec.conn.dataChannel.bufferedAmount>1048576){
+          if(!rec.conn.open)throw new Error('connection closed');
+          if(entry.canceled)throw new Error('canceled');
+          const cur=rec.conn.dataChannel.bufferedAmount;
+          if(cur<last){last=cur;guard=0;}else if(++guard>375)throw new Error('send stalled');
+          await new Promise(r=>setTimeout(r,40));
+        }
+        rec.conn.send(buf);
+        entry.done=Math.min(o+CH,f.size);
+        dpTick(entry);
+        dpThrottleRender();
+      }
+      rec.conn.send({type:'fend'});
+      entry.state='done';entry.done=f.size;entry._spd=0;entry._eta=null;
+      dpSaveEntries(true);
+    }catch(e){
+      entry.state=entry.canceled?'canceled':'fail';
+      entry._spd=0;entry._eta=null;
+      dpSaveEntries(true);
+      // 主动告诉对方「这个文件废了」，对方才能把进度条收掉，而不是永远停在 N%
+      try{rec.conn.send({type:'ferr',name:f.name});}catch(_){}
+    }
+    if(rec.out===entry)rec.out=null;
+    dpRenderFiles();
+  }
+}
+
+/* ── 记录上的四个操作：取消 / 重试 / 删除 / 清空 ── */
+function dpCancelEntry(e){
+  if(!e||e.state!=='run')return;
+  e.canceled=true;e.state='canceled';e._spd=0;e._eta=null;
+  if(e.dir==='in'){
+    const rec=dpPeers[e._peerId];
+    if(rec){
+      rec.in=null;
+      if(rec.conn&&rec.conn.open){try{rec.conn.send({type:'fcancel',key:e._key});}catch(_){}} // 让发送方也停下
+    }
+    if(dpPartial[e._key]&&dpPartial[e._key].entry===e)delete dpPartial[e._key];
+  }
+  dpSaveEntries(true);
+  dpRenderFiles();
+}
+function dpRetryEntry(e){
+  if(!e)return;
+  const rec=dpPeers[e._peerId];
+  if(!rec||!rec.conn||!rec.conn.open){toast(dpT('retryConn'),false);return;}
+  if(e.dir==='out'){
+    if(!e._file){toast(dpT('retryConn'),false);return;}
+    const i=dpEntries.indexOf(e);
+    if(i>=0){dpEntries.splice(i,1);dpReleaseEntry(e);dpRenderFiles();}
+    dpQueueFiles(rec,[e._file]);   // 重新走一遍 fmeta → fack，对端会从断点接着收
+  }else{
+    // 接收方：请对端重发。对端发来 fmeta 后本机用已收进度回 fack，即可续传
+    try{rec.conn.send({type:'fretry',key:e._key,name:e.name,size:e.size});}catch(_){}
+    e.state='run';e._t=Date.now();e._t0=null;e._b0=e.done;e._spd=0;e._eta=null;
+    dpSaveEntries(true);
+    dpRenderFiles();
+  }
+}
+function dpDeleteEntry(e){
+  const i=dpEntries.indexOf(e);if(i<0)return;
+  dpEntries.splice(i,1);dpReleaseEntry(e);dpSaveEntries(true);dpRenderFiles();
+}
+function dpClearEntries(){
+  if(!dpEntries.length)return;
+  dpEntries.forEach(dpReleaseEntry);
+  dpEntries=[];dpSaveEntries(true);dpRenderFiles();
+}
+
+/* ========================= 入房（无房主席位制） ========================= */
+function dpCleanup(){
+  if(dpPruneTimer){clearInterval(dpPruneTimer);dpPruneTimer=null;}
+  if(dpProbeTimer){clearInterval(dpProbeTimer);dpProbeTimer=null;}
+  if(dpReconnectTimer){clearTimeout(dpReconnectTimer);dpReconnectTimer=null;}
+  dpPending={};
+  try{if(dpPeer)dpPeer.destroy();}catch(e){}
+  Object.values(dpPeers).forEach(v=>{try{v.conn.close();}catch(e){}});
+  dpPeer=null;dpPeers={};
+}
+function dpJoin(){
+  dpCleanup();
+  if(typeof Peer==='undefined'){dpStatusSet('libFail',[],'err');return;}
+  dpState.connected=false;dpState.slot=null;
+  dpSyncChrome();dpRenderPeers();
+  dpStatusSet('joining',[dpState.room]);
+  // iOS 切后台/锁屏会暂停 WebSocket，回前台时自动重连信令
+  if(!dpVisBound){
+    dpVisBound=true;
+    document.addEventListener('visibilitychange',()=>{
+      if(!document.hidden&&dpPeer&&dpPeer.disconnected){try{dpPeer.reconnect();}catch(e){}}
+    });
+  }
+  dpClaim(1);
+}
+const dpSlotId=i=>DP_PREFIX+dpState.room.replace(/[^0-9A-Za-z]/g,'')+'-s'+i;
+const dpSlotNum=id=>{const m=/-s(\d+)$/.exec(id||'');return m?+m[1]:null;};
+/* 占席：从 s1 开始逐个声明席位 ID，被占用就顺延到下一席 */
+function dpClaim(i){
+  if(!dpState)return;
+  if(i>DP_SLOTS){
+    dpStatusSet('roomFull',[DP_SLOTS],'err');
+    dpReconnectTimer=setTimeout(dpJoin,12000); // 等有设备离开腾出席位后自动加入
+    return;
+  }
+  const p=new Peer(dpSlotId(i),DP_PEER_OPTS);
+  dpPeer=p;
+  // 看门狗：9 秒仍未握上信令（PeerJS 云偶发无响应）就推倒重来
+  // 先置空 dpPeer 再销毁：销毁可能触发迟到错误事件，置空让守卫拦住，避免误触 dpClaim 链
+  dpReconnectTimer=setTimeout(()=>{if(dpPeer===p&&!p.open){dpPeer=null;try{p.destroy();}catch(e){}dpRetry();}},9000);
+  p.on('open',()=>{
+    if(dpPeer!==p)return;
+    dpState.slot=i;dpState.connected=true;
+    dpClaimAutoColor(); // 首次使用按席位定色，同房间设备颜色天然不同
+    dpStatusSet('joined',[dpState.room],'ok');
+    dpSyncChrome();dpRenderPeers();
+    dpProbeLower();
+    dpProbeTimer=setInterval(dpProbeLower,8000);
+    dpPruneTimer=setInterval(dpPrune,10000);
+  });
+  p.on('error',e=>{
+    if(dpPeer!==p)return;
+    if(e.type==='unavailable-id'){
+      // 席位被占：初次声明顺延下一席；断线重连时席位被抢则整个重新加入
+      if(dpState.connected&&dpState.slot===i){dpState.connected=false;dpRetry();}
+      else{try{p.destroy();}catch(_){}dpClaim(i+1);}
+    }else if(e.type==='peer-unavailable')dpMarkEmpty(e);
+    else dpStatusSet('connErr',[e.type||'?'],'err');
+  });
+  p.on('disconnected',()=>{if(dpPeer===p){try{p.reconnect();}catch(_){}}});
+  // 被动接入：席位号比自己小的设备由本机主动发起，这里接的是席位号更大的设备
+  p.on('connection',conn=>{
+    const rec={...dpSeed(conn.peer),conn,slot:dpSlotNum(conn.peer),opened:false};
+    dpPeers[conn.peer]=rec;
+    const giveUp=setTimeout(()=>{ // 半开连接保护：10 秒仍未打通则移除
+      if(rec.open)return;
+      try{conn.close();}catch(e){}
+      if(dpPeers[conn.peer]===rec){delete dpPeers[conn.peer];dpRenderPeers();}
+    },10000);
+    conn.on('open',()=>{
+      clearTimeout(giveUp);
+      rec.opened=true;dpBindDataConn(conn,rec);
+      try{conn.send({type:'hello',name:dpState.name,dev:dpState.dev,color:dpColorId});}catch(e){}
+      dpRenderPeers();
+    });
+    conn.on('data',msg=>{
+      if(msg&&msg.type==='hello'){
+        const fresh=!dpKnown[conn.peer];
+        rec.name=msg.name||rec.name;rec.dev=msg.dev||rec.dev;rec.color=msg.color||rec.color;
+        dpLearn(conn.peer,rec.name,rec.dev,rec.color);
+        if(!rec.greeted){rec.greeted=true;if(fresh)toast(dpT('peerJoined',rec.name));}
+        // 名片丢失自愈：被动方收到问候必回名片（主动方按周期重发，不回信，避免死循环）
+        try{conn.send({type:'hello',name:dpState.name,dev:dpState.dev,color:dpColorId});}catch(e){}
+        dpRenderPeers();
+      }
+    });
+    conn.on('close',()=>{clearTimeout(giveUp);if(dpPeers[conn.peer]===rec){delete dpPeers[conn.peer];dpRenderPeers();}});
+    conn.on('error',()=>{clearTimeout(giveUp);if(dpPeers[conn.peer]===rec){delete dpPeers[conn.peer];dpRenderPeers();}});
+  });
+}
+/* 主动探测所有比自己席位号小的设备（空席位返回 peer-unavailable，属正常） */
+function dpProbeLower(){
+  const p=dpPeer;if(!p||!p.open||dpState.slot==null)return;
+  // 给已连通的低席位设备重发名片：任一方的 hello 丢失都能在下一周期自愈
+  Object.entries(dpPeers).forEach(([id,v])=>{
+    if(v.slot!=null&&v.slot<dpState.slot&&v.conn&&v.conn.open){
+      try{v.conn.send({type:'hello',name:dpState.name,dev:dpState.dev,color:dpColorId});}catch(e){}
+    }
+  });
+  for(let j=1;j<dpState.slot;j++){
+    const id=dpSlotId(j);
+    if(dpPeers[id]&&dpPeers[id].conn.open)continue;
+    if(dpPending[j])continue;
+    const c=p.connect(id,{reliable:true});
+    dpPending[j]=c;
+    if(dpPeers[id]&&!dpPeers[id].conn.open){try{dpPeers[id].conn.close();}catch(e){}} // 释放旧死连接
+    const rec={...dpSeed(id),conn:c,slot:j,opened:false};
+    dpPeers[id]=rec;
+    const giveUp=setTimeout(()=>{ // 对端可能已离开（尤其 iOS 静默掉线），10 秒未连通则放弃
+      delete dpPending[j];
+      if(rec.open)return;
+      try{c.close();}catch(e){}
+      if(dpPeers[id]===rec){delete dpPeers[id];dpRenderPeers();}
+    },10000);
+    c.on('open',()=>{
+      clearTimeout(giveUp);delete dpPending[j];
+      rec.opened=true;dpBindDataConn(c,rec);
+      try{c.send({type:'hello',name:dpState.name,dev:dpState.dev,color:dpColorId});}catch(e){}
+      dpRenderPeers();
+    });
+    c.on('data',msg=>{
+      if(msg&&msg.type==='hello'){
+        const fresh=!dpKnown[id];
+        rec.name=msg.name||rec.name;rec.dev=msg.dev||rec.dev;rec.color=msg.color||rec.color;
+        dpLearn(id,rec.name,rec.dev,rec.color);
+        if(!rec.greeted){rec.greeted=true;if(fresh)toast(dpT('peerJoined',rec.name));}
+        dpRenderPeers();
+      }
+    });
+    c.on('close',()=>{clearTimeout(giveUp);delete dpPending[j];if(dpPeers[id]===rec){delete dpPeers[id];dpRenderPeers();}});
+    c.on('error',()=>{clearTimeout(giveUp);delete dpPending[j];if(dpPeers[id]===rec&&!rec.open){delete dpPeers[id];dpRenderPeers();}});
+  }
+}
+/* 探测到空席位：从 peer-unavailable 的错误消息里取席位号，清掉待定标记 */
+function dpMarkEmpty(e){
+  const m=/-s(\d+)/.exec((e&&e.message)||'');
+  if(!m)return;
+  const j=+m[1],id=dpSlotId(j);
+  const pending=dpPending[j];
+  delete dpPending[j];
+  if(pending){try{pending.close();}catch(_){}} // 顺手关掉这条失败的连接，别留在 PeerJS 内部表里
+  if(dpPeers[id]&&!dpPeers[id].conn.open){delete dpPeers[id];dpRenderPeers();}
+}
+/* 定期剔除静默掉线的成员（iOS 切后台不触发 close）；只剔"开过又死了"的连接 */
+function dpPrune(){
+  let changed=false;
+  Object.entries(dpPeers).forEach(([id,v])=>{
+    if(!v.conn.open&&v.opened){try{v.conn.close();}catch(e){}delete dpPeers[id];changed=true;}
+  });
+  if(changed)dpRenderPeers();
+  // 接收卡死保护：对端进程被杀 / iOS 被冻结时不会有 ferr，也不会有 close。
+  // 超过 45 秒没有收到任何新数据块，就把这条记录判为失败，别让进度条永远停在 N%。
+  const now=Date.now();
+  let fChanged=false;
+  dpEntries.forEach(e=>{
+    if(e.state==='run'&&e.dir==='in'&&e._t&&now-e._t>45000){e.state='fail';e._t=0;fChanged=true;}
+  });
+  if(fChanged){dpSaveEntries(true);dpRenderFiles();}
+}
+/* 主动离开：断开信令与所有 P2P 连接，其他设备立刻看到本机离开 */
+function dpLeave(){
+  dpCleanup();
+  dpState.connected=false;dpState.slot=null;
+  dpStatusSet('left');
+  dpSyncChrome();dpRenderPeers();
+}
+
+/* ========================= 设置面板 ========================= */
+function dpBindPanel(){
+  const btn=dpEl('dpSettings'),panel=dpEl('dpPanel');
+  if(!btn||!panel)return;
+  const set=open=>{panel.classList.toggle('open',open);btn.classList.toggle('on',open);btn.setAttribute('aria-expanded',open?'true':'false');};
+  btn.onclick=e=>{e.stopPropagation();set(!panel.classList.contains('open'));};
+  panel.onclick=e=>e.stopPropagation();
+  document.addEventListener('click',()=>set(false));
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')set(false);});
+}
+
+/* ── 鼠标停在「复制邀请链接」上时，弹出这条邀请链接的二维码 ──
+   只有悬停时才画（省一次编码），房间码换了会重画；手机端没有悬停，不弹也不影响复制。
+   鼠标移开必须收起来；键盘 Tab 过来则用 .on 顶住，让纯键盘操作也能看到二维码。 */
+function dpBindQr(){
+  const wrap=dpEl('dpQrWrap'),pop=dpEl('dpQrPop'),box=dpEl('dpQrCode');
+  if(!wrap||!pop||!box)return;
+  let cur=null;
+  const draw=()=>{
+    const url=dpInviteUrl();
+    if(url===cur)return;
+    cur=url;
+    const m=dpQrMatrix(url);
+    box.innerHTML=m?dpQrSvg(m):'';
+    pop.classList.toggle('qr-none',!m);   // 太长画不下就整个不弹
+  };
+  const show=()=>{draw();wrap.classList.add('on');};
+  const hide=()=>wrap.classList.remove('on');
+
+  /* 区分操作方式：只有键盘走过来的焦点才拉出二维码。
+     鼠标点击也会给按钮焦点，但那是「点到就结束」，不该把浮层钉住。 */
+  let byKey=false;
+  document.addEventListener('keydown',()=>{byKey=true;},true);
+  document.addEventListener('mousedown',()=>{byKey=false;},true);
+  document.addEventListener('touchstart',()=>{byKey=false;},true);
+
+  wrap.addEventListener('mouseenter',show);
+  wrap.addEventListener('mouseleave',hide);
+  wrap.addEventListener('mouseover',draw);          // 悬停中房间码变了也能跟上
+  wrap.addEventListener('focusin',()=>{if(byKey)show();});
+  wrap.addEventListener('focusout',hide);
+}
+
+/* ========================= 初始化 ========================= */
+function dpRoomFromUrl(){
+  const m=/[?&#]room=([0-9A-Za-z-]{3,7})/.exec(location.href);
+  if(!m)return null;
+  let v=m[1].toUpperCase().replace(/[^0-9A-Z]/g,'').slice(0,6);
+  if(v.length<3)return null;
+  return v.length>3?v.slice(0,3)+'-'+v.slice(3):v;
+}
+function dpInit(){
+  dpInitTheme();
+  dpInitColor();
+  dpInitSound();
+  dpInitLang();
+  dpBindPanel();
+  let saved=null;
+  try{saved=JSON.parse(localStorage.getItem('jy-drop')||'null');}catch(e){}
+  const urlRoom=dpRoomFromUrl();
+  dpNameAuto=!(saved&&saved.name);
+  dpState={
+    room:urlRoom||(saved&&saved.room)||dpRandomRoom(),
+    name:(saved&&saved.name)||dpDevName(),
+    dev:dpDevType(),connected:false,slot:null
+  };
+  if(urlRoom&&(!saved||saved.room!==urlRoom))dpSave();
+  const roomEl=dpEl('dpRoom');
+  if(roomEl){
+    roomEl.value=dpState.room;
+    roomEl.onkeydown=e=>{if(e.key==='Enter')roomEl.blur();};
+    roomEl.onchange=()=>{
+      let v=(roomEl.value||'').toUpperCase().replace(/[^0-9A-Z]/g,'').slice(0,6);
+      if(v.length<3){roomEl.value=dpState.room;toast(dpT('roomShort'),false);return;}
+      v=v.length>3?v.slice(0,3)+'-'+v.slice(3):v;
+      roomEl.value=v;
+      if(v!==dpState.room){dpState.room=v;dpSave();dpJoin();}
+    };
+  }
+  const nameEl=dpEl('dpName');
+  if(nameEl){
+    nameEl.value=dpState.name;
+    nameEl.onchange=()=>{
+      dpNameAuto=false;
+      dpState.name=nameEl.value.trim()||dpDevName();
+      nameEl.value=dpState.name;dpSave();
+      dpJoin(); // 以新名称重新加入
+    };
+  }
+  const nr=dpEl('dpNewRoom');
+  if(nr)nr.onclick=()=>{
+    dpState.room=dpRandomRoom();dpSave();
+    const r=dpEl('dpRoom');if(r)r.value=dpState.room;
+    dpJoin();
+  };
+  const cp=dpEl('dpCopy');
+  if(cp)cp.onclick=async()=>{
+    try{await dpCopyText(dpInviteUrl());toast(dpT('roomCopied'));}
+    catch(e){toast(dpT('copyFail',dpState.room),false);}
+  };
+  const lv=dpEl('dpLeave');
+  if(lv)lv.onclick=()=>{if(dpState.connected)dpLeave();else dpJoin();};
+  const clr=dpEl('dpClear');
+  if(clr)clr.onclick=dpClearEntries;
+  dpBindQr(); // 悬停「复制邀请链接」弹二维码
+
+  dpLoadEntries(); // 把上次留下的传输记录读回来（刷新不丢，只有清空记录才删）
+  dpSyncChrome();dpRenderPeers();dpRenderFiles();
+  // 先把本机信息渲染出来，再异步加载 PeerJS（多镜像回退），加载成功才入房
+  dpStatusSet('joining',[dpState.room]);
+  dpLoadPeer(ok=>{if(ok)dpJoin();else dpStatusSet('libFail',[],'err');});
+}
+/* 关闭页面时主动释放席位，其他设备立即感知 */
+window.addEventListener('beforeunload',()=>{try{dpSaveEntries(true);}catch(e){}try{dpCleanup();}catch(e){}});
+/* iOS/Safari 上 beforeunload 不可靠，pagehide 兜底；但进 bfcache 时不算真卸载，别误清 */
+window.addEventListener('pagehide',e=>{
+  try{dpSaveEntries(true);}catch(e2){}
+  if(!e.persisted){try{dpCleanup();}catch(e2){}}
+});
+/* ── 拖放：拖到设备圆圈上发给它 ── */
+/* 拖到圆圈以外时，不让浏览器直接打开这个文件 */
+window.addEventListener('dragover',e=>e.preventDefault());
+window.addEventListener('drop',e=>e.preventDefault());
+
+dpInit();
+</script>
+</body>
+</html>
