@@ -538,6 +538,25 @@ a.social-i{text-decoration:none;color:var(--text-1)}
 .note-full time{font-size:12px;color:var(--text-3);display:block;margin-bottom:16px}
 .note-full p{margin-bottom:12px}
 
+/* 弹窗内搜索框（音乐 / 备忘录） */
+.dlg-search{position:relative;display:flex;align-items:center;margin-bottom:14px}
+.dlg-search>svg{position:absolute;left:13px;width:16px;height:16px;color:var(--text-3);pointer-events:none}
+.dlg-search input{width:100%;padding:11px 74px 11px 37px;border-radius:12px;background:var(--card-inner);
+  border:1px solid transparent;color:var(--text-1);font-family:inherit;font-size:13.5px;outline:none;transition:.2s}
+.dlg-search input::placeholder{color:var(--text-3)}
+.dlg-search input:focus{border-color:rgba(110,164,255,.55);background:var(--chip)}
+.dlg-search .ds-key{position:absolute;right:10px;font-size:11px;font-family:inherit;color:var(--text-3);
+  background:var(--chip);border-radius:6px;padding:2px 7px;pointer-events:none}
+.dlg-search .ds-clear{position:absolute;right:8px;display:none;width:24px;height:24px;border-radius:50%;
+  place-items:center;color:var(--text-2);background:var(--chip);font-size:14px;line-height:1}
+.dlg-search.has-q .ds-clear{display:grid}
+.dlg-search.has-q .ds-key{display:none}
+mark{background:rgba(110,164,255,.32);color:inherit;border-radius:4px;padding:0 1px}
+@media(max-width:640px){ /* 手机端不需要键盘快捷键提示 */
+  .dlg-search .ds-key{display:none}
+  .dlg-search input{padding-right:42px}
+}
+
 /* 技能 */
 .skill-group{margin-bottom:20px}
 .skill-group>h5{font-size:13px;color:var(--text-2);font-weight:600;margin:0 0 11px 2px;
@@ -875,6 +894,10 @@ a.social-i{text-decoration:none;color:var(--text-1)}
 .dp-peer.me .dp-avatar{background:linear-gradient(150deg,#5e5ce6,#bf5af2);box-shadow:0 6px 16px rgba(191,90,242,.35)}
 .dp-peer span.nm{font-size:11.5px;color:var(--text-2);max-width:92px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dp-peer.me span.nm{color:var(--text-1);font-weight:630}
+/* 拖放文件到设备球：悬停高亮，提示可松手发送 */
+.dp-peer.dp-drag{background:var(--chip);transform:translateY(-2px) scale(1.05)}
+.dp-peer.dp-drag .dp-avatar{transform:scale(1.14);box-shadow:0 0 0 3px rgba(100,210,255,.55),0 8px 20px rgba(10,132,255,.5)}
+.dp-avatar{transition:transform .18s,box-shadow .18s}
 .dp-hint{font-size:11.5px;color:var(--text-3);text-align:center;line-height:1.6}
 .dp-files{display:flex;flex-direction:column;gap:8px}
 .dp-file{display:flex;align-items:center;gap:12px;background:var(--card-inner);border:1px solid var(--card-border);border-radius:14px;padding:10px 14px}
@@ -961,9 +984,10 @@ a.social-i{text-decoration:none;color:var(--text-1)}
   display:flex;align-items:center;gap:14px;padding:16px 18px;border-radius:15px;
   background:var(--card-inner);margin-bottom:10px;
 }
-.setting-i .s-ic{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;
+.setting-i .s-ic{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;flex:none;
   background:linear-gradient(150deg,#8e7bff,#5b44d6)}
 .setting-i .s-ic svg{width:20px;height:20px;color:#fff}
+.setting-i>div{flex:1;min-width:0} /* 中间文字可收缩换行，不挤压两侧 */
 .setting-i h5{font-size:14.5px;font-weight:630}
 .setting-i p{font-size:12px;color:var(--text-2);margin-top:2px}
 .switch{margin-left:auto;position:relative;width:50px;height:29px;border-radius:999px;
@@ -972,9 +996,15 @@ a.social-i{text-decoration:none;color:var(--text-1)}
   background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.3);transition:.25s}
 .switch.on{background:linear-gradient(145deg,#4d92ff,#2b66e6)}
 .switch.on::after{left:23px}
-.seg{margin-left:auto;display:flex;background:var(--card-inner);border-radius:11px;padding:3px;gap:2px}
-.seg button{padding:7px 14px;border-radius:9px;font-size:12.5px;color:var(--text-2)}
+.seg{margin-left:auto;display:flex;background:var(--card-inner);border-radius:11px;padding:3px;gap:2px;flex:none}
+.seg button{padding:7px 14px;border-radius:9px;font-size:12.5px;color:var(--text-2);white-space:nowrap;flex:none}
 .seg button.on{background:var(--accent);color:#fff;font-weight:600}
+/* 超窄屏幕：压缩设置行间距，保证图标与主题按钮不挤压 */
+@media(max-width:400px){
+  .setting-i{gap:10px;padding:14px}
+  .setting-i p{font-size:11px}
+  .seg button{padding:7px 10px}
+}
 
 /* App 启动器 */
 .launcher{
@@ -1867,11 +1897,17 @@ const T = {
     if(!NOTES.length)return `<div class="music-empty">
       <p><b>「备忘录」文件夹${notesStatus==='error'?'无法读取':'还是空的'}</b></p>
       <span>放入 .txt 笔记后刷新页面（首行 # 标题，可含 日期：YYYY-MM-DD 行）</span></div>`;
-    return `<div class="notes-list">${NOTES.map((n,i)=>`
+    return `<div class="dlg-search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>
+      <input id="noteSearch" placeholder="搜索标题或内容…" autocomplete="off" enterkeyhint="search">
+      <kbd class="ds-key">/</kbd>
+      <button class="ds-clear" id="noteSearchClear" type="button" aria-label="清空搜索">✕</button>
+    </div>
+    <div class="notes-list" id="notesList">${NOTES.map((n,i)=>`
     <button class="note-i" data-note="${i}">
       <h5>${esc(n.t)}<time>${esc(n.d)}</time></h5><p>${esc(n.p.join(''))}</p>
     </button>`).join('')}
-    <p style="font-size:12px;color:var(--text-3);margin-top:12px;text-align:center">来自「备忘录」文件夹 · 共 ${NOTES.length} 篇</p></div>`;
+    <p id="notesCount" style="font-size:12px;color:var(--text-3);margin-top:12px;text-align:center">来自「备忘录」文件夹 · 共 ${NOTES.length} 篇</p></div>`;
   },
   skills:()=>SKILLS.map(g=>`
     <div class="skill-group"><h5>${g.g}</h5>
@@ -1958,13 +1994,19 @@ const T = {
       </div>
       <div class="pl-bar" id="plBar"><i id="plProg"></i></div>
     </div>
+    <div class="dlg-search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>
+      <input id="musicSearch" placeholder="搜索歌曲…" autocomplete="off" enterkeyhint="search">
+      <kbd class="ds-key">/</kbd>
+      <button class="ds-clear" id="musicSearchClear" type="button" aria-label="清空搜索">✕</button>
+    </div>
     <div class="song-list">${songs.map((s,i)=>`
       <button class="song-i" data-song="${i}">
         <span class="song-ic">${ICONS.music}</span>
         <span class="song-name">${esc(s.name)}</span>
         <span class="song-eq"><i></i><i></i><i></i></span>
       </button>`).join('')}</div>
-    <p style="font-size:12px;color:var(--text-3);margin-top:12px;text-align:center">来自「音乐」文件夹 · 共 ${songs.length} 首</p>`;
+    <p id="musicCount" style="font-size:12px;color:var(--text-3);margin-top:12px;text-align:center">来自「音乐」文件夹 · 共 ${songs.length} 首</p>`;
   },
   games:()=>T.media(GAMES,ICONS.games,'玩过的、在玩的、想玩的'),
   favorites:()=>FAVS.map(f=>`
@@ -2272,6 +2314,7 @@ function bindWindow(id){
     $$('[data-photo]').forEach(t=>t.onclick=()=>openLb(+t.dataset.photo));
   }
   if(id==='notes'){
+    bindDlgSearch('notes');
     $$('[data-note]').forEach(b=>b.onclick=()=>{
       const n=NOTES[+b.dataset.note];
       $('#window .win-body').innerHTML=`<div class="note-full">
@@ -2314,6 +2357,7 @@ function bindWindow(id){
   }
   if(id==='music'){
     if(!$('#plPlay'))return;   // 空文件夹 / 加载中
+    bindDlgSearch('music');
     $('#plPlay').innerHTML=gAudio.paused?SVG_PLAY:SVG_PAUSE;
     $('#plPlay').onclick=()=>{ if(gCur<0)musicPlayIdx(0); else gAudio.paused?gAudio.play():gAudio.pause(); };
     $('#plPrev').onclick=()=>musicPlayIdx((gCur-1+songs.length)%songs.length);
@@ -2938,6 +2982,9 @@ let dpReconnectTimer=null; // 待执行的重连定时（离开房间时需取�
 let dpVisBound=false;      // 前后台切换重连监听（只绑一次）
 let dpPending={};          // 正在探测中的席位号 -> conn
 const dpEl=id=>document.getElementById(id);
+/* 全局兜底：文件拖到设备球以外的位置时不让浏览器直接打开该文件 */
+window.addEventListener('dragover',e=>e.preventDefault());
+window.addEventListener('drop',e=>e.preventDefault());
 const dpFmtSize=b=>b==null?'--':b<1024?b+' B':b<1048576?(b/1024).toFixed(1)+' KB':b<1073741824?(b/1048576).toFixed(1)+' MB':(b/1073741824).toFixed(2)+' GB';
 function dpRandomRoom(){
   const ab='23456789ABCDEFGHJKMNPQRSTUVWXYZ';
@@ -2999,11 +3046,25 @@ function dpRenderPeers(){
   const list=Object.entries(dpPeers).filter(([,v])=>v.conn&&v.conn.open).sort((a,b)=>(a[1].slot||99)-(b[1].slot||99)).map(([id,v])=>
     `<button class="dp-peer" type="button" data-dpeer="${id}">${dpAvatar(v.dev)}<span class="nm">${esc(v.name||'未知设备')}</span></button>`).join('');
   box.innerHTML=self+list+(!list&&dpState.connected?'<span class="dp-empty" style="align-self:center;padding:16px 10px">还没有其他设备 · 让对方打开本页并输入相同房间码</span>':'');
-  box.querySelectorAll('[data-dpeer]').forEach(b=>b.onclick=()=>dpPickFiles(b.dataset.dpeer));
+  // 拖放发送：把文件拖到指定设备球上即可传送（click 选文件 + drop 拖放两条路径都支持）
+  box.querySelectorAll('[data-dpeer]').forEach(b=>{
+    const id=b.dataset.dpeer;
+    b.onclick=()=>dpPickFiles(id);
+    b.addEventListener('dragover',e=>{e.preventDefault();e.dataTransfer.dropEffect='copy';b.classList.add('dp-drag');});
+    b.addEventListener('dragleave',()=>b.classList.remove('dp-drag'));
+    b.addEventListener('drop',e=>{
+      e.preventDefault();b.classList.remove('dp-drag');
+      const rec=dpPeers[id];
+      if(!rec)return;
+      if(!rec.conn.open){dpProbeLower();toast('与该设备的连接正在重试，请稍候再试',false);return;}
+      const files=[...(e.dataTransfer.files||[])];
+      if(files.length)dpSendFiles(rec,files);
+    });
+  });
 }
 function dpRenderFiles(){
   const box=dpEl('dpFiles');if(!box)return;
-  if(!dpEntries.length){box.innerHTML='<span class="dp-empty">暂无传输记录 · 点击上方设备头像即可发送文件</span>';return;}
+  if(!dpEntries.length){box.innerHTML='<span class="dp-empty">暂无传输记录 · 点击或把文件拖到设备头像即可发送</span>';return;}
   box.innerHTML=dpEntries.map((e,i)=>{
     const pct=e.size?Math.min(100,Math.round(e.done/e.size*100)):0;
     const icon=e.dir==='out'?'📤':'📥';
@@ -3285,6 +3346,86 @@ function dpBindWindow(){
   }else dpJoin();
   dpCardSub();
 }
+
+/* ========================= 弹窗内快捷搜索（音乐 / 备忘录） ========================= */
+let gMusicQ='',gNotesQ='';  // 记住关键词：弹窗重渲染后（如播放状态刷新）不丢失
+/* 把命中的关键词片段高亮（返回已转义的 HTML） */
+function hlMatch(txt,q){
+  if(!q)return esc(txt);
+  const i=txt.toLowerCase().indexOf(q.toLowerCase());
+  if(i<0)return esc(txt);
+  return esc(txt.slice(0,i))+'<mark>'+esc(txt.slice(i,i+q.length))+'</mark>'+esc(txt.slice(i+q.length));
+}
+/* 音乐搜索 */
+function musicSearchApply(focus){
+  const inp=$('#musicSearch');if(!inp)return;
+  if(focus)inp.focus();
+  const q=inp.value.trim();
+  let n=0;
+  $$('#window .song-i').forEach(b=>{
+    const s=songs[+b.dataset.song];if(!s)return;
+    const hit=!q||s.name.toLowerCase().includes(q.toLowerCase());
+    b.style.display=hit?'':'none';
+    const nm=b.querySelector('.song-name');if(nm)nm.innerHTML=hlMatch(s.name,q);
+    if(hit)n++;
+  });
+  const wrap=inp.closest('.dlg-search');if(wrap)wrap.classList.toggle('has-q',!!q);
+  const c=$('#musicCount');
+  if(c)c.textContent=q?(n?'匹配 '+n+' / '+songs.length+' 首 · 回车播放第一首':'没有匹配的歌曲'):('来自「音乐」文件夹 · 共 '+songs.length+' 首');
+}
+/* 备忘录搜索 */
+function notesSearchApply(focus){
+  const inp=$('#noteSearch');if(!inp)return;
+  if(focus)inp.focus();
+  const q=inp.value.trim();
+  let n=0;
+  $$('#window .note-i').forEach(b=>{
+    const nt=NOTES[+b.dataset.note];if(!nt)return;
+    const hit=!q||(nt.t+' '+nt.p.join(' ')).toLowerCase().includes(q.toLowerCase());
+    b.style.display=hit?'':'none';
+    const h5=b.querySelector('h5');if(h5)h5.innerHTML=hlMatch(nt.t,q)+'<time>'+esc(nt.d)+'</time>';
+    if(hit)n++;
+  });
+  const wrap=inp.closest('.dlg-search');if(wrap)wrap.classList.toggle('has-q',!!q);
+  const c=$('#notesCount');
+  if(c)c.textContent=q?(n?'匹配 '+n+' / '+NOTES.length+' 篇 · 回车打开第一篇':'没有匹配的笔记'):('来自「备忘录」文件夹 · 共 '+NOTES.length+' 篇');
+}
+/* 把搜索框接到弹窗上：实时过滤 + 回车快捷操作 + Esc 清空 + 清空按钮 */
+function bindDlgSearch(kind){
+  const isMusic=kind==='music';
+  const inp=$(isMusic?'#musicSearch':'#noteSearch');
+  if(!inp)return;
+  const apply=()=>isMusic?musicSearchApply():notesSearchApply();
+  if(isMusic){inp.value=gMusicQ;if(gMusicQ)musicSearchApply();}
+  else{inp.value=gNotesQ;if(gNotesQ)notesSearchApply();}
+  inp.oninput=()=>{
+    if(isMusic)gMusicQ=inp.value;else gNotesQ=inp.value;
+    apply();
+  };
+  inp.onkeydown=e=>{
+    if(e.key==='Escape'){
+      if(inp.value){e.stopPropagation();inp.value='';if(isMusic)gMusicQ='';else gNotesQ='';apply();}
+      return; // 关键词已空时交给全局 Esc 关窗
+    }
+    if(e.key==='Enter'){
+      // NodeList 没有 find，先转数组再取第一个可见项
+      const first=[...$$(isMusic?'#window .song-i':'#window .note-i')].find(b=>b.style.display!=='none');
+      if(first)first.click(); // 音乐：播放第一首匹配；备忘录：打开第一篇匹配
+    }
+  };
+  const clr=$(isMusic?'#musicSearchClear':'#noteSearchClear');
+  if(clr)clr.onclick=()=>{
+    inp.value='';if(isMusic)gMusicQ='';else gNotesQ='';apply();inp.focus();
+  };
+}
+/* 快捷键：音乐/备忘录弹窗内按 “/” 或 Ctrl/Cmd+K 直达搜索框 */
+document.addEventListener('keydown',e=>{
+  const isMusic=currentApp==='music',isNotes=currentApp==='notes';
+  if(!isMusic&&!isNotes)return;
+  const typing=/^(INPUT|TEXTAREA)$/.test((document.activeElement||{}).tagName||'');
+  if(e.key==='/'&&!typing)e.preventDefault(),(isMusic?musicSearchApply(true):notesSearchApply(true));
+  else if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k')e.preventDefault(),(isMusic?musicSearchApply(true):notesSearchApply(true));
+});
 
 /* ========================= 灯箱 ========================= */
 let lbIndex=0;
