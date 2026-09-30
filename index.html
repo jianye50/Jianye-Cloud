@@ -1900,7 +1900,7 @@ const T = {
       <span>放入 .txt 笔记后刷新页面（首行 # 标题，可含 日期：YYYY-MM-DD 行）</span></div>`;
     return `<div class="dlg-search">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>
-      <input id="noteSearch" placeholder="搜索标题或内容…" autocomplete="off" enterkeyhint="search">
+      <input id="noteSearch" placeholder="搜索标题、内容或日期（如 2026-09）…" autocomplete="off" enterkeyhint="search">
       <kbd class="ds-key">/</kbd>
       <button class="ds-clear" id="noteSearchClear" type="button" aria-label="清空搜索">✕</button>
     </div>
@@ -3374,17 +3374,29 @@ function musicSearchApply(focus){
   const c=$('#musicCount');
   if(c)c.textContent=q?(n?'匹配 '+n+' / '+songs.length+' 首 · 回车播放第一首':'没有匹配的歌曲'):('来自「音乐」文件夹 · 共 '+songs.length+' 首');
 }
-/* 备忘录搜索 */
+/* 归一化：去掉空格与所有分隔符，便于用 20260927 / 2026/09/27 等写法搜日期 */
+function normKey(s){return String(s==null?'':s).toLowerCase().replace(/[^0-9a-z\u4e00-\u9fa5]/g,'');}
+/* 日期高亮：原文命中按片段高亮；仅归一化命中（如 20260927 对 2026-09-27）则整段标黄 */
+function hlDate(txt,q){
+  if(!q||!txt)return esc(txt);
+  if(txt.toLowerCase().includes(q.toLowerCase()))return hlMatch(txt,q);
+  const qn=normKey(q);
+  if(qn&&normKey(txt).includes(qn))return '<mark>'+esc(txt)+'</mark>';
+  return esc(txt);
+}
+/* 备忘录搜索：标题 + 正文 + 日期（三种字段任一命中即显示） */
 function notesSearchApply(focus){
   const inp=$('#noteSearch');if(!inp)return;
   if(focus)inp.focus();
-  const q=inp.value.trim();
+  const q=inp.value.trim(),ql=q.toLowerCase(),qn=normKey(q);
   let n=0;
   $$('#window .note-i').forEach(b=>{
     const nt=NOTES[+b.dataset.note];if(!nt)return;
-    const hit=!q||(nt.t+' '+nt.p.join(' ')).toLowerCase().includes(q.toLowerCase());
+    const hay=(nt.t+' '+nt.p.join(' ')+' '+nt.d);
+    const hit=!q||hay.toLowerCase().includes(ql)||(qn&&normKey(hay).includes(qn));
     b.style.display=hit?'':'none';
-    const h5=b.querySelector('h5');if(h5)h5.innerHTML='<span class="nt">'+hlMatch(nt.t,q)+'</span><time>'+esc(nt.d)+'</time>';
+    const h5=b.querySelector('h5');
+    if(h5)h5.innerHTML='<span class="nt">'+hlMatch(nt.t,q)+'</span><time>'+hlDate(nt.d,q)+'</time>';
     if(hit)n++;
   });
   const wrap=inp.closest('.dlg-search');if(wrap)wrap.classList.toggle('has-q',!!q);
