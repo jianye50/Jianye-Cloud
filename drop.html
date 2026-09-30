@@ -206,15 +206,17 @@ select.sel{width:100%;appearance:none;-webkit-appearance:none;font-family:inheri
   color:var(--text);background:var(--solid);border:1px solid var(--border);border-radius:12px;
   padding:10px 34px 10px 12px;cursor:pointer;outline:none;transition:.18s}
 select.sel:hover{border-color:var(--accent)}
-/* ── 主题颜色色板 ── */
-.swatches{display:flex;flex-wrap:wrap;gap:10px 11px;padding:2px 0 1px}
-.sw{position:relative;width:26px;height:26px;flex:none;padding:0;border:none;border-radius:50%;cursor:pointer;
-  display:grid;place-items:center;color:#fff;background:linear-gradient(150deg,var(--sw-lt),var(--sw));
-  box-shadow:0 2px 8px rgba(0,0,0,.18);transition:transform .16s,box-shadow .16s}
-.sw:hover{transform:scale(1.12)}
-.sw svg{width:13px;height:13px;opacity:0;transition:opacity .14s}
-.sw.on{transform:scale(1.06);box-shadow:0 0 0 2px var(--solid),0 0 0 4px var(--sw)}
-.sw.on svg{opacity:1}
+/* ── 颜色色板：每个色块直接写颜色名，不用编号猜 ── */
+.swatches{display:flex;flex-wrap:wrap;gap:8px;padding:1px 0}
+.sw{display:inline-flex;align-items:center;gap:7px;padding:6px 12px 6px 8px;border-radius:999px;cursor:pointer;
+  font-family:inherit;font-size:11.5px;font-weight:600;color:var(--text2);background:var(--chip);
+  border:1px solid transparent;transition:.16s}
+.sw i{width:15px;height:15px;flex:none;border-radius:50%;display:grid;place-items:center;color:#fff;
+  background:linear-gradient(150deg,var(--sw-lt),var(--sw));box-shadow:0 2px 6px rgba(0,0,0,.18)}
+.sw i svg{width:9px;height:9px;opacity:0;transition:opacity .14s}
+.sw:hover{color:var(--text);border-color:var(--border2)}
+.sw.on{color:var(--accent);border-color:rgba(var(--accent-rgb),.45);background:var(--solid)}
+.sw.on i svg{opacity:1}
 select.sel option{background:var(--solid);color:var(--text)}
 
 /* ── 传输记录：卡片头 / 行内操作 ── */
@@ -377,8 +379,8 @@ html[dir="rtl"] select.sel{padding:10px 12px 10px 34px}
     </div>
   </div>
   <div class="fld">
-    <label data-i18n="accentColor">主题颜色</label>
-    <div class="swatches" id="dpSwatches" role="group" data-i18n-aria="accentColor" aria-label="主题颜色"></div>
+    <label data-i18n="accentColor">颜色</label>
+    <div class="swatches" id="dpSwatches" role="group" data-i18n-aria="accentColor" aria-label="颜色"></div>
   </div>
   <div class="fld">
     <label data-i18n="sound">提示音</label>
@@ -663,15 +665,31 @@ const DP_PEER_CDNS=[
   'https://cdn.bootcdn.net/ajax/libs/peerjs/'+DP_PEER_VER+'/peerjs.min.js'
 ];
 let dpPeerWaiters=null;
+let dpPeerRound=0,dpPeerRetryTimer=null;
+const DP_PEER_ROUNDS=4,DP_PEER_WAIT=[6000,15000,30000];
 function dpLoadPeer(cb){
   if(typeof Peer!=='undefined'){cb(true);return;}
   if(dpPeerWaiters){dpPeerWaiters.push(cb);return;}
   dpPeerWaiters=[cb];
-  const done=ok=>{const q=dpPeerWaiters;dpPeerWaiters=null;q.forEach(f=>{try{f(ok);}catch(e){}});};
+  const done=ok=>{
+    if(ok)dpPeerRound=0;
+    const q=dpPeerWaiters;dpPeerWaiters=null;q.forEach(f=>{try{f(ok);}catch(e){}});
+  };
   let i=0;
   const next=()=>{
     if(typeof Peer!=='undefined'){done(true);return;}
-    if(i>=DP_PEER_CDNS.length){done(false);return;}
+    if(i>=DP_PEER_CDNS.length){
+      /* 三个镜像都拿不到：先把实情告诉用户，但别就此躺平 ——
+         手机刚唤醒、切了网络、瞬时断网都很常见，后台再试几轮，成功就自动入房。 */
+      dpPeerRound++;
+      if(dpPeerRound<DP_PEER_ROUNDS){
+        try{dpStatusSet('libFail',[],'err');}catch(e){}
+        clearTimeout(dpPeerRetryTimer);
+        dpPeerRetryTimer=setTimeout(()=>{i=0;next();},DP_PEER_WAIT[Math.min(dpPeerRound-1,DP_PEER_WAIT.length-1)]);
+        return;
+      }
+      done(false);return;
+    }
     const s=document.createElement('script');
     s.async=true;s.src=DP_PEER_CDNS[i++];
     s.onload=()=>{if(typeof Peer!=='undefined')done(true);else{s.remove();next();}};
@@ -743,7 +761,7 @@ const DP_DICT={
   self:'本机',peers:'附近的设备',files:'传输记录',
   foot1:'WebRTC 点对点直连 · 仅连接握手经过中继',foot2:'点击设备圆圈选择文件，或把文件拖到圆圈上发送',
   settings:'设置',theme:'外观主题',themeAuto:'自动',themeLight:'浅色',themeDark:'深色',
-  accentColor:'主题颜色',
+  accentColor:'颜色',
   language:'界面语言',langAuto:'自动（跟随系统）',ariaTheme:'切换深浅色模式',ariaSettings:'设置',ariaRoom:'房间码',ariaLang:'界面语言',
   subOnline:r=>`房间 ${r} · 在线，等待同房间设备加入`,subOffline:'输入相同房间码 · P2P 直连互传',
   joining:r=>`正在加入房间 ${r} …`,joined:r=>`已加入房间 ${r} · 在线`,
@@ -767,7 +785,7 @@ const DP_DICT={
   self:'This device',peers:'Nearby devices',files:'Transfer history',
   foot1:'WebRTC peer-to-peer · only the handshake goes through a relay',foot2:'Click a device to choose files, or drop files onto it',
   settings:'Settings',theme:'Appearance',themeAuto:'Auto',themeLight:'Light',themeDark:'Dark',
-  accentColor:'Accent color',
+  accentColor:'Color',
   language:'Language',langAuto:'Auto (follow system)',ariaTheme:'Toggle light / dark mode',ariaSettings:'Settings',ariaRoom:'Room code',ariaLang:'Language',
   subOnline:r=>`Room ${r} · online, waiting for devices`,subOffline:'Enter the same room code · direct P2P transfer',
   joining:r=>`Joining room ${r} …`,joined:r=>`Joined room ${r} · online`,
@@ -792,7 +810,7 @@ const DP_DICT={
   self:'本機',peers:'附近的裝置',files:'傳輸記錄',
   foot1:'WebRTC 點對點直連 · 僅連線握手經過中繼',foot2:'點擊裝置圓圈選擇檔案，或把檔案拖到圓圈上傳送',
   settings:'設定',theme:'外觀主題',themeAuto:'自動',themeLight:'淺色',themeDark:'深色',
-  accentColor:'主題顏色',
+  accentColor:'顏色',
   language:'介面語言',langAuto:'自動（跟隨系統）',ariaTheme:'切換深淺色模式',ariaSettings:'設定',ariaRoom:'房間碼',ariaLang:'介面語言',
   subOnline:r=>`房間 ${r} · 線上，等待同房間裝置加入`,subOffline:'輸入相同房間碼 · P2P 直連互傳',
   joining:r=>`正在加入房間 ${r} …`,joined:r=>`已加入房間 ${r} · 線上`,
@@ -816,7 +834,7 @@ const DP_DICT={
   self:'この端末',peers:'近くの端末',files:'転送履歴',
   foot1:'WebRTC による P2P 直結 · 中継されるのは接続のハンドシェイクのみ',foot2:'端末をタップしてファイルを選択、またはファイルを端末にドロップして送信',
   settings:'設定',theme:'外観テーマ',themeAuto:'自動',themeLight:'ライト',themeDark:'ダーク',
-  accentColor:'アクセントカラー',
+  accentColor:'色',
   language:'表示言語',langAuto:'自動（システムに従う）',ariaTheme:'ライト／ダークを切り替え',ariaSettings:'設定',ariaRoom:'ルームコード',ariaLang:'表示言語',
   subOnline:r=>`ルーム ${r} ・オンライン、同じルームの端末を待機中`,subOffline:'同じルームコードを入力 · P2P で直接転送',
   joining:r=>`ルーム ${r} に参加しています …`,joined:r=>`ルーム ${r} に参加しました ・オンライン`,
@@ -840,7 +858,7 @@ const DP_DICT={
   self:'이 기기',peers:'주변 기기',files:'전송 기록',
   foot1:'WebRTC P2P 직결 · 연결 핸드셰이크만 중계를 거칩니다',foot2:'기기를 눌러 파일을 선택하거나, 파일을 기기 위로 끌어다 놓으세요',
   settings:'설정',theme:'화면 테마',themeAuto:'자동',themeLight:'라이트',themeDark:'다크',
-  accentColor:'강조 색상',
+  accentColor:'색상',
   language:'표시 언어',langAuto:'자동(시스템 설정)',ariaTheme:'라이트/다크 모드 전환',ariaSettings:'설정',ariaRoom:'방 코드',ariaLang:'표시 언어',
   subOnline:r=>`방 ${r} · 온라인, 같은 방 기기를 기다리는 중`,subOffline:'같은 방 코드를 입력하세요 · P2P 직접 전송',
   joining:r=>`방 ${r} 에 참가하는 중 …`,joined:r=>`방 ${r} 에 참가했습니다 · 온라인`,
@@ -865,7 +883,7 @@ const DP_DICT={
   self:'Este dispositivo',peers:'Dispositivos cercanos',files:'Historial de transferencias',
   foot1:'WebRTC de dispositivo a dispositivo · solo el enlace de conexión pasa por un relé',foot2:'Haz clic en un dispositivo para elegir archivos, o arrastra archivos sobre él',
   settings:'Ajustes',theme:'Apariencia',themeAuto:'Automático',themeLight:'Claro',themeDark:'Oscuro',
-  accentColor:'Color de acento',
+  accentColor:'Color',
   language:'Idioma',langAuto:'Automático (según el sistema)',ariaTheme:'Cambiar modo claro/oscuro',ariaSettings:'Ajustes',ariaRoom:'Código de sala',ariaLang:'Idioma',
   subOnline:r=>`Sala ${r} · en línea, esperando dispositivos`,subOffline:'Introduce el mismo código · transferencia P2P directa',
   joining:r=>`Entrando en la sala ${r} …`,joined:r=>`En la sala ${r} · en línea`,
@@ -889,7 +907,7 @@ const DP_DICT={
   self:'Cet appareil',peers:'Appareils à proximité',files:'Historique des transferts',
   foot1:'WebRTC pair à pair · seule la négociation passe par un relais',foot2:'Cliquez sur un appareil pour choisir des fichiers, ou déposez-les dessus',
   settings:'Réglages',theme:'Apparence',themeAuto:'Auto',themeLight:'Clair',themeDark:'Sombre',
-  accentColor:'Couleur d’accent',
+  accentColor:'Couleur',
   language:'Langue',langAuto:'Auto (système)',ariaTheme:'Basculer clair/sombre',ariaSettings:'Réglages',ariaRoom:'Code du salon',ariaLang:'Langue',
   subOnline:r=>`Salon ${r} · en ligne, en attente d'appareils`,subOffline:'Saisissez le même code · transfert P2P direct',
   joining:r=>`Connexion au salon ${r} …`,joined:r=>`Salon ${r} rejoint · en ligne`,
@@ -913,7 +931,7 @@ const DP_DICT={
   self:'Dieses Gerät',peers:'Geräte in der Nähe',files:'Übertragungsverlauf',
   foot1:'WebRTC Peer-to-Peer · nur der Verbindungsaufbau läuft über einen Relay',foot2:'Gerät anklicken, um Dateien zu wählen – oder Dateien darauf ziehen',
   settings:'Einstellungen',theme:'Erscheinungsbild',themeAuto:'Automatisch',themeLight:'Hell',themeDark:'Dunkel',
-  accentColor:'Akzentfarbe',
+  accentColor:'Farbe',
   language:'Sprache',langAuto:'Automatisch (System)',ariaTheme:'Hell/Dunkel umschalten',ariaSettings:'Einstellungen',ariaRoom:'Raumcode',ariaLang:'Sprache',
   subOnline:r=>`Raum ${r} · online, warte auf Geräte`,subOffline:'Gleichen Raumcode eingeben · direkte P2P-Übertragung',
   joining:r=>`Raum ${r} wird betreten …`,joined:r=>`Raum ${r} beigetreten · online`,
@@ -938,7 +956,7 @@ const DP_DICT={
   self:'Questo dispositivo',peers:'Dispositivi vicini',files:'Cronologia trasferimenti',
   foot1:'WebRTC peer-to-peer · solo l’handshake passa da un relay',foot2:'Fai clic su un dispositivo per scegliere i file, oppure trascinali sopra di esso',
   settings:'Impostazioni',theme:'Aspetto',themeAuto:'Automatico',themeLight:'Chiaro',themeDark:'Scuro',
-  accentColor:'Colore principale',
+  accentColor:'Colore',
   language:'Lingua',langAuto:'Automatico (sistema)',ariaTheme:'Passa a chiaro/scuro',ariaSettings:'Impostazioni',ariaRoom:'Codice stanza',ariaLang:'Lingua',
   subOnline:r=>`Stanza ${r} · online, in attesa di dispositivi`,subOffline:'Inserisci lo stesso codice · trasferimento P2P diretto',
   joining:r=>`Accesso alla stanza ${r} …`,joined:r=>`Stanza ${r} · online`,
@@ -962,7 +980,7 @@ const DP_DICT={
   self:'Este dispositivo',peers:'Dispositivos próximos',files:'Histórico de transferências',
   foot1:'WebRTC ponto a ponto · apenas o handshake passa por um relay',foot2:'Clique em um dispositivo para escolher arquivos, ou arraste arquivos até ele',
   settings:'Ajustes',theme:'Aparência',themeAuto:'Automático',themeLight:'Claro',themeDark:'Escuro',
-  accentColor:'Cor de destaque',
+  accentColor:'Cor',
   language:'Idioma',langAuto:'Automático (sistema)',ariaTheme:'Alternar modo claro/escuro',ariaSettings:'Ajustes',ariaRoom:'Código da sala',ariaLang:'Idioma',
   subOnline:r=>`Sala ${r} · online, aguardando dispositivos`,subOffline:'Digite o mesmo código · transferência P2P direta',
   joining:r=>`Entrando na sala ${r} …`,joined:r=>`Na sala ${r} · online`,
@@ -986,7 +1004,7 @@ const DP_DICT={
   self:'Это устройство',peers:'Устройства рядом',files:'История передач',
   foot1:'WebRTC напрямую · через ретранслятор идёт только рукопожатие',foot2:'Нажмите на устройство, чтобы выбрать файлы, или перетащите файлы на него',
   settings:'Настройки',theme:'Оформление',themeAuto:'Авто',themeLight:'Светлая',themeDark:'Тёмная',
-  accentColor:'Акцентный цвет',
+  accentColor:'Цвет',
   language:'Язык',langAuto:'Авто (как в системе)',ariaTheme:'Переключить светлую/тёмную тему',ariaSettings:'Настройки',ariaRoom:'Код комнаты',ariaLang:'Язык',
   subOnline:r=>`Комната ${r} · онлайн, ждём устройства`,subOffline:'Введите тот же код · прямая P2P-передача',
   joining:r=>`Подключение к комнате ${r} …`,joined:r=>`Комната ${r} · онлайн`,
@@ -1010,7 +1028,7 @@ const DP_DICT={
   self:'Dit apparaat',peers:'Apparaten in de buurt',files:'Overdrachtsgeschiedenis',
   foot1:'WebRTC peer-to-peer · alleen de verbindingsopbouw loopt via een relay',foot2:'Klik op een apparaat om bestanden te kiezen, of sleep bestanden erop',
   settings:'Instellingen',theme:'Weergave',themeAuto:'Automatisch',themeLight:'Licht',themeDark:'Donker',
-  accentColor:'Accentkleur',
+  accentColor:'Kleur',
   language:'Taal',langAuto:'Automatisch (systeem)',ariaTheme:'Licht/donker wisselen',ariaSettings:'Instellingen',ariaRoom:'Kamercode',ariaLang:'Taal',
   subOnline:r=>`Kamer ${r} · online, wacht op apparaten`,subOffline:'Voer dezelfde code in · directe P2P-overdracht',
   joining:r=>`Deelnemen aan kamer ${r} …`,joined:r=>`Kamer ${r} · online`,
@@ -1035,7 +1053,7 @@ const DP_DICT={
   self:'To urządzenie',peers:'Urządzenia w pobliżu',files:'Historia transferów',
   foot1:'WebRTC bezpośrednio · przez przekaźnik idzie tylko uzgadnianie połączenia',foot2:'Kliknij urządzenie, aby wybrać pliki, albo przeciągnij na nie pliki',
   settings:'Ustawienia',theme:'Wygląd',themeAuto:'Automatyczny',themeLight:'Jasny',themeDark:'Ciemny',
-  accentColor:'Kolor akcentu',
+  accentColor:'Kolor',
   language:'Język',langAuto:'Automatyczny (system)',ariaTheme:'Przełącz jasny/ciemny',ariaSettings:'Ustawienia',ariaRoom:'Kod pokoju',ariaLang:'Język',
   subOnline:r=>`Pokój ${r} · online, czekam na urządzenia`,subOffline:'Wpisz ten sam kod · bezpośredni transfer P2P',
   joining:r=>`Dołączanie do pokoju ${r} …`,joined:r=>`Pokój ${r} · online`,
@@ -1059,7 +1077,7 @@ const DP_DICT={
   self:'Bu cihaz',peers:'Yakındaki cihazlar',files:'Aktarım geçmişi',
   foot1:'WebRTC eşler arası · yalnızca bağlantı el sıkışması aktarıcıdan geçer',foot2:'Dosya seçmek için bir cihaza dokunun veya dosyaları üzerine sürükleyin',
   settings:'Ayarlar',theme:'Görünüm',themeAuto:'Otomatik',themeLight:'Açık',themeDark:'Koyu',
-  accentColor:'Vurgu rengi',
+  accentColor:'Renk',
   language:'Dil',langAuto:'Otomatik (sisteme göre)',ariaTheme:'Açık/koyu arasında geçiş yap',ariaSettings:'Ayarlar',ariaRoom:'Oda kodu',ariaLang:'Dil',
   subOnline:r=>`Oda ${r} · çevrimiçi, cihaz bekleniyor`,subOffline:'Aynı kodu girin · doğrudan P2P aktarım',
   joining:r=>`Oda ${r} · katılınıyor …`,joined:r=>`Oda ${r} · çevrimiçi`,
@@ -1083,7 +1101,7 @@ const DP_DICT={
   self:'هذا الجهاز',peers:'الأجهزة القريبة',files:'سجل النقل',
   foot1:'WebRTC اتصال مباشر · المصافحة فقط تمر عبر وسيط',foot2:'اضغط على جهاز لاختيار الملفات، أو اسحب الملفات وأفلتها عليه',
   settings:'الإعدادات',theme:'المظهر',themeAuto:'تلقائي',themeLight:'فاتح',themeDark:'داكن',
-  accentColor:'لون التمييز',
+  accentColor:'اللون',
   language:'اللغة',langAuto:'تلقائي (حسب النظام)',ariaTheme:'تبديل الوضع الفاتح/الداكن',ariaSettings:'الإعدادات',ariaRoom:'رمز الغرفة',ariaLang:'اللغة',
   subOnline:r=>`الغرفة ${r} · متصل، في انتظار الأجهزة`,subOffline:'أدخل الرمز نفسه · نقل مباشر بين الأجهزة',
   joining:r=>`جارٍ الانضمام إلى الغرفة ${r} …`,joined:r=>`انضممت إلى الغرفة ${r} · متصل`,
@@ -1107,7 +1125,7 @@ const DP_DICT={
   self:'यह डिवाइस',peers:'आस-पास के डिवाइस',files:'ट्रांसफ़र इतिहास',
   foot1:'WebRTC पीयर-टू-पीयर · सिर्फ़ कनेक्शन हैंडशेक रिले से जाता है',foot2:'फ़ाइल चुनने के लिए डिवाइस पर टैप करें, या फ़ाइलें उस पर ड्रॉप करें',
   settings:'सेटिंग्स',theme:'थीम',themeAuto:'ऑटो',themeLight:'लाइट',themeDark:'डार्क',
-  accentColor:'एक्सेंट रंग',
+  accentColor:'रंग',
   language:'भाषा',langAuto:'ऑटो (सिस्टम के अनुसार)',ariaTheme:'लाइट/डार्क बदलें',ariaSettings:'सेटिंग्स',ariaRoom:'रूम कोड',ariaLang:'भाषा',
   subOnline:r=>`रूम ${r} · ऑनलाइन, डिवाइस का इंतज़ार`,subOffline:'वही कोड डालें · सीधा P2P ट्रांसफ़र',
   joining:r=>`रूम ${r} से जुड़ रहे हैं …`,joined:r=>`रूम ${r} में शामिल · ऑनलाइन`,
@@ -1131,7 +1149,7 @@ const DP_DICT={
   self:'อุปกรณ์นี้',peers:'อุปกรณ์ใกล้เคียง',files:'ประวัติการโอน',
   foot1:'WebRTC เชื่อมต่อตรงแบบเพียร์ทูเพียร์ · เฉพาะการจับมือเชื่อมต่อที่ผ่านรีเลย์',foot2:'แตะที่อุปกรณ์เพื่อเลือกไฟล์ หรือลากไฟล์มาวางบนอุปกรณ์',
   settings:'การตั้งค่า',theme:'ธีม',themeAuto:'อัตโนมัติ',themeLight:'สว่าง',themeDark:'มืด',
-  accentColor:'สีหลัก',
+  accentColor:'สี',
   language:'ภาษา',langAuto:'อัตโนมัติ (ตามระบบ)',ariaTheme:'สลับโหมดสว่าง/มืด',ariaSettings:'การตั้งค่า',ariaRoom:'รหัสห้อง',ariaLang:'ภาษา',
   subOnline:r=>`ห้อง ${r} · ออนไลน์ รออุปกรณ์อื่น`,subOffline:'กรอกรหัสเดียวกัน · ส่งตรงแบบ P2P',
   joining:r=>`กำลังเข้าห้อง ${r} …`,joined:r=>`เข้าห้อง ${r} แล้ว · ออนไลน์`,
@@ -1155,7 +1173,7 @@ const DP_DICT={
   self:'Thiết bị này',peers:'Thiết bị gần đây',files:'Lịch sử truyền',
   foot1:'WebRTC kết nối trực tiếp · chỉ phần bắt tay kết nối đi qua máy chủ trung chuyển',foot2:'Nhấn vào thiết bị để chọn tệp, hoặc kéo tệp thả vào thiết bị',
   settings:'Cài đặt',theme:'Giao diện',themeAuto:'Tự động',themeLight:'Sáng',themeDark:'Tối',
-  accentColor:'Màu nhấn',
+  accentColor:'Màu',
   language:'Ngôn ngữ',langAuto:'Tự động (theo hệ thống)',ariaTheme:'Chuyển chế độ sáng/tối',ariaSettings:'Cài đặt',ariaRoom:'Mã phòng',ariaLang:'Ngôn ngữ',
   subOnline:r=>`Phòng ${r} · trực tuyến, đang chờ thiết bị`,subOffline:'Nhập cùng mã phòng · truyền P2P trực tiếp',
   joining:r=>`Đang tham gia phòng ${r} …`,joined:r=>`Đã vào phòng ${r} · trực tuyến`,
@@ -1179,7 +1197,7 @@ const DP_DICT={
   self:'Perangkat ini',peers:'Perangkat terdekat',files:'Riwayat transfer',
   foot1:'WebRTC peer-to-peer · hanya jabat tangan koneksi lewat relay',foot2:'Klik perangkat untuk memilih file, atau tarik file ke atasnya',
   settings:'Pengaturan',theme:'Tema tampilan',themeAuto:'Otomatis',themeLight:'Terang',themeDark:'Gelap',
-  accentColor:'Warna aksen',
+  accentColor:'Warna',
   language:'Bahasa',langAuto:'Otomatis (ikuti sistem)',ariaTheme:'Ganti mode terang/gelap',ariaSettings:'Pengaturan',ariaRoom:'Kode ruang',ariaLang:'Bahasa',
   subOnline:r=>`Ruang ${r} · online, menunggu perangkat`,subOffline:'Masukkan kode yang sama · transfer P2P langsung',
   joining:r=>`Bergabung ke ruang ${r} …`,joined:r=>`Bergabung di ruang ${r} · online`,
@@ -1325,7 +1343,7 @@ function dpApplyLang(pref,persist=true){
       const n=dpEl('dpName');if(n)n.value=dpState.name;
       dpSave();
     }
-    dpSyncChrome();dpRenderPeers();dpRenderFiles();
+    dpSyncChrome();dpRenderPeers();dpRenderFiles(true);   // 语言变了，列表里的文案必须整段重画
     const st=dpEl('dpStatus');
     if(st){st.textContent=dpT(dpStatusState.k,...dpStatusState.args);st.className='dp-status'+(dpStatusState.cls?' '+dpStatusState.cls:'');}
   }
@@ -1375,9 +1393,12 @@ function dpInitTheme(){
   let saved=null;
   try{saved=localStorage.getItem(DP_THEME_KEY);}catch(e){}
   dpApplyTheme(saved==='light'||saved==='dark'?saved:'auto');
-  matchMedia('(prefers-color-scheme:dark)').addEventListener('change',()=>{
-    if(dpThemeMode==='auto')dpApplyTheme('auto'); // 仅跟随系统时同步
-  });
+  try{
+    const mq=matchMedia('(prefers-color-scheme:dark)');
+    const onSys=()=>{if(dpThemeMode==='auto')dpApplyTheme('auto');}; // 仅跟随系统时同步
+    // 老 Safari 的 MediaQueryList 没有 addEventListener，只有 addListener
+    if(mq.addEventListener)mq.addEventListener('change',onSys);else if(mq.addListener)mq.addListener(onSys);
+  }catch(e){}
   const btn=dpEl('dpTheme');
   /* 按钮三态循环：自动 → 浅色 → 深色 → 自动 */
   if(btn)btn.onclick=()=>{
@@ -1393,7 +1414,7 @@ function dpInitTheme(){
   });
 }
 
-/* ========================= 主题颜色（强调色；同时就是本机设备球的颜色） ========================= */
+/* ========================= 颜色色板（强调色；同时就是本机设备球的颜色） ========================= */
 const DP_COLOR_KEY='jy-drop-color';
 /* id 会随 hello 名片发给同一房间的其他设备，所以用稳定的短字符串 */
 const DP_COLORS=[
@@ -1406,6 +1427,32 @@ const DP_COLORS=[
   {id:'green',  hex:'#30d158', lt:'#8ef0a7'},
   {id:'teal',   hex:'#40c8e0', lt:'#9ce8f6'}
 ];
+/* 每种颜色在各语言里的叫法：色板上直接写颜色名，别写「颜色 1 / 颜色 2」这种编号 */
+const DP_COLOR_NAMES={
+'zh-CN':{blue:'蓝',indigo:'靛',purple:'紫',pink:'粉',red:'红',orange:'橙',green:'绿',teal:'青'},
+'zh-TW':{blue:'藍',indigo:'靛',purple:'紫',pink:'粉',red:'紅',orange:'橙',green:'綠',teal:'青'},
+'en':{blue:'Blue',indigo:'Indigo',purple:'Purple',pink:'Pink',red:'Red',orange:'Orange',green:'Green',teal:'Teal'},
+'ja':{blue:'ブルー',indigo:'インディゴ',purple:'パープル',pink:'ピンク',red:'レッド',orange:'オレンジ',green:'グリーン',teal:'ティール'},
+'ko':{blue:'파랑',indigo:'남색',purple:'보라',pink:'분홍',red:'빨강',orange:'주황',green:'초록',teal:'청록'},
+'es':{blue:'Azul',indigo:'Índigo',purple:'Púrpura',pink:'Rosa',red:'Rojo',orange:'Naranja',green:'Verde',teal:'Turquesa'},
+'fr':{blue:'Bleu',indigo:'Indigo',purple:'Violet',pink:'Rose',red:'Rouge',orange:'Orange',green:'Vert',teal:'Turquoise'},
+'de':{blue:'Blau',indigo:'Indigo',purple:'Violett',pink:'Rosa',red:'Rot',orange:'Orange',green:'Grün',teal:'Türkis'},
+'it':{blue:'Blu',indigo:'Indaco',purple:'Viola',pink:'Rosa',red:'Rosso',orange:'Arancio',green:'Verde',teal:'Acqua'},
+'pt':{blue:'Azul',indigo:'Índigo',purple:'Roxo',pink:'Rosa',red:'Vermelho',orange:'Laranja',green:'Verde',teal:'Turquesa'},
+'ru':{blue:'Синий',indigo:'Индиго',purple:'Фиолетовый',pink:'Розовый',red:'Красный',orange:'Оранжевый',green:'Зелёный',teal:'Бирюзовый'},
+'nl':{blue:'Blauw',indigo:'Indigo',purple:'Paars',pink:'Roze',red:'Rood',orange:'Oranje',green:'Groen',teal:'Turkoois'},
+'pl':{blue:'Niebieski',indigo:'Indygo',purple:'Fioletowy',pink:'Różowy',red:'Czerwony',orange:'Pomarańczowy',green:'Zielony',teal:'Morski'},
+'tr':{blue:'Mavi',indigo:'Çivit',purple:'Mor',pink:'Pembe',red:'Kırmızı',orange:'Turuncu',green:'Yeşil',teal:'Turkuaz'},
+'ar':{blue:'أزرق',indigo:'نيلي',purple:'بنفسجي',pink:'زهري',red:'أحمر',orange:'برتقالي',green:'أخضر',teal:'فيروزي'},
+'hi':{blue:'नीला',indigo:'इंडिगो',purple:'बैंगनी',pink:'गुलाबी',red:'लाल',orange:'नारंगी',green:'हरा',teal:'टील'},
+'th':{blue:'ฟ้า',indigo:'คราม',purple:'ม่วง',pink:'ชมพู',red:'แดง',orange:'ส้ม',green:'เขียว',teal:'เขียวน้ำเงิน'},
+'vi':{blue:'Xanh dương',indigo:'Chàm',purple:'Tím',pink:'Hồng',red:'Đỏ',orange:'Cam',green:'Xanh lá',teal:'Xanh ngọc'},
+'id':{blue:'Biru',indigo:'Indigo',purple:'Ungu',pink:'Merah muda',red:'Merah',orange:'Oranye',green:'Hijau',teal:'Teal'}
+};
+const dpColorName=id=>{
+  const t=DP_COLOR_NAMES[dpLang]||DP_COLOR_NAMES.en;
+  return t[id]||DP_COLOR_NAMES.en[id]||id;
+};
 const dpHexRgb=h=>{const n=parseInt(h.slice(1),16);return ((n>>16)&255)+','+((n>>8)&255)+','+(n&255);};
 const dpColorById=id=>DP_COLORS.find(c=>c.id===id)||DP_COLORS[0];
 let dpColorId='blue';
@@ -1445,7 +1492,7 @@ function dpInitColor(){
   let saved=null;try{saved=localStorage.getItem(DP_COLOR_KEY);}catch(e){}
   const box=dpEl('dpSwatches');
   if(box){
-    box.innerHTML=DP_COLORS.map(c=>`<button class="sw" type="button" data-color="${c.id}" aria-pressed="false" style="--sw:${c.hex};--sw-lt:${c.lt}">${DP_CHECK}</button>`).join('');
+    box.innerHTML=DP_COLORS.map(c=>`<button class="sw" type="button" data-color="${c.id}" aria-pressed="false" style="--sw:${c.hex};--sw-lt:${c.lt}"><i>${DP_CHECK}</i><span class="swn">${esc(dpColorName(c.id))}</span></button>`).join('');
     box.querySelectorAll('[data-color]').forEach(b=>b.onclick=()=>dpApplyColor(b.dataset.color));
   }
   // 手动选过就用选的；否则先默认蓝，占席后由 dpClaimAutoColor 按席位定色
@@ -1465,12 +1512,13 @@ function dpClaimAutoColor(){
   try{localStorage.setItem(DP_COLOR_AUTO_KEY,c.id);}catch(e){}
   dpApplyColor(c.id,false);
 }
-/* 色板按钮的无障碍文案跟随界面语言 */
+/* 色板按钮上的颜色名与无障碍文案跟随界面语言 */
 function dpSyncSwatchLabels(){
   const box=dpEl('dpSwatches');if(!box)return;
-  box.querySelectorAll('[data-color]').forEach((b,i)=>{
-    const t=dpT('accentColor')+' '+(i+1);
-    b.title=t;b.setAttribute('aria-label',t);
+  box.querySelectorAll('[data-color]').forEach(b=>{
+    const n=dpColorName(b.dataset.color);
+    const s=b.querySelector('.swn');if(s)s.textContent=n;
+    b.title=n;b.setAttribute('aria-label',dpT('accentColor')+' · '+n);
   });
 }
 
@@ -1509,10 +1557,15 @@ const dpAvatar=(dev,c)=>'<span class="dp-avatar"'+((c&&c.hex)?' style="'+dpAvata
 const DP_PREFIX='jydrop-v2-';
 const DP_SLOTS=8;
 const DP_PEER_OPTS={debug:0};
+/* 在线判定靠心跳：对端每 8 秒必来一条 hello（高席位发、低席位回），
+   静默超过这个时长就当它已经走了。手机直接关页面/被系统冻结时不会触发
+   beforeunload，也不会发 close，只有这条兜底能把它摘掉。 */
+const DP_BEAT_MS=30000;
+const DP_PRUNE_MS=5000;
 let dpState=null;          // {room,name,dev,slot,connected}
 let dpNameAuto=true;       // 名称是否为自动生成（用户没手动改过）
 let dpPeer=null;           // 当前 Peer 实例（占用 dpState.slot 号席位）
-let dpPeers={};            // 成员表：slotId -> {name,dev,conn,slot,opened}
+let dpPeers={};            // 成员表：slotId -> {name,dev,conn,slot,opened,_seen}（_seen=最近一次收到对端消息的时间）
 let dpKnown={};            // 名片记忆：slotId -> {name,dev}，断线重连不闪回"…"
 let dpEntries=[];          // 传输记录（新的在前）
 let dpRenderTimer=null;
@@ -1536,7 +1589,7 @@ const dpLearn=(id,name,dev,color)=>{
   if(!name||name==='…')return;
   dpKnown[id]={name,dev:dev||(dpKnown[id]&&dpKnown[id].dev)||null,color:color||(dpKnown[id]&&dpKnown[id].color)||null};
 };
-/* 把本机名片（名称/设备类型/主题颜色）推给所有已连通的设备 */
+/* 把本机名片（名称/设备类型/颜色）推给所有已连通的设备 */
 function dpAnnounce(){
   if(!dpState)return;
   Object.values(dpPeers).forEach(v=>{
@@ -1620,17 +1673,18 @@ function dpCanRetry(e){
   if(e.dir==='out')return !!(e._file&&rec&&rec.conn&&rec.conn.open);
   return !!(rec&&rec.conn&&rec.conn.open);
 }
+/* 一行的文字说明（方向 / 大小 / 实时速度 / 剩余时间） */
+function dpFileMeta(e){
+  const dirTxt=e.dir==='out'?dpT('to',e.peerName||'—'):dpT('from',e.peerName||'—');
+  if(e.state!=='run')return `${dirTxt} · ${dpFmtSize(e.size)}`;
+  let s=`${dpFmtSize(e.done)} / ${dpFmtSize(e.size)}`;
+  if(e._spd>120)s+=' · '+dpFmtSize(Math.round(e._spd))+'/s';          // 实时速度
+  if(e._eta!=null&&e._eta<3600)s+=' · '+dpT('eta',dpFmtDur(e._eta));   // 预计剩余
+  return `${dirTxt} · ${s}`;
+}
 function dpFileRow(e,i){
   const pct=e.size?Math.min(100,Math.round(e.done/e.size*100)):0;
   const icon=e.dir==='out'?'📤':'📥';
-  const dirTxt=e.dir==='out'?dpT('to',e.peerName||'—'):dpT('from',e.peerName||'—');
-  let meta=`${dirTxt} · ${dpFmtSize(e.size)}`;
-  if(e.state==='run'){
-    let s=`${dpFmtSize(e.done)} / ${dpFmtSize(e.size)}`;
-    if(e._spd>120)s+=' · '+dpFmtSize(Math.round(e._spd))+'/s';        // 实时速度
-    if(e._eta!=null&&e._eta<3600)s+=' · '+dpT('eta',dpFmtDur(e._eta));   // 预计剩余
-    meta=`${dirTxt} · ${s}`;
-  }
   const act=[];
   if(e.state==='run'){
     act.push(`<span class="dp-pct">${pct}%</span>`);
@@ -1644,14 +1698,35 @@ function dpFileRow(e,i){
     if(dpCanRetry(e))act.push(`<button class="dp-sm" type="button" data-dretry="${i}">${esc(dpT('retry'))}</button>`);
   }
   act.push(`<button class="dp-x" type="button" data-ddel="${i}" title="${esc(dpT('delRec'))}" aria-label="${esc(dpT('delRec'))}">${DP_XICON}</button>`);
-  return `<div class="dp-file"><span class="fi">${icon}</span><div class="fm"><b>${esc(e.name)}</b>
-    <span>${esc(meta)}</span>
+  return `<div class="dp-file" data-dpk="${i}"><span class="fi">${icon}</span><div class="fm"><b>${esc(e.name)}</b>
+    <span class="fmeta">${esc(dpFileMeta(e))}</span>
     ${e.state==='run'?'<div class="dp-bar"><i style="width:'+pct+'%"></i></div>':''}</div>
     <span class="dp-act">${act.join('')}</span></div>`;
 }
-function dpRenderFiles(){
+/* 整段重建整张列表在传输时会每 150ms 发生一次（几十行 DOM 白白重造），
+   所以先比「结构指纹」：只有进度在变就只改数字和进度条宽度，结构变了才重建。 */
+let dpFilesSig=null;   // null = 还没渲染过（首次必须画一次空态），'' = 当前是空列表
+function dpRenderFiles(force){
   const box=dpEl('dpFiles');if(!box)return;
-  if(!dpEntries.length){box.innerHTML=`<span class="dp-empty">${esc(dpT('fileEmpty1'))}<br>${esc(dpT('fileEmpty2'))}</span>`;return;}
+  if(!dpEntries.length){
+    if(force||dpFilesSig!==''){
+      dpFilesSig='';
+      box.innerHTML=`<span class="dp-empty">${esc(dpT('fileEmpty1'))}<br>${esc(dpT('fileEmpty2'))}</span>`;
+    }
+    return;
+  }
+  const sig=dpEntries.map(e=>[e.dir,e.name,e.size,e.state,e.peerName,e.url?1:0].join('|')).join('\n');
+  if(!force&&sig===dpFilesSig&&box.children.length===dpEntries.length){
+    dpEntries.forEach((e,i)=>{
+      const row=box.querySelector('[data-dpk="'+i+'"]');if(!row)return;
+      const pct=e.size?Math.min(100,Math.round(e.done/e.size*100)):0;
+      const m=row.querySelector('.fmeta');if(m)m.textContent=dpFileMeta(e);
+      const p=row.querySelector('.dp-pct');if(p)p.textContent=pct+'%';
+      const b=row.querySelector('.dp-bar i');if(b)b.style.width=pct+'%';
+    });
+    return;
+  }
+  dpFilesSig=sig;
   box.innerHTML=dpEntries.map(dpFileRow).join('');
   box.querySelectorAll('[data-dsave]').forEach(b=>b.onclick=()=>{
     const e=dpEntries[+b.dataset.dsave];if(!e||!e.url)return;
@@ -1666,9 +1741,10 @@ function dpThrottleRender(){
   dpRenderTimer=setTimeout(()=>{dpRenderTimer=null;dpRenderFiles();dpSaveEntries();},150);
 }
 const DP_MAX_ENTRIES=60; // 记录上限：超过就丢掉最旧的，并释放它占着的 Blob 内存
-/* 记录被移除时，顺手把它对应的续传缓冲也丢掉，别让内存越攒越多 */
+/* 记录被移除时，顺手把它对应的续传缓冲和 Blob 内存放掉 */
 function dpReleaseEntry(e){
-  if(e.url){try{URL.revokeObjectURL(e.url);}catch(_){}}
+  if(e.url){try{URL.revokeObjectURL(e.url);}catch(_){}e.url=null;}
+  e.blob=null;
   if(e._key&&dpPartial[e._key]&&dpPartial[e._key].entry===e){
     delete dpPartial[e._key];
     if(e.state==='run')e.state='canceled';
@@ -1677,7 +1753,8 @@ function dpReleaseEntry(e){
 const dpAddEntry=e=>{
   dpEntries.unshift(e);
   if(dpEntries.length>DP_MAX_ENTRIES){
-    dpEntries.splice(DP_MAX_ENTRIES).forEach(dpReleaseEntry);
+    // 挤掉的记录若还在传，先取消掉，否则会留下一条偷偷继续传的「幽灵」
+    dpEntries.splice(DP_MAX_ENTRIES).forEach(x=>{dpCancelRunning(x);dpReleaseEntry(x);});
   }
   dpSaveEntries();
   dpRenderFiles();
@@ -1721,23 +1798,36 @@ function dpTrimStore(){
 
 /* ========================= 数据通道协议 ========================= */
 /* {type:'fmeta',name,size,key} → 对端回 {type:'fack',key,done}（已收到多少字节）
-   → ArrayBuffer 分块 → {type:'fend'}；失败 {type:'ferr'}；中途取消 {type:'fcancel'}
-   对端要求重发：{type:'fretry'}。老版本网页不认识后三种消息，会直接忽略，互传仍然正常。 */
+   → {type:'fstart',key,from} 声明这次从哪开始发 → ArrayBuffer 分块 → {type:'fend'}
+   失败 {type:'ferr'}；取消 {type:'fcancel'}（两边通用：接收方点取消 = 让发送方停，
+   发送方点取消 = 告诉接收方这条记录是「已取消」而不是「失败」）；对端要求重发 {type:'fretry'}。
+   老版本网页不认识 fstart/fcancel/fretry 等消息，会直接忽略，互传仍然正常。
+   在线判定：每 8 秒一条 {type:'hello'} 当心跳；离开前广播 {type:'bye'} 让对方立刻摘掉本机
+   （老版本不认识 bye，会忽略；那种情况下由对方的心跳超时兜底）。 */
 function dpBindDataConn(conn,rec){
   if(rec.bound)return;rec.bound=true;
   rec.peerId=conn.peer;
+  rec._seen=Date.now();     // 打底：连上就算活着
   conn.on('data',data=>{
+    rec._seen=Date.now();   // 任何一条消息都算心跳（对端每 8 秒会来一条 hello）
+    // 对端临走前打的招呼：不用等心跳超时，立刻就把他摘掉
+    if(data&&data.type==='bye'){dpDropPeer(rec,true);return;}
     if(data&&data.type==='fmeta'){
       const key=data.key||dpKey(data.name,data.size);
       let part=dpPartial[key];
       // 同名同大小且已经收了一部分 → 接着上次收，不新建记录
       if(!part||part.done<=0||part.done>=data.size||part.entry.state==='done'){
-        const entry={dir:'in',name:data.name,size:data.size,done:0,state:'run',peerName:data.from||rec.name,
+        // 列表里若还有这条文件的失败/取消记录（半截数据已被丢掉的情况），复用它，
+        // 别为同一次传输在列表里堆出两行
+        const reuse=part?null:dpEntries.find(x=>x.dir==='in'&&x._key===key&&x.state!=='done');
+        const entry=reuse||{dir:'in',name:data.name,size:data.size,done:0,state:'run',peerName:data.from||rec.name,
           _t:Date.now(),_key:key,_peerId:conn.peer};
+        entry.done=0;entry.state='run';entry.peerName=data.from||entry.peerName||rec.name;
+        entry._t=Date.now();entry._t0=null;entry._b0=0;entry._spd=0;entry._eta=null;entry._peerId=conn.peer;
         part={entry,chunks:[],done:0};
         dpPartial[key]=part;
         dpTrimStore();
-        dpAddEntry(entry);
+        if(reuse)dpRenderFiles();else dpAddEntry(entry);
       }else{
         part.entry.state='run';
         part.entry.peerName=data.from||part.entry.peerName;
@@ -1749,14 +1839,40 @@ function dpBindDataConn(conn,rec){
       dpRenderFiles();
     }else if(data&&data.type==='fack'&&rec.ask&&rec.ask.key===data.key){
       const fin=rec.ask.resolve;rec.ask=null;fin(data.done||0);
+    }else if(data&&data.type==='fstart'&&rec.in&&rec.in.key===data.key){
+      /* 发送方声明实际的续传起点。若它没收到/晚收到我们的 fack，就会从 0 重发，
+         而本地还留着上一次的半截数据 —— 直接往后接会拼出一个坏文件，
+         所以起点对不上就把半截数据丢掉，从头收。 */
+      const from=Math.max(0,+data.from||0);
+      if(from!==rec.in.entry.done){
+        rec.in.chunks.length=0;
+        rec.in.entry.done=0;rec.in.entry._t0=null;rec.in.entry._b0=0;
+        rec.in.entry._spd=0;rec.in.entry._eta=null;
+        const p=dpPartial[rec.in.key];if(p){p.chunks.length=0;p.done=0;}
+        dpRenderFiles();
+      }
     }else if(data&&data.type==='fcancel'&&rec.out&&rec.out._key===data.key){
       rec.out.canceled=true; // 对端点了取消，发送循环下一轮就停
+    }else if(data&&data.type==='fcancel'&&rec.in&&rec.in.key===data.key){
+      // 发送方点了取消：这条记录是「已取消」，不该显示成「失败」再给个重试按钮
+      const e=rec.in.entry;
+      e.state='canceled';e._spd=0;e._eta=null;rec.in=null;
+      delete dpPartial[data.key];
+      dpSaveEntries(true);dpRenderFiles();
     }else if(data&&data.type==='fretry'){
       const k=data.key||dpKey(data.name,data.size);
       const f=dpSrc[k];
       if(f&&conn.open&&!(rec.out&&rec.out.state==='run'))dpQueueFiles(rec,[f]);
     }else if(data&&data.type==='fend'&&rec.in){
       const e=rec.in.entry;
+      // 收到的字节数和声明的大小不一致（续传起点错位、数据块丢了）时，
+      // 拼出来的必然是个坏文件 —— 宁可判失败让用户重传，也不悄悄交出去
+      if(e.size&&e.done!==e.size){
+        e.state='fail';e._spd=0;e._eta=null;
+        delete dpPartial[rec.in.key];rec.in=null;
+        dpSaveEntries(true);dpRenderFiles();
+        return;
+      }
       e.blob=new Blob(rec.in.chunks);
       e.url=URL.createObjectURL(e.blob);
       e.state='done';e._spd=0;e._eta=null;
@@ -1819,12 +1935,15 @@ async function dpSendFiles(rec,files){
     rec.out=entry;
     try{
       rec.conn.send({type:'fmeta',name:f.name,size:f.size,from:dpState.name,key});
-      const from=await dpAskOffset(rec,key,300);   // 对端已有进度 → 从断点续传
+      const from=await dpAskOffset(rec,key,800);   // 对端已有进度 → 从断点续传（留足往返时间）
       if(entry.canceled)throw new Error('canceled');
       if(from>0&&from<f.size){
         entry.done=from;entry._b0=from;entry._t0=null;
         toast(dpT('resume',dpFmtSize(from)));
       }
+      // 把「这次从哪开始发」明确告诉对端：它若没收到或晚收到 fack，就按对不上处理、
+      // 丢掉半截数据从头收，绝不会出现「它留着旧数据、我从头发」拼成坏文件
+      rec.conn.send({type:'fstart',key,from:entry.done});
       const CH=65536;
       for(let o=entry.done;o<f.size;o+=CH){
         if(entry.canceled)throw new Error('canceled');
@@ -1849,11 +1968,13 @@ async function dpSendFiles(rec,files){
       entry.state='done';entry.done=f.size;entry._spd=0;entry._eta=null;
       dpSaveEntries(true);
     }catch(e){
-      entry.state=entry.canceled?'canceled':'fail';
+      const canceled=!!entry.canceled;
+      entry.state=canceled?'canceled':'fail';
       entry._spd=0;entry._eta=null;
       dpSaveEntries(true);
-      // 主动告诉对方「这个文件废了」，对方才能把进度条收掉，而不是永远停在 N%
-      try{rec.conn.send({type:'ferr',name:f.name});}catch(_){}
+      // 主动告诉对方这条传输的结局：对方才不会把进度条永远停在 N%；
+      // 用户主动取消 ≠ 出错，报「已取消」而不是「失败」，对方也就不会弹出重试按钮
+      try{rec.conn.send(canceled?{type:'fcancel',key}:{type:'ferr',name:f.name});}catch(_){}
     }
     if(rec.out===entry)rec.out=null;
     dpRenderFiles();
@@ -1863,15 +1984,7 @@ async function dpSendFiles(rec,files){
 /* ── 记录上的四个操作：取消 / 重试 / 删除 / 清空 ── */
 function dpCancelEntry(e){
   if(!e||e.state!=='run')return;
-  e.canceled=true;e.state='canceled';e._spd=0;e._eta=null;
-  if(e.dir==='in'){
-    const rec=dpPeers[e._peerId];
-    if(rec){
-      rec.in=null;
-      if(rec.conn&&rec.conn.open){try{rec.conn.send({type:'fcancel',key:e._key});}catch(_){}} // 让发送方也停下
-    }
-    if(dpPartial[e._key]&&dpPartial[e._key].entry===e)delete dpPartial[e._key];
-  }
+  dpCancelRunning(e);
   dpSaveEntries(true);
   dpRenderFiles();
 }
@@ -1894,12 +2007,26 @@ function dpRetryEntry(e){
 }
 function dpDeleteEntry(e){
   const i=dpEntries.indexOf(e);if(i<0)return;
+  dpCancelRunning(e); // 删掉一条正在传的记录 = 顺手取消它，别让它继续在后台发
   dpEntries.splice(i,1);dpReleaseEntry(e);dpSaveEntries(true);dpRenderFiles();
 }
 function dpClearEntries(){
   if(!dpEntries.length)return;
-  dpEntries.forEach(dpReleaseEntry);
+  dpEntries.forEach(e=>{dpCancelRunning(e);dpReleaseEntry(e);});
   dpEntries=[];dpSaveEntries(true);dpRenderFiles();
+}
+/* 记录还在传就先叫停（不走 dpCancelEntry 的渲染，避免在批量清理里反复重绘） */
+function dpCancelRunning(e){
+  if(!e||e.state!=='run')return;
+  e.canceled=true;e.state='canceled';e._spd=0;e._eta=null;
+  if(e.dir==='in'){
+    const rec=dpPeers[e._peerId];
+    if(rec){
+      rec.in=null;
+      if(rec.conn&&rec.conn.open){try{rec.conn.send({type:'fcancel',key:e._key});}catch(_){}}
+    }
+    if(e._key&&dpPartial[e._key]&&dpPartial[e._key].entry===e)delete dpPartial[e._key];
+  }
 }
 
 /* ========================= 入房（无房主席位制） ========================= */
@@ -1922,7 +2049,13 @@ function dpJoin(){
   if(!dpVisBound){
     dpVisBound=true;
     document.addEventListener('visibilitychange',()=>{
-      if(!document.hidden&&dpPeer&&dpPeer.disconnected){try{dpPeer.reconnect();}catch(e){}}
+      if(document.hidden)return;
+      // 自己刚被冻结过：这段时间收不到任何 hello，把心跳时间戳全部刷新，
+      // 否则一回来就会把所有人误判成"静默掉线"踢掉
+      const now=Date.now();
+      Object.values(dpPeers).forEach(v=>{if(v.opened)v._seen=now;});
+      if(dpPeer&&dpPeer.disconnected){try{dpPeer.reconnect();}catch(e){}}
+      if(dpState&&dpState.connected){try{dpProbeLower();}catch(e){}}
     });
   }
   dpClaim(1);
@@ -1950,7 +2083,7 @@ function dpClaim(i){
     dpSyncChrome();dpRenderPeers();
     dpProbeLower();
     dpProbeTimer=setInterval(dpProbeLower,8000);
-    dpPruneTimer=setInterval(dpPrune,10000);
+    dpPruneTimer=setInterval(dpPrune,DP_PRUNE_MS);
   });
   p.on('error',e=>{
     if(dpPeer!==p)return;
@@ -1967,18 +2100,19 @@ function dpClaim(i){
     const rec={...dpSeed(conn.peer),conn,slot:dpSlotNum(conn.peer),opened:false};
     dpPeers[conn.peer]=rec;
     const giveUp=setTimeout(()=>{ // 半开连接保护：10 秒仍未打通则移除
-      if(rec.open)return;
+      if(rec.opened)return;
       try{conn.close();}catch(e){}
       if(dpPeers[conn.peer]===rec){delete dpPeers[conn.peer];dpRenderPeers();}
     },10000);
     conn.on('open',()=>{
       clearTimeout(giveUp);
-      rec.opened=true;dpBindDataConn(conn,rec);
+      rec.opened=true;rec._seen=Date.now();dpBindDataConn(conn,rec);
       try{conn.send({type:'hello',name:dpState.name,dev:dpState.dev,color:dpColorId});}catch(e){}
       dpRenderPeers();
     });
     conn.on('data',msg=>{
       if(msg&&msg.type==='hello'){
+        rec._seen=Date.now();
         const fresh=!dpKnown[conn.peer];
         rec.name=msg.name||rec.name;rec.dev=msg.dev||rec.dev;rec.color=msg.color||rec.color;
         dpLearn(conn.peer,rec.name,rec.dev,rec.color);
@@ -1986,10 +2120,12 @@ function dpClaim(i){
         // 名片丢失自愈：被动方收到问候必回名片（主动方按周期重发，不回信，避免死循环）
         try{conn.send({type:'hello',name:dpState.name,dev:dpState.dev,color:dpColorId});}catch(e){}
         dpRenderPeers();
+      }else if(msg&&msg.type==='bye'){
+        dpDropPeer(rec,true);
       }
     });
-    conn.on('close',()=>{clearTimeout(giveUp);if(dpPeers[conn.peer]===rec){delete dpPeers[conn.peer];dpRenderPeers();}});
-    conn.on('error',()=>{clearTimeout(giveUp);if(dpPeers[conn.peer]===rec){delete dpPeers[conn.peer];dpRenderPeers();}});
+    conn.on('close',()=>{clearTimeout(giveUp);if(dpPeers[conn.peer]===rec)dpDropPeer(rec);});
+    conn.on('error',()=>{clearTimeout(giveUp);if(dpPeers[conn.peer]===rec)dpDropPeer(rec);});
   });
 }
 /* 主动探测所有比自己席位号小的设备（空席位返回 peer-unavailable，属正常） */
@@ -2012,27 +2148,30 @@ function dpProbeLower(){
     dpPeers[id]=rec;
     const giveUp=setTimeout(()=>{ // 对端可能已离开（尤其 iOS 静默掉线），10 秒未连通则放弃
       delete dpPending[j];
-      if(rec.open)return;
+      if(rec.opened)return;
       try{c.close();}catch(e){}
       if(dpPeers[id]===rec){delete dpPeers[id];dpRenderPeers();}
     },10000);
     c.on('open',()=>{
       clearTimeout(giveUp);delete dpPending[j];
-      rec.opened=true;dpBindDataConn(c,rec);
+      rec.opened=true;rec._seen=Date.now();dpBindDataConn(c,rec);
       try{c.send({type:'hello',name:dpState.name,dev:dpState.dev,color:dpColorId});}catch(e){}
       dpRenderPeers();
     });
     c.on('data',msg=>{
       if(msg&&msg.type==='hello'){
+        rec._seen=Date.now();
         const fresh=!dpKnown[id];
         rec.name=msg.name||rec.name;rec.dev=msg.dev||rec.dev;rec.color=msg.color||rec.color;
         dpLearn(id,rec.name,rec.dev,rec.color);
         if(!rec.greeted){rec.greeted=true;if(fresh)toast(dpT('peerJoined',rec.name));}
         dpRenderPeers();
+      }else if(msg&&msg.type==='bye'){
+        dpDropPeer(rec,true);
       }
     });
-    c.on('close',()=>{clearTimeout(giveUp);delete dpPending[j];if(dpPeers[id]===rec){delete dpPeers[id];dpRenderPeers();}});
-    c.on('error',()=>{clearTimeout(giveUp);delete dpPending[j];if(dpPeers[id]===rec&&!rec.open){delete dpPeers[id];dpRenderPeers();}});
+    c.on('close',()=>{clearTimeout(giveUp);delete dpPending[j];if(dpPeers[id]===rec)dpDropPeer(rec);});
+    c.on('error',()=>{clearTimeout(giveUp);delete dpPending[j];if(dpPeers[id]===rec&&!rec.open)dpDropPeer(rec);});
   }
 }
 /* 探测到空席位：从 peer-unavailable 的错误消息里取席位号，清掉待定标记 */
@@ -2045,24 +2184,62 @@ function dpMarkEmpty(e){
   if(pending){try{pending.close();}catch(_){}} // 顺手关掉这条失败的连接，别留在 PeerJS 内部表里
   if(dpPeers[id]&&!dpPeers[id].conn.open){delete dpPeers[id];dpRenderPeers();}
 }
-/* 定期剔除静默掉线的成员（iOS 切后台不触发 close）；只剔"开过又死了"的连接 */
+/* 把某个成员摘掉（关连接、清成员表、把它名下没传完的记录判失败），
+   bye=true 表示对端主动道别，不额外弹提示 */
+function dpDropPeer(rec,bye){
+  if(!rec||rec.gone)return;
+  const id=rec.peerId||(rec.conn&&rec.conn.peer);
+  rec.gone=true;
+  try{rec.conn&&rec.conn.close();}catch(e){}
+  if(id&&dpPeers[id]===rec)delete dpPeers[id];
+  if(rec.slot!=null&&dpPending[rec.slot])delete dpPending[rec.slot];
+  // 它名下正在传的记录判为失败，别让进度条永远挂在 N%
+  let changed=false;
+  dpEntries.forEach(e=>{
+    if(e.state==='run'&&e._peerId&&e._peerId===id){e.state='fail';e._spd=0;e._eta=null;changed=true;}
+  });
+  if(changed)dpSaveEntries(true);
+  dpRenderPeers();dpRenderFiles();
+}
+/* 主动道别：关页面/离开房间前先广播一条 bye，对端立刻把本机摘掉，
+   不用等 30 秒心跳超时（发不出去也没关系，心跳兜底还在） */
+function dpSayBye(){
+  try{
+    Object.values(dpPeers).forEach(v=>{
+      if(v.conn&&v.conn.open){try{v.conn.send({type:'bye'});}catch(e){}}
+    });
+  }catch(e){}
+}
+/* 定期剔除静默掉线的成员：断了的连接、以及开着但已经很久没消息的
+   （手机直接关页面/被系统冻结时不会有 close，也没有 bye） */
 function dpPrune(){
+  const now=Date.now();
   let changed=false;
   Object.entries(dpPeers).forEach(([id,v])=>{
-    if(!v.conn.open&&v.opened){try{v.conn.close();}catch(e){}delete dpPeers[id];changed=true;}
+    if(v.gone)return;
+    if(!v.conn.open&&v.opened){                                            // 连接已断
+      try{v.conn.close();}catch(e){}
+      dpDropPeer(v);changed=true;return;
+    }
+    // 正在收发文件的连接不按心跳判死（大文件单向传输时对端可能长时间没话说），
+    // 那种情况交给传输自己的看门狗（45 秒无数据块）处理
+    const busy=!!(v.in||v.out);
+    if(v.opened&&v._seen&&!busy&&now-v._seen>DP_BEAT_MS){                           // 心跳静默：当他走了
+      dpDropPeer(v,true);changed=true;
+    }
   });
   if(changed)dpRenderPeers();
   // 接收卡死保护：对端进程被杀 / iOS 被冻结时不会有 ferr，也不会有 close。
   // 超过 45 秒没有收到任何新数据块，就把这条记录判为失败，别让进度条永远停在 N%。
-  const now=Date.now();
   let fChanged=false;
   dpEntries.forEach(e=>{
     if(e.state==='run'&&e.dir==='in'&&e._t&&now-e._t>45000){e.state='fail';e._t=0;fChanged=true;}
   });
   if(fChanged){dpSaveEntries(true);dpRenderFiles();}
 }
-/* 主动离开：断开信令与所有 P2P 连接，其他设备立刻看到本机离开 */
+/* 主动离开：先跟同伴道别（对方立刻看到本机离开），再断开信令与所有 P2P 连接 */
 function dpLeave(){
+  dpSayBye();
   dpCleanup();
   dpState.connected=false;dpState.slot=null;
   dpStatusSet('left');
@@ -2181,12 +2358,18 @@ function dpInit(){
   dpStatusSet('joining',[dpState.room]);
   dpLoadPeer(ok=>{if(ok)dpJoin();else dpStatusSet('libFail',[],'err');});
 }
-/* 关闭页面时主动释放席位，其他设备立即感知 */
-window.addEventListener('beforeunload',()=>{try{dpSaveEntries(true);}catch(e){}try{dpCleanup();}catch(e){}});
-/* iOS/Safari 上 beforeunload 不可靠，pagehide 兜底；但进 bfcache 时不算真卸载，别误清 */
+/* 关闭页面时主动道别，其他设备立即感知本机离开。
+   这里不销毁连接：页面真走的话浏览器会自己拆掉；而 beforeunload 有可能被
+   用户取消（留在页面上），那时若已经自毁，本机会一直显示离线却没人重连。
+   手机端常常来不及跑完这段（尤其被系统直接杀掉），所以对端还有心跳兜底。 */
+window.addEventListener('beforeunload',()=>{
+  try{dpSaveEntries(true);}catch(e){}
+  try{dpSayBye();}catch(e){}
+});
+/* iOS/Safari 上 beforeunload 不可靠，pagehide 兜底；但进 bfcache 时不算真卸载，别道别 */
 window.addEventListener('pagehide',e=>{
   try{dpSaveEntries(true);}catch(e2){}
-  if(!e.persisted){try{dpCleanup();}catch(e2){}}
+  if(!e.persisted){try{dpSayBye();}catch(e2){}}
 });
 /* ── 拖放：拖到设备圆圈上发给它 ── */
 /* 拖到圆圈以外时，不让浏览器直接打开这个文件 */
