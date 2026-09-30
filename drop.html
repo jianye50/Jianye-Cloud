@@ -74,7 +74,7 @@ body{
   background-repeat:no-repeat;
 }
 /* 桌面应用式外壳：顶栏通栏，下面三栏铺满整个窗口宽度 */
-.app{width:100%;max-width:1680px;margin:0 auto;min-height:100dvh;display:flex;flex-direction:column;
+.app{width:100%;max-width:1680px;margin:0 auto;height:100dvh;display:flex;flex-direction:column;
   padding:0 26px calc(18px + env(safe-area-inset-bottom))}
 
 /* ── 顶栏：左标题 / 右工具 ── */
@@ -100,7 +100,7 @@ body{
   letter-spacing:0;box-shadow:0 0 0 2px var(--surface);pointer-events:none}
 
 /* ── 三栏工作区：左房间控制台 / 中设备区 / 右传输记录 ── */
-.layout{flex:1;min-height:0;display:grid;grid-template-columns:300px minmax(0,1fr) 384px;gap:20px;
+.layout{flex:1;min-height:0;display:grid;grid-template-columns:300px minmax(0,1fr) 384px;grid-template-rows:minmax(0,1fr);gap:20px;
   padding:14px 0 4px;align-items:stretch}
 .col{display:flex;flex-direction:column;gap:14px;min-height:0}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:18px;
@@ -251,6 +251,7 @@ html[dir="rtl"] select.sel{padding:10px 12px 10px 34px}
 
 /* ── 中窄屏：传输记录先收成固定高度 ── */
 @media (max-width:1180px){
+  .app{height:auto;min-height:100dvh}   /* 记录移到下方后改为页面滚动，列表本身限高 */
   .layout{grid-template-columns:280px minmax(0,1fr)}
   .side-r{grid-column:1 / -1}
   .files-card{flex:none}
