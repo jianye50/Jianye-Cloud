@@ -73,8 +73,10 @@ body{
   background-image:radial-gradient(90% 55% at 50% 0%,var(--glow),transparent 70%);
   background-repeat:no-repeat;
 }
-/* 桌面应用式外壳：顶栏通栏，下面三栏铺满整个窗口宽度 */
-.app{width:100%;max-width:1680px;margin:0 auto;height:100dvh;display:flex;flex-direction:column;
+/* 桌面应用式外壳：顶栏通栏，下面三栏铺满整个窗口宽度
+   注意：这里不能用 max-width 限制外壳宽度，否则在超宽屏（21:9 / 32:9）上
+   页面会被居中成一条竖带，左右两边留出大片空白。宽度交给 .layout 自适应。 */
+.app{width:100%;height:100dvh;display:flex;flex-direction:column;
   padding:0 26px calc(18px + env(safe-area-inset-bottom))}
 
 /* ── 顶栏：左标题 / 右工具 ── */
@@ -248,6 +250,26 @@ html[dir="rtl"] .panel{right:auto;left:26px}
 html[dir="rtl"] .rinput{text-align:right}
 html[dir="rtl"] .selwrap svg{right:auto;left:12px}
 html[dir="rtl"] select.sel{padding:10px 12px 10px 34px}
+
+/* ── 超宽屏：左右栏按比例加宽、中间设备区适当放大，避免内容被拉成扁平长条 ── */
+@media (min-width:1681px){
+  .layout{grid-template-columns:minmax(300px,360px) minmax(0,1fr) minmax(384px,460px);gap:24px}
+  .peer-wrap{max-width:840px}
+}
+@media (min-width:2200px){
+  .app{padding:0 40px calc(18px + env(safe-area-inset-bottom))}
+  .panel{right:40px}
+  html[dir="rtl"] .panel{left:40px;right:auto}
+  .layout{grid-template-columns:minmax(320px,410px) minmax(0,1fr) minmax(400px,540px);gap:28px}
+  .peer-wrap{max-width:920px}
+  .dp-peers{gap:14px 34px}
+  .radar{width:168px;height:168px}
+  .radar .ring{inset:9.35%}
+  .self{width:112px;height:112px}
+  .self svg{width:52px;height:52px}
+  .dp-avatar{width:88px;height:88px}
+  .dp-avatar svg{width:43px;height:43px}
+}
 
 /* ── 中窄屏：传输记录先收成固定高度 ── */
 @media (max-width:1180px){
