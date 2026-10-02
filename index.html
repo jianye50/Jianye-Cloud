@@ -66,6 +66,33 @@ html[data-theme="light"]{
   --wp-opacity:.16;
   color-scheme:light;
 }
+/* 透明主题：面板不填色，只留磨砂模糊 + 发丝棱边，背景渐变与壁纸直接透出来。
+   文字沿用深色的白字（背景仍是深蓝渐变），保证在各种壁纸下都读得清。 */
+html[data-theme="clear"]{
+  --text-1:#ffffff;
+  --text-2:rgba(234,240,255,.78);
+  --text-3:rgba(224,232,255,.55);
+  --card-bg:transparent;
+  --card-bg-strong:rgba(255,255,255,.04);
+  --card-inner:rgba(255,255,255,.045);
+  --card-inner-soft:rgba(255,255,255,.06);
+  --card-border:rgba(255,255,255,.24);
+  --card-border-hover:rgba(255,255,255,.48);
+  --nav-bg:transparent;
+  --scrim:rgba(4,9,26,.32);
+  --scrim-solid:rgba(9,16,40,.5);
+  --shadow:0 18px 50px rgba(2,6,22,.26);
+  --shadow-hover:0 26px 70px rgba(2,6,22,.38);
+  --scrim-overlay:linear-gradient(rgba(4,10,30,.28),rgba(4,10,30,.34));
+  --blob-1:rgba(76,120,255,.34);
+  --blob-2:rgba(126,84,255,.28);
+  --blob-3:rgba(44,140,255,.22);
+  --accent:#4d8dff;
+  --track:rgba(255,255,255,.16);
+  --chip:rgba(255,255,255,.10);
+  --wp-opacity:.34;
+  color-scheme:dark;
+}
 *{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth}
 body{
@@ -1399,11 +1426,16 @@ html[data-theme="light"] .more-mask{background:rgba(250,252,255,.5);color:var(--
 }
 </style>
 <script>
-/* 液态玻璃开关：必须在首屏渲染前生效，否则会先出现玻璃再突然消失（闪烁）。
-   整层效果就是一个独立的 <style id="liquid-glass">，关闭 = 禁用该样式表，可 100% 回到原版外观。 */
+/* 液态玻璃开关 + 主题：必须在首屏渲染前生效，否则会先出现玻璃 / 深色再突然切换（闪烁）。
+   整层玻璃效果就是一个独立的 <style id="liquid-glass">，关闭 = 禁用该样式表，可 100% 回到原版外观。 */
 (function(){
-  var on=true;
-  try{var s=JSON.parse(localStorage.getItem('jy-settings')||'{}');on=s.glass!=='off';}catch(e){}
+  var s={},on=true;
+  try{s=JSON.parse(localStorage.getItem('jy-settings')||'{}');on=s.glass!=='off';}catch(e){}
+  /* 主题提前落位，避免闪烁。默认「透明」；只有用户在设置里主动选过主题（jy-theme-chosen）才沿用保存值，
+     这样新增的默认主题对老访客同样生效，又不会覆盖用户自己的选择。 */
+  var picked=false;
+  try{picked=localStorage.getItem('jy-theme-chosen')==='1';}catch(e){}
+  document.documentElement.dataset.theme=(picked&&s.theme)?s.theme:'clear';
   if(!on){
     var el=document.getElementById('liquid-glass');
     if(el)el.disabled=true;
@@ -1470,6 +1502,74 @@ html.mo-theme,html.mo-theme *:not(.bg-blob):not(.bg-wp){
              border-color .42s ease,box-shadow .42s ease,fill .42s ease,stroke .42s ease,
              opacity .42s ease,transform .42s ease;
 }
+</style>
+<style id="theme-clear">
+/* ========================= 透明主题（clear） =========================
+   在「外观主题」里与深色 / 浅色并列的第三档：所有组件不再填色，
+   只保留磨砂模糊 + 折射棱边 + 发丝分割线，让背景渐变和壁纸直接透出来。
+   整块独立成表，删除即回滚（该主题会退化成普通深色）。 */
+
+/* 1. 玻璃层令牌：把「内嵌釉光」也调成透明，只留棱边 */
+html[data-theme="clear"]{
+  --lg-chip:rgba(255,255,255,.10);
+  --lg-glare:rgba(255,255,255,.12);
+  --lg-sheen:transparent;
+  --lg-rim:linear-gradient(145deg,
+      rgba(255,255,255,.85) 0%,
+      rgba(255,255,255,.28) 15%,
+      rgba(255,255,255,.06) 36%,
+      rgba(255,255,255,.03) 58%,
+      rgba(255,255,255,.16) 80%,
+      rgba(255,255,255,.66) 100%);
+  --lg-rim-soft:linear-gradient(150deg,
+      rgba(255,255,255,.38) 0%,
+      rgba(255,255,255,.07) 42%,
+      rgba(255,255,255,.18) 100%);
+  --lg-inner:inset 0 1px 0 rgba(255,255,255,.22),
+             inset 0 -24px 38px -28px rgba(255,255,255,.26),
+             inset 0 0 0 .5px rgba(255,255,255,.08);
+  --lg-drop:0 20px 46px rgba(2,6,22,.24), 0 2px 10px rgba(2,6,22,.14);
+  --lg-drop-hi:0 30px 74px rgba(2,6,22,.34), 0 4px 16px rgba(2,6,22,.18);
+  --lg-hair:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.28),rgba(255,255,255,0));
+}
+
+/* 2. 主面板：完全不填色；磨砂模糊照样保留，即使关掉液态玻璃也读得清 */
+html[data-theme="clear"] :is(.nav,.banner,.card,.window,.popover,.launch-panel,.toast){
+  background:transparent;
+  backdrop-filter:blur(30px) saturate(165%);
+  -webkit-backdrop-filter:blur(30px) saturate(165%);
+}
+html[data-theme="clear"] :is(.banner,.card){
+  box-shadow:0 16px 44px rgba(2,6,22,.24),inset 0 1px 0 rgba(255,255,255,.16);
+}
+html[data-theme="clear"] :is(.banner,.card):hover{
+  box-shadow:0 24px 62px rgba(2,6,22,.32),inset 0 1px 0 rgba(255,255,255,.24);
+}
+html[data-theme="clear"] .nav{box-shadow:0 10px 30px rgba(2,6,22,.2),inset 0 1px 0 rgba(255,255,255,.12)}
+html[data-theme="clear"].mo-scrolled .nav{box-shadow:0 14px 34px rgba(2,6,22,.28)}
+
+/* 3. 浮层（加号菜单 / 提示条 / 九宫格面板）：留一丝白，免得文字飘在花背景上不好认 */
+html[data-theme="clear"] :is(.popover,.launch-panel,.toast){
+  background:rgba(255,255,255,.06);
+  backdrop-filter:blur(34px) saturate(170%);
+  -webkit-backdrop-filter:blur(34px) saturate(170%);
+}
+html[data-theme="clear"] .toast{background:rgba(10,18,44,.32);color:#fff}
+
+/* 4. 遮罩与灯箱：整体降透明度 */
+html[data-theme="clear"] .lightbox{background:rgba(3,7,20,.46)}
+html[data-theme="clear"] .lb-btn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.22)}
+html[data-theme="clear"] .lb-btn:hover{background:rgba(255,255,255,.18)}
+html[data-theme="clear"] .lb-count{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2)}
+html[data-theme="clear"] .more-mask{background:rgba(4,9,26,.3)}
+
+/* 5. 控件与列表行：描边更淡，透明底上不再出现「框中框」 */
+html[data-theme="clear"] :is(.chip,.tag,.seg,.dp-file,.hw-cell,.setting-i,.tile-grid-wrap,.cal-panel){
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14),inset 0 0 0 .5px rgba(255,255,255,.06);
+}
+html[data-theme="clear"] :is(.win-hd,.chat-bar){border-color:rgba(255,255,255,.14)}
+html[data-theme="clear"] .win-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,.22)}
+html[data-theme="clear"] .switch:not(.on){background:rgba(255,255,255,.16)}
 </style>
 </head>
 <body data-wp="on" data-motion="on">
@@ -2459,8 +2559,9 @@ const T = {
     </div>
     <div class="setting-i">
       <span class="s-ic" style="background:linear-gradient(145deg,#4cc8ff,#1f6fe0)">${ICONS.about}</span>
-      <div><h5>外观主题</h5><p>深色是 iCloud 夜的质感，浅色是另一种心情</p></div>
+      <div><h5>外观主题</h5><p>组件全部透明（默认），也可切换深色的夜、浅色的白天</p></div>
       <span class="seg">
+        <button data-theme-btn="clear" class="${document.documentElement.dataset.theme==='clear'?'on':''}">透明</button>
         <button data-theme-btn="dark" class="${document.documentElement.dataset.theme==='dark'?'on':''}">深色</button>
         <button data-theme-btn="light" class="${document.documentElement.dataset.theme==='light'?'on':''}">浅色</button>
       </span>
@@ -2861,6 +2962,7 @@ function bindWindow(id){
     };
     $$('[data-theme-btn]').forEach(b=>b.onclick=()=>{
       if(window.JYMO)JYMO.themeGlow();     // 主题切换时整页颜色渐变
+      try{localStorage.setItem('jy-theme-chosen','1');}catch(e){}   // 记为「用户主动选过」，此后沿用该选择
       document.documentElement.dataset.theme=b.dataset.themeBtn;saveSettings();
       $$('[data-theme-btn]').forEach(x=>x.classList.toggle('on',x===b));
     });
@@ -4179,6 +4281,7 @@ let lbIndex=0;
 function openLb(i,fromEl){
   lbIndex=i;
   if(window.JYMO)JYMO.setOrigin(fromEl);      // 记住点的是哪张照片，关闭时飞回去
+  if(window.JYMO)JYMO.beforeLightbox();       // 取消上一次关闭遗留的动画，避免再次打开时被压成透明
   showLb();
   $('#lightbox').classList.add('open');
   if(window.JYMO)JYMO.enterLightbox();
@@ -4329,7 +4432,9 @@ function saveSettings(){
 (function initSettings(){
   let s={};
   try{s=JSON.parse(localStorage.getItem('jy-settings'))||{};}catch(e){}
-  document.documentElement.dataset.theme=s.theme||'dark';
+  let themePicked=false;
+  try{themePicked=localStorage.getItem('jy-theme-chosen')==='1';}catch(e){}
+  document.documentElement.dataset.theme=(themePicked&&s.theme)?s.theme:'clear';   // 默认：透明
   document.body.dataset.wp=s.wp||'on';
   document.body.dataset.motion=s.motion||'on';
   // head 里的脚本已经处理过一次；这里兜底同步，且不写回存储
@@ -4534,6 +4639,15 @@ syncMusicUI();
     lbImg=document.getElementById('lbImg');
     launchBtn=document.getElementById('launchBtn');
   }
+  /* 灯箱的容器 / 大图 / 操作按钮统一回收动画：退场用的是 fill:forwards，
+     不主动取消的话会一直把容器按在 opacity:0 上，导致下次打开「看不到图」 */
+  function cleanupLb(){
+    grab();
+    if(!lb)return;
+    release(lb);release(lbImg);
+    var btns=lb.querySelectorAll('.lb-btn');
+    for(var i=0;i<btns.length;i++)release(btns[i]);
+  }
 
   var themeT=null;
   window.JYMO={
@@ -4597,9 +4711,11 @@ syncMusicUI();
     },
 
     /* ---------- 照片灯箱（飞回被点的那张缩略图） ---------- */
+    beforeLightbox:function(){grab();cleanupLb();},
     enterLightbox:function(){
       grab();
       if(!can())return;
+      cleanupLb();     // 关键：清掉上一轮退场遗留的 fill:forwards 动画，否则再开时容器会卡在 opacity:0
       var from=src||rct(lbImg);
       lbImg._moFrom=from;
       play(lb,[{opacity:0},{opacity:1}],{duration:220,easing:'linear',fill:'backwards'});
