@@ -876,6 +876,92 @@ mark{background:rgba(110,164,255,.32);color:inherit;border-radius:4px;padding:0 
   .card-hardware,.card-drop{grid-column:span 12}
 }
 
+/* 新年倒计时长条小组件（半宽） */
+.card-countdown{grid-column:span 6;min-height:110px;display:flex;align-items:center;padding:0 22px;overflow:hidden;border-radius:var(--radius-lg)}
+.cd-widget{display:flex;align-items:center;gap:18px;width:100%;min-width:0}
+.cd-txt{flex:1;min-width:0}
+.cd-txt h3{font-size:16.5px;font-weight:650;white-space:nowrap}
+.cd-txt p{font-size:12.5px;color:var(--text-3);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cd-clock{flex:none;text-align:right}
+.cd-daysbox{display:flex;align-items:baseline;gap:5px;justify-content:flex-end}
+.cd-daysbox b{font-size:38px;font-weight:280;line-height:1;letter-spacing:-1px;font-variant-numeric:tabular-nums}
+.cd-daysbox span{font-size:13px;color:var(--text-3)}
+.cd-hms{display:block;font-size:12.5px;color:var(--text-2);font-variant-numeric:tabular-nums;letter-spacing:1px;margin-top:6px}
+.cd-bar{position:absolute;left:0;right:0;bottom:0;height:3px;background:var(--track)}
+.cd-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ff9f6a,#ff3b5c);transition:width .6s ease}
+.ic-countdown{background:linear-gradient(160deg,#ff9f6a,#ff3b5c)}
+.ic-countdown svg{color:#fff}
+
+/* 电子木鱼长条小组件（半宽 · 点一下敲一记） */
+.card-muyu{grid-column:span 6;min-height:110px;display:flex;align-items:center;padding:0 22px;overflow:hidden;border-radius:var(--radius-lg)}
+.mu-widget{display:flex;align-items:center;gap:18px;width:100%;min-width:0}
+.mu-txt{flex:1;min-width:0}
+.mu-txt h3{font-size:16.5px;font-weight:650;white-space:nowrap}
+.mu-txt p{font-size:12.5px;color:var(--text-3);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mu-count{text-align:right;min-width:64px}
+.mu-count b{display:block;font-size:30px;font-weight:300;line-height:1.05;letter-spacing:-.5px;font-variant-numeric:tabular-nums}
+.mu-count span{display:block;font-size:11.5px;color:var(--text-3);margin-top:3px}
+.mu-snd.off{opacity:.55}
+.ic-muyu{background:linear-gradient(160deg,#ffc46b,#ff7a2f)}
+.ic-muyu svg{color:#fff}
+#muIcon.knock{animation:muKnock .34s cubic-bezier(.3,1.7,.5,1)}
+@keyframes muKnock{0%{transform:scale(1) rotate(0)}35%{transform:scale(.84) rotate(-7deg)}72%{transform:scale(1.07) rotate(3deg)}100%{transform:scale(1) rotate(0)}}
+.mu-fly{position:absolute;left:24px;top:46px;z-index:3;font-size:12.5px;font-weight:700;color:#ffb64d;
+  opacity:0;pointer-events:none;text-shadow:0 1px 6px rgba(0,0,0,.45)}
+.mu-fly.fly{animation:muFly .95s cubic-bezier(.2,.7,.3,1) forwards}
+@keyframes muFly{0%{opacity:0;transform:translateY(6px) scale(.85)}22%{opacity:1}100%{opacity:0;transform:translateY(-38px) scale(1.1)}}
+/* 木鱼卡上的「敲一记」按钮：不打开窗口，直接敲 */
+.mu-knock{flex:none;display:inline-flex;align-items:center;gap:6px;padding:9px 15px;border-radius:99px;
+  font-size:13px;font-weight:600;color:#fff;background:linear-gradient(145deg,#ffb64d,#ff7a1f);
+  box-shadow:0 4px 14px rgba(255,122,31,.35);font-family:inherit;transition:.2s}
+.mu-knock:hover{transform:translateY(-1px)}
+.mu-knock:active{transform:scale(.96)}
+.mu-knock svg{width:14px;height:14px}
+@media (max-width:820px){.mu-knock span{display:none}.mu-knock{padding:10px 12px}}
+
+/* ===== 倒计时 / 木鱼 详情窗口 ===== */
+.window.cd{max-width:560px}
+.window.mu{max-width:520px}
+.cdw-wrap{display:flex;flex-direction:column;align-items:center;gap:16px;padding:6px 0 2px}
+.cdw-hero{display:flex;align-items:baseline;gap:12px}
+.cdw-hero b{font-size:64px;font-weight:200;letter-spacing:-2px;line-height:1;font-variant-numeric:tabular-nums;
+  background:linear-gradient(145deg,#ffb27a,#ff3b5c);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.cdw-hero div{display:flex;flex-direction:column;gap:2px}
+.cdw-hero span{font-size:13px;color:var(--text-3)}
+.cdw-hero em{font-style:normal;font-size:16.5px;font-weight:650}
+.cdw-clock{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%}
+.cdw-clock > div{background:var(--card-inner);border:1px solid var(--card-border);border-radius:14px;padding:10px 6px;text-align:center}
+.cdw-clock b{display:block;font-size:21px;font-weight:600;font-variant-numeric:tabular-nums}
+.cdw-clock span{display:block;font-size:10.5px;color:var(--text-3);margin-top:3px}
+.cdw-prog{width:100%}
+.cdw-prog-hd{display:flex;justify-content:space-between;gap:10px;font-size:11.5px;color:var(--text-3);margin-bottom:6px}
+.cdw-bar{height:8px;border-radius:99px;background:var(--track);overflow:hidden}
+.cdw-bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#ff9f6a,#ff3b5c);transition:width .6s ease}
+.cdw-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;width:100%}
+.cdw-cell{background:var(--card-inner);border:1px solid var(--card-border);border-radius:14px;padding:12px 6px;text-align:center;min-width:0}
+.cdw-cell b{display:block;font-size:17px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cdw-cell span{display:block;font-size:10.5px;color:var(--text-3);margin-top:3px;white-space:nowrap}
+.cdw-note{font-size:12px;color:var(--text-3);text-align:center;line-height:1.7}
+.muw-wrap{display:flex;flex-direction:column;align-items:center;gap:14px;padding:4px 0 2px}
+.muw-fish{width:100%;display:flex;flex-direction:column;align-items:center;gap:10px;padding:20px 10px;border-radius:20px;
+  background:var(--card-inner);border:1px solid var(--card-border);font-family:inherit;color:var(--text-1);transition:.2s}
+.muw-fish:hover{border-color:var(--card-border-hover);background:var(--card-inner-soft)}
+.muw-fish svg{width:92px;height:92px;color:#ffb64d;filter:drop-shadow(0 8px 16px rgba(255,145,60,.32))}
+.muw-fish.knock svg{animation:muKnock .34s cubic-bezier(.3,1.7,.5,1)}
+.muw-fish-hint{font-size:12px;color:var(--text-3)}
+.muw-total{text-align:center}
+.muw-total b{display:block;font-size:46px;font-weight:250;line-height:1;letter-spacing:-1px;font-variant-numeric:tabular-nums}
+.muw-total.pulse b{animation:muPop .32s ease}
+@keyframes muPop{0%{transform:scale(1)}40%{transform:scale(1.13)}100%{transform:scale(1)}}
+.muw-total span{display:block;font-size:11.5px;color:var(--text-3);margin-top:5px;letter-spacing:.5px}
+.muw-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;width:100%}
+.muw-cell{background:var(--card-inner);border:1px solid var(--card-border);border-radius:14px;padding:12px 8px;text-align:center;min-width:0}
+.muw-cell b{display:block;font-size:16px;font-weight:640;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.muw-cell span{display:block;font-size:10.5px;color:var(--text-3);margin-top:3px}
+.muw-tools{display:flex;gap:10px;width:100%}
+.muw-tools .btn{flex:1}
+.muw-note{font-size:11.5px;color:var(--text-3);text-align:center;line-height:1.75}
+
 /* 文件传送弹窗（fyDrop / Snapdrop 风格） */
 .window.drop{max-width:600px}
 .dp-wrap{display:flex;flex-direction:column;gap:14px;padding:6px 0 2px}
@@ -1069,10 +1155,11 @@ mark{background:rgba(110,164,255,.32);color:inherit;border-radius:4px;padding:0 
   .wrap{padding:calc(var(--nav-h) + 16px) 14px 36px}
   .grid{gap:14px}
   .card-profile,.card-photos,.card-contact,.card-projects,.card-skills,
-  .card-notes,.card-timeline,.card-remind,.card-weather,.card-assistant,.card-speedtest,.card-hardware,.card-drop{grid-column:span 12;min-height:0}
+  .card-notes,.card-timeline,.card-remind,.card-weather,.card-assistant,.card-speedtest,.card-hardware,.card-drop,
+  .card-countdown,.card-muyu{grid-column:span 12;min-height:0}
   /* 手机上长条组件与「智能助手」卡片规格完全一致 */
-  .card-weather,.card-assistant,.card-speedtest,.card-hardware,.card-drop{min-height:88px}
-  .card-speedtest,.card-hardware,.card-drop{padding:0 26px}
+  .card-weather,.card-assistant,.card-speedtest,.card-hardware,.card-drop,.card-countdown,.card-muyu{min-height:88px}
+  .card-speedtest,.card-hardware,.card-drop,.card-countdown,.card-muyu{padding:0 26px}
   .spd-widget,.hdw-widget,.dpw-widget{gap:18px}
   .spd-widget .app-ic,.hdw-widget .app-ic,.dpw-widget .app-ic{width:52px;height:52px;border-radius:15px}
   /* 手机上省/市/区县选择器竖向排列，避免挤压溢出 */
@@ -1790,6 +1877,39 @@ html[data-theme="clear"] .switch:not(.on){background:rgba(255,255,255,.16)}
       </div>
     </article>
 
+    <!-- 新年倒计时长条卡（半宽 · 实时刷新 · 点击展开详情） -->
+    <article class="card card-countdown" data-open="countdown" tabindex="0" aria-label="新年倒计时，点击查看详情">
+      <div class="cd-widget">
+        <span class="app-ic ic-countdown" data-icon="countdown"></span>
+        <div class="cd-txt">
+          <h3>新年倒计时</h3>
+          <p id="cdSub">正在计算…</p>
+        </div>
+        <div class="cd-clock">
+          <div class="cd-daysbox"><b id="cdDays">--</b><span>天</span></div>
+          <em class="cd-hms" id="cdHms">--:--:--</em>
+        </div>
+      </div>
+      <span class="cd-bar"><i id="cdBar"></i></span>
+    </article>
+
+    <!-- 电子木鱼长条卡（半宽 · 点卡片看详情 / 点「敲一记」直接敲） -->
+    <article class="card card-muyu" data-open="muyu" id="muyuCard" tabindex="0" aria-label="电子木鱼，点击查看详情">
+      <span class="mu-fly" id="muFly">+1 功德</span>
+      <div class="mu-widget">
+        <span class="app-ic ic-muyu" data-icon="muyu" id="muIcon"></span>
+        <div class="mu-txt">
+          <h3>电子木鱼</h3>
+          <p id="muSub">共 0 记 · 今日 0 记</p>
+        </div>
+        <div class="mu-count"><b id="muCount">0</b><span>功德</span></div>
+        <button class="mu-knock" id="muKnock" type="button" title="直接敲一记（不打开窗口）">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M6.5 5.5l2.4 2.4M17.5 5.5l-2.4 2.4M4 12h3M17 12h3"/><circle cx="12" cy="14.5" r="5.5"/></svg>
+          <span>敲一记</span>
+        </button>
+      </div>
+    </article>
+
     <article class="card compact" data-open="music" tabindex="0">
       <span class="app-ic tile-ic ic-music" data-icon="music"></span>
       <span class="c-label">音乐</span><span class="c-sub" id="musicSub">我的循环歌单</span>
@@ -1875,6 +1995,8 @@ const ICONS = {
   douyin:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.5 8.5a6 6 0 0 1-3.5-1.13v8.3a5.8 5.8 0 1 1-5.8-5.8c.28 0 .55.02.82.07v3.1a2.7 2.7 0 0 0-.82-.13 2.76 2.76 0 1 0 2.76 2.76V2h3.04a6 6 0 0 0 3.5 5.44z"/></svg>',
   feishu:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.2 7.7L3 21l1.9-5.4A8.5 8.5 0 1 1 21 11.5z"/><path d="M8 10.5h8M8 13.5h5" stroke-linecap="round"/></svg>',
   steam:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-9.9 11.45l5.5 2.27a2.83 2.83 0 0 1 1.66-.51l2.44-3.55V11.3a3.83 3.83 0 1 1 3.83-3.83A3.8 3.8 0 0 1 15.5 11.2h-.43l-3.55 2.44c0 .05.01.11.01.16a2.85 2.85 0 0 1-2.85 2.85c-.28 0-.54-.05-.79-.13l-5.17-2.14A10 10 0 1 0 12 2zM9.33 13.5a1.9 1.9 0 1 1-.37 3.76l1.15.48a1.42 1.42 0 1 0-.78-4.24zm4.3-8.44a2.55 2.55 0 1 1 0 5.1 2.55 2.55 0 0 1 0-5.1zm0 1.2a1.35 1.35 0 1 0 0 2.7 1.35 1.35 0 0 0 0-2.7z"/></svg>',
+  countdown:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 3h11M6.5 21h11M8 3v3.6c0 1.9 1.1 3 4 5.4 2.9-2.4 4-3.5 4-5.4V3"/><path d="M8 21v-3.6c0-1.9 1.1-3 4-5.4 2.9 2.4 4 3.5 4 5.4V21"/></svg>',
+  muyu:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5c4.4-.6 8.3 2.3 8.6 6.1.3 3.5-2.5 6.5-6.5 6.9l-1.1 2.2a.9.9 0 0 1-1.5.1l-1-1.8-1.5-.3C4.6 17.5 2.4 14.8 2.6 11.3 2.8 7.7 6.2 5.2 10.1 5c.3 0 .6 0 .9 0z"/><path d="M8.4 11c2.2-1.1 4.7-1 6.7.2"/><path d="M17.8 2.4 15.9 6.2"/></svg>',
   assistant:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9z"/><path d="M18.7 14.8l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8zM5.3 15.8l.7 1.6 1.6.7-1.6.7-.7 1.6-.7-1.6-1.6-.7 1.6-.7z"/></svg>'
 };
 document.querySelectorAll('[data-icon]').forEach(el=>{
@@ -2660,6 +2782,50 @@ T.media=(list,ic,sub)=>list.map(m=>`
     <span class="stars">${'★'.repeat(m.s)}${'☆'.repeat(5-m.s)}</span>
   </div>`).join('');
 
+/* 倒计时详情窗口内容（数字由 cdTick() 每秒刷新） */
+T.countdown=()=>`
+  <div class="cdw-wrap">
+    <div class="cdw-hero">
+      <b id="cdwDays">--</b>
+      <div><span>天后就是</span><em id="cdwYear">-- 年</em></div>
+    </div>
+    <div class="cdw-clock">
+      <div><b id="cdwH">--</b><span>小时</span></div>
+      <div><b id="cdwM">--</b><span>分钟</span></div>
+      <div><b id="cdwS">--</b><span>秒</span></div>
+    </div>
+    <div class="cdw-prog">
+      <div class="cdw-prog-hd"><span id="cdwFrom">--</span><span id="cdwPct">今年已过 --</span></div>
+      <div class="cdw-bar"><i id="cdwBar"></i></div>
+    </div>
+    <div class="cdw-grid">
+      <div class="cdw-cell"><b id="cdwWeeks">--</b><span>周</span></div>
+      <div class="cdw-cell"><b id="cdwDaysAll">--</b><span>天</span></div>
+      <div class="cdw-cell"><b id="cdwHours">--</b><span>小时</span></div>
+      <div class="cdw-cell"><b id="cdwMins">--</b><span>分钟</span></div>
+    </div>
+    <p class="cdw-note" id="cdwNote">--</p>
+  </div>`;
+
+/* 木鱼详情窗口内容（数字由 MUYU.render() 刷新） */
+T.muyu=()=>`
+  <div class="muw-wrap">
+    <button class="muw-fish" id="muwFish" type="button" aria-label="敲一记木鱼">
+      ${ICONS.muyu}
+      <span class="muw-fish-hint">点一下 · 敲一记</span>
+    </button>
+    <div class="muw-total" id="muwTotalWrap"><b id="muwCount">0</b><span>累计功德</span></div>
+    <div class="muw-grid">
+      <div class="muw-cell"><b id="muwToday">0</b><span>今日功德</span></div>
+      <div class="muw-cell"><b id="muwLevel">初入佛门</b><span>修行境界</span></div>
+    </div>
+    <div class="muw-tools">
+      <button class="btn btn-ghost mu-snd" id="muwSound" type="button">🔊 木鱼音效</button>
+      <button class="btn btn-ghost" id="muwReset" type="button">清零重来</button>
+    </div>
+    <p class="muw-note">木鱼声为内置的木腔共鸣采样，敲击时有细微音高变化。<br>想换成自己的真实录音？把文件放进站点「音效/木鱼.wav」即可自动生效。</p>
+  </div>`;
+
 const META={
   about:['关于我','ic-about','about','鉴业 · 个人档案'],
   photos:['照片','ic-photos','photos','来自「图片」文件夹'],
@@ -2678,7 +2844,9 @@ const META={
   assistant:['智能助手','ic-assistant','assistant','Jianye AI · 随时问我'],
   speedtest:['网络测速','ic-speed','speedtest','Speedtest · 网络质量检测'],
   hardware:['硬件检测','ic-hardware','hardware','CPU · GPU · 屏幕 · 外设体检'],
-  drop:['文件传送','ic-drop','drop','P2P 快传 · 文件不经过服务器']
+  drop:['文件传送','ic-drop','drop','P2P 快传 · 文件不经过服务器'],
+  countdown:['新年倒计时','ic-countdown','countdown','实时倒数 · 目标 '+((new Date()).getFullYear()+1)+' 年 1 月 1 日'],
+  muyu:['电子木鱼','ic-muyu','muyu','敲一敲 · 今日与累计功德']
 };
 
 /* ========================= 天气 =========================
@@ -2856,7 +3024,7 @@ function openApp(id){
   if(window.JYMO)JYMO.beforeApp();          // 取消上一轮未播完的退场动画，避免动画叠加
   currentApp=id;
   const m=META[id];
-  $('#window').className='window'+(id==='photos'?' wide':id==='assistant'?' ai':id==='speedtest'?' speed':id==='hardware'?' hw':id==='drop'?' drop':'');
+  $('#window').className='window'+(id==='photos'?' wide':id==='assistant'?' ai':id==='speedtest'?' speed':id==='hardware'?' hw':id==='drop'?' drop':id==='countdown'?' cd':id==='muyu'?' mu':'');
   $('#window').innerHTML=`
     <div class="win-hd">
       <span class="app-ic ${m[1]}">${ICONS[m[2]]}</span>
@@ -2884,6 +3052,8 @@ function bindWindow(id){
   if(id==='speedtest')stBindWindow();
   if(id==='hardware'){hwRun();const rb=hwEl('hwRe');if(rb)rb.onclick=hwRun;}
   if(id==='drop')dpBindWindow();
+  if(id==='countdown')cdTick();     // 打开时立即刷新窗口内的数字（之后由每秒定时器接管）
+  if(id==='muyu')muyuBindWindow();
   if(id==='contact'){
     $('#copyMail').onclick=copyEmail;
     $$('#window [data-soon]').forEach(b=>b.onclick=()=>toast(b.dataset.soon+' 主页即将开通，先发邮件吧'));
@@ -4435,6 +4605,443 @@ function buildLauncher(){
     </button>`).join('');
 }
 buildLauncher();
+
+/* ============ 新年倒计时（实时显示距离明年 1 月 1 日） ============
+   同一套数字同时驱动卡片和详情窗口：窗口没打开时对应节点不存在，跳过即可 */
+function cdTick(){
+  const now=new Date();
+  const year=now.getFullYear();
+  const target=new Date(year+1,0,1,0,0,0);       // 明年 1 月 1 日 00:00
+  const yStart=new Date(year,0,1);
+  const left=Math.max(0,target-now);
+  const days=Math.floor(left/86400000);
+  const h=Math.floor(left%86400000/3600000);
+  const m=Math.floor(left%3600000/60000);
+  const s=Math.floor(left%60000/1000);
+  const pct=Math.min(100,Math.max(0,(now-yStart)/(target-yStart)*100));
+  const pad=n=>String(n).padStart(2,'0');
+  const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  /* 卡片 */
+  set('cdDays',days);
+  set('cdHms',pad(h)+':'+pad(m)+':'+pad(s));
+  set('cdSub','距离 '+target.getFullYear()+' 年 1 月 1 日 · 今年已过 '+pct.toFixed(1)+'%');
+  const bar=document.getElementById('cdBar'); if(bar)bar.style.width=pct.toFixed(2)+'%';
+  /* 详情窗口 */
+  set('cdwDays',days);
+  set('cdwYear',target.getFullYear()+' 年');
+  set('cdwH',pad(h)); set('cdwM',pad(m)); set('cdwS',pad(s));
+  set('cdwFrom',year+' 年 1 月 1 日');
+  set('cdwPct','今年已过 '+pct.toFixed(1)+'%');
+  set('cdwWeeks',Math.floor(days/7));
+  set('cdwDaysAll',days);
+  set('cdwHours',Math.floor(left/3600000).toLocaleString('zh-CN'));
+  set('cdwMins',Math.floor(left/60000).toLocaleString('zh-CN'));
+  set('cdwNote','今天 '+year+' 年 '+(now.getMonth()+1)+' 月 '+now.getDate()+' 日 · '+
+    ['周日','周一','周二','周三','周四','周五','周六'][now.getDay()]+
+    ' ｜ '+(target.getFullYear())+' 年还有 '+Math.ceil(left/86400000)+' 天');
+  const wbar=document.getElementById('cdwBar'); if(wbar)wbar.style.width=pct.toFixed(2)+'%';
+}
+cdTick();
+setInterval(cdTick,1000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)cdTick();});
+
+/* ============ 电子木鱼（敲一记 · 功德 +1） ============
+   音效取自内置样本：木腔共鸣（基频 762Hz + 四个不谐和泛音）+ 木槌撞击噪声 + 短促早期反射，
+   峰值在约 40ms 内掉到 1/3、-40dB 衰减约 216ms，就是木鱼那声干脆的「笃」。
+   样本以 base64 内嵌，file:// 离线打开也有声音；每次敲击做 ±6% 随机变速，避免机械重复。
+   如果站点里存在「音效/木鱼.wav（或 .mp3 / .m4a）」，会自动改用它 —— 想换成自己的真实录音只需放文件。 */
+const MUYU_WAV_B64 =
+  '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' +
+  '/7L/8f8wAG0AowDRAPQACwEVARIBAgHmAMEAkwBfACcA8P+5/4b/WP8y/xX/A//7/v7+Df8n/0v/d/+q/+L/GwBVAIsAvADkAAEBEgEWAQwB' +
+  '9QDRAKMAbQAxAPT/tv98/0n/H/8B//D+7P72/g3/L/9b/47/xv///zYAawCaAMEA3wDzAPwA+gDtANUAtQCMAF4AKwD3/8L/j/9h/zr/HP8H' +
+  '///+Av8R/yv/UP9+/7P/7P8mAF8AlADCAOcAAAEMAQoB/ADgALoAiwBVABwA4/+r/3n/Tf8r/xP/B/8H/xH/J/9G/23/mv/L////MABhAI0A' +
+  'sgDQAOQA7wDvAOQAzwCxAIoAXQAqAPb/wP+N/1//OP8a/wf/Af8H/xr/OP9g/5D/xv///zYAbACbAMMA4QDzAPkA9ADiAMYAoQB1AEQAEQDe' +
+  '/63/gf9b/zz/J/8c/xv/I/82/1H/dP+d/8r/+v8qAFoAhgCsAMsA4QDsAOwA4QDLAKsAggBTAB8A6v+1/4T/WP81/xz/Dv8N/xf/Lf9O/3b/' +
+  'pv/Z/wwAPwBvAJgAuQDRAN8A4wDcAMsAsgCRAGoAPgAQAOP/tv+M/2j/Sf8z/yb/I/8q/zr/VP92/5//zf/9/y4AXgCJAK8AzADgAOkA5gDY' +
+  'AL8AnABxAEEADgDb/6r/ff9X/zr/J/8f/yH/Lv9F/2T/iv+1/+P/EAA9AGcAjACqAMAAzgDSAM0AwACpAIsAZwA+ABIA5v+6/5D/a/9N/zb/' +
+  'Kf8m/y7/P/9a/37/qf/Y/wgAOQBnAJAAsgDLANoA3QDWAMUAqgCHAF0AMAABANT/qP+B/2H/SP84/zL/Nf9B/1b/cv+U/7v/5P8NADcAXgCC' +
+  'AJ8AtgDFAMsAyAC7AKYAiQBkADsADgDi/7X/i/9n/0v/N/8s/y3/OP9M/2r/j/+5/+f/FQBDAGwAkACtAMEAywDMAMIAsACWAHUAUAAnAP7/' +
+  '1f+u/4v/bv9X/0j/Qf9C/0z/Xv93/5b/u//j/wwANQBdAIAAngC1AMMAyADDALUAngB/AFoAMAADANf/rP+F/2X/TP88/zf/O/9I/1//ff+h' +
+  '/8n/8/8cAEUAaQCIAKAAsQC6ALoAsgChAIoAbQBLACYAAADZ/7T/kv91/17/Tv9H/0f/UP9i/3v/mv+//+j/EQA6AGIAhACgALUAwADCALoA' +
+  'qQCQAHAASgAhAPj/zv+o/4b/av9W/0r/R/9N/1v/cP+M/63/0f/3/xwAQABhAH4AlQClAK4ArwCpAJoAhQBqAEoAJgAAANr/tf+T/3b/X/9Q' +
+  '/0n/S/9W/2n/hP+l/8v/8/8bAEMAZwCGAJ4ArgC2ALUAqwCYAH8AXwA8ABYA8f/M/6r/jP90/2P/Wf9W/1z/aP97/5T/sf/S//X/GAA7AFwA' +
+  'eACPAKAAqQCrAKUAlwCBAGUARAAgAPr/1P+w/4//dP9f/1P/T/9U/2H/d/+T/7T/2P///yQARwBnAIIAlgCiAKcApACaAIkAcQBVADUAEwDy' +
+  '/9D/sf+V/37/bf9j/1//Y/9u/3//l/+z/9T/9/8ZADwAXAB4AI8AnwCnAKcAnwCOAHcAWgA4ABQA8f/N/63/kf97/2z/ZP9k/2v/ev+O/6f/' +
+  'xf/k/wMAIgA/AFkAbQB9AIcAigCIAH8AcQBeAEcALQARAPX/2v+//6j/lf+H/37/fP+A/4r/mf+u/8b/4f/+/xkANQBNAGIAcQB7AH4AfABz' +
+  'AGUAUgA7ACIACADv/9b/wP+t/5//lv+R/5L/mP+j/7H/w//X/+3/AgAYACwAPgBNAFkAYABkAGIAXABSAEQAMwAgAAsA9//i/8//vv+x/6f/' +
+  'ov+h/6X/rv+6/8r/3P/w/wMAFwApADkARgBPAFQAVQBSAEsAQAAzACQAFAADAPP/4//W/8r/wf+7/7j/uf+8/8P/zP/Y/+X/8/8BAA8AHQAp' +
+  'ADMAOwBAAEIAQAA8ADUAKwAfABIABAD3/+r/3v/U/8z/x//F/8b/yv/Q/9j/4v/u//n/BAAPABkAIgApAC0ALwAwAC0AKQAjABwAFAALAAEA' +
+  '+f/x/+n/4//e/9r/2f/Z/9v/3//k/+v/8v/6/wEACQAQABYAGwAfACEAIQAgAB0AGQATAA0ABwAAAPv/9f/w/+z/6f/o/+f/6P/q/+3/8f/1' +
+  '//r//v8CAAYACQAMAA4AEAAQABAADwAOAAsACQAGAAMAAAD+//z/+v/4//f/9//3//f/+P/5//v//P/+/wAAAAABAAIAAwADAAMAAgACAAEA' +
+  'AQAAAAAAAAA=';
+
+const MUYU_SFX_SRC=['音效/木鱼.wav','音效/木鱼.mp3','音效/muyu.wav','音效/木鱼.m4a'];
+
+const MUYU=(function(){
+  const K_CNT='jianye_muyu_count', K_SND='jianye_muyu_sound', K_DAY='jianye_muyu_day';
+  const LEVELS=[[0,'初入佛门'],[10,'心诚则灵'],[50,'渐入佳境'],[120,'六根清净'],[300,'心如止水'],[800,'得道高僧'],[2000,'功德无量']];
+  const todayKey=()=>{const d=new Date();
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
+  let total=0, soundOn=true, day={d:todayKey(),n:0};
+  try{
+    total=Math.max(0,parseInt(localStorage.getItem(K_CNT)||'0',10)||0);
+    soundOn=localStorage.getItem(K_SND)!=='0';
+    const j=JSON.parse(localStorage.getItem(K_DAY)||'null');
+    if(j&&j.d)day={d:j.d,n:Math.max(0,parseInt(j.n,10)||0)};
+  }catch(e){}
+  if(day.d!==todayKey())day={d:todayKey(),n:0};      // 跨天自动重新计「今日」
+
+  /* ---------- 音频 ---------- */
+  function b64Ab(b64){
+    const s=atob(b64), n=s.length, u=new Uint8Array(n);
+    for(let i=0;i<n;i++)u[i]=s.charCodeAt(i);
+    return u.buffer;
+  }
+  /* 内嵌 WAV 在页面加载时就【同步】解析成 PCM。
+     这是「第一记声音不一样」的根因修复：以前第一记敲下去样本还没 decodeAudioData 完，
+     只能临时退化成合成音顶上，从第二记起才是样本声。现在改成自己解析 WAV 头，
+     第一记就能直接建 Buffer 发声，与后面每一记完全同声。 */
+  const PCM=(function(){
+    try{
+      const dv=new DataView(b64Ab(MUYU_WAV_B64.replace(/\s+/g,'')));
+      const tag=o=>String.fromCharCode(dv.getUint8(o),dv.getUint8(o+1),dv.getUint8(o+2),dv.getUint8(o+3));
+      if(tag(0)!=='RIFF'||tag(8)!=='WAVE')return null;
+      let p=12,fmt=null,off=0,len=0;
+      while(p+8<=dv.byteLength){
+        const id=tag(p), sz=dv.getUint32(p+4,true);
+        if(id==='fmt ')fmt={ch:dv.getUint16(p+10,true),sr:dv.getUint32(p+12,true),bps:dv.getUint16(p+22,true)};
+        else if(id==='data'){off=p+8;len=Math.min(sz,dv.byteLength-off);}
+        p+=8+sz+(sz&1);
+      }
+      if(!fmt||!off||fmt.bps!==16||!len)return null;
+      const n=len>>1,f=new Float32Array(n);
+      for(let i=0;i<n;i++)f[i]=dv.getInt16(off+(i<<1),true)/32768;
+      return {sr:fmt.sr,ch:fmt.ch,pcm:f};
+    }catch(e){return null;}
+  })();
+
+  let ac=null, pcmBuf=null, buf=null, bufBusy=false, customSrc='', probing=false, unlocked=false;
+  function acGet(){
+    const AC=window.AudioContext||window.webkitAudioContext;
+    if(!AC)return null;
+    if(!ac){try{ac=new AC();}catch(e){return null;}}
+    if(ac.state==='suspended'){try{ac.resume();}catch(e){}}
+    return ac;
+  }
+  /* 页面里第一次用户手势就把音频上下文唤醒，避免第一记敲击落在 suspended 状态上（会又轻又慢） */
+  function unlock(){
+    if(unlocked)return; unlocked=true;
+    const c=acGet(); if(!c)return;
+    try{
+      const b=c.createBufferSource();
+      b.buffer=c.createBuffer(1,1,PCM?PCM.sr:44100);
+      b.connect(c.destination); b.start(0);
+    }catch(e){}
+  }
+  function bufGet(){
+    if(pcmBuf)return pcmBuf;
+    const c=acGet(); if(!c||!c.createBuffer)return buf;
+    if(PCM){
+      try{
+        const B=c.createBuffer(1,PCM.pcm.length,PCM.sr);
+        if(B.copyToChannel)B.copyToChannel(PCM.pcm,0); else B.getChannelData(0).set(PCM.pcm);
+        pcmBuf=B;
+      }catch(e){pcmBuf=null;}
+    }
+    return pcmBuf||buf;           // 万一同步建 Buffer 失败，再退回异步解码的结果
+  }
+  function loadBuf(){             // 兜底解码（正常情况下走不到这里）
+    if(buf||bufBusy)return;
+    const c=acGet(); if(!c||!c.decodeAudioData)return;
+    bufBusy=true;
+    try{
+      const raw=b64Ab(MUYU_WAV_B64.replace(/\s+/g,''));
+      const done=d=>{buf=d;bufBusy=false;};
+      const p=c.decodeAudioData(raw,done,()=>{bufBusy=false;});
+      if(p&&p.then)p.then(done).catch(()=>{bufBusy=false;});   // 新版 Promise 接口
+    }catch(e){bufBusy=false;}
+  }
+  /* 探测站点里有没有用户自己的录音。改成页面加载就开始探，探好就固定用它，
+     不再出现「第一记用旧的、第二记才换新的」这种中途换音源 */
+  function probeCustom(){
+    if(probing)return; probing=true;
+    const list=MUYU_SFX_SRC.slice();
+    (function next(){
+      if(!list.length)return;
+      const a=new Audio();
+      let settled=false;
+      const done=ok=>{
+        if(settled)return; settled=true;
+        if(ok)customSrc=a.src; else next();
+      };
+      a.addEventListener('canplaythrough',()=>done(true),{once:true});
+      a.addEventListener('error',()=>done(false),{once:true});
+      setTimeout(()=>done(false),2500);
+      a.preload='auto';
+      a.src=encodeURI(list.shift());
+    })();
+  }
+  const RATE=()=>0.95+Math.random()*0.10;   // 轻微变速＝手敲的天然差异
+  function playBuf(){
+    const c=acGet(); const B=bufGet(); if(!c||!B)return false;
+    try{
+      const s=c.createBufferSource(), g=c.createGain();
+      s.buffer=B;
+      s.playbackRate.value=RATE();
+      g.gain.value=0.9;
+      s.connect(g); g.connect(c.destination);
+      s.start();
+      return true;
+    }catch(e){return false;}
+  }
+  function playSynth(){          // 兜底：样本还没解码完 / 环境不支持时，用最简合成顶上
+    const c=acGet(); if(!c)return;
+    try{
+      const t=c.currentTime;
+      const o=c.createOscillator(), o2=c.createOscillator(), g=c.createGain(), f=c.createBiquadFilter();
+      o.type='sine';     o.frequency.setValueAtTime(762,t); o.frequency.exponentialRampToValueAtTime(700,t+.03);
+      o2.type='triangle';o2.frequency.setValueAtTime(1204,t);o2.frequency.exponentialRampToValueAtTime(1120,t+.03);
+      f.type='lowpass'; f.frequency.value=4200;
+      g.gain.setValueAtTime(.0001,t);
+      g.gain.exponentialRampToValueAtTime(.30,t+.004);
+      g.gain.exponentialRampToValueAtTime(.0001,t+.19);
+      o.connect(f); o2.connect(f); f.connect(g); g.connect(c.destination);
+      o.start(t); o2.start(t); o.stop(t+.20); o2.stop(t+.20);
+    }catch(e){}
+  }
+  function play(){
+    if(!soundOn)return;
+    unlock();
+    if(customSrc){                       // 站点里有用户自己的录音 → 全程都用它
+      try{
+        const a=new Audio(customSrc);
+        a.playbackRate=RATE();
+        a.volume=0.9;
+        const r=a.play();
+        if(r&&r.catch)r.catch(()=>{if(!playBuf())playSynth();});
+        return;
+      }catch(e){}
+    }
+    if(playBuf())return;                 // 正常路径：内嵌样本，第一记就用它
+    loadBuf();
+    if(!playBuf())playSynth();           // 真·不支持时才用合成音兜底
+  }
+
+  /* ---------- 界面 ---------- */
+  function level(){
+    let name=LEVELS[0][1];
+    LEVELS.forEach(l=>{if(total>=l[0])name=l[1];});
+    return name;
+  }
+  function render(){
+    const fmt=n=>n.toLocaleString('zh-CN');
+    const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+    set('muCount',fmt(total));
+    set('muSub','共 '+fmt(total)+' 记 · 今日 '+fmt(day.n)+' 记');
+    set('muwCount',fmt(total));
+    set('muwToday',fmt(day.n));
+    set('muwLevel',level());
+    document.querySelectorAll('.mu-snd').forEach(b=>{
+      b.textContent=soundOn?'🔊 木鱼音效':'🔇 音效已关';
+      b.classList.toggle('off',!soundOn);
+    });
+  }
+  function animate(){
+    ['muIcon','muwFish'].forEach(id=>{
+      const el=document.getElementById(id); if(!el)return;
+      el.classList.remove('knock'); void el.offsetWidth; el.classList.add('knock');
+    });
+    const w=document.getElementById('muwTotalWrap');
+    if(w){w.classList.remove('pulse');void w.offsetWidth;w.classList.add('pulse');}
+    const fl=document.getElementById('muFly');
+    if(fl&&!fl.closest('#window')){fl.classList.remove('fly');void fl.offsetWidth;fl.classList.add('fly');}
+  }
+  function save(){
+    try{
+      localStorage.setItem(K_CNT,String(total));
+      localStorage.setItem(K_SND,soundOn?'1':'0');
+      localStorage.setItem(K_DAY,JSON.stringify(day));
+    }catch(e){}
+  }
+  function knock(n){
+    n=n||1;
+    if(day.d!==todayKey())day={d:todayKey(),n:0};
+    total+=n; day.n+=n;
+    save(); play(); render(); animate();
+  }
+  return {
+    knock:knock,
+    render:render,
+    total:()=>total,
+    init(){
+      render();
+      probeCustom();              // 页面加载就把音源探好，避免中途换音源
+      const once=()=>{
+        unlock();
+        document.removeEventListener('pointerdown',once,true);
+        document.removeEventListener('keydown',once,true);
+        document.removeEventListener('touchstart',once,true);
+      };
+      document.addEventListener('pointerdown',once,true);
+      document.addEventListener('keydown',once,true);
+      document.addEventListener('touchstart',once,true);
+    },
+    toggleSound(){
+      soundOn=!soundOn; save(); render();
+      if(soundOn){if(!buf)loadBuf();play();}
+      return soundOn;
+    },
+    reset(){
+      if(!total&&!day.n)return false;
+      total=0; day={d:todayKey(),n:0};
+      save(); render();
+      return true;
+    }
+  };
+})();
+
+/* 木鱼详情窗口的绑定：这里可以连续敲 */
+function muyuBindWindow(){
+  const fish=$('#muwFish'); if(!fish)return;
+  fish.onclick=()=>MUYU.knock();
+  const snd=$('#muwSound');
+  if(snd)snd.onclick=()=>toast(MUYU.toggleSound()?'木鱼音效已开启':'木鱼音效已关闭');
+  const rst=$('#muwReset');
+  if(rst)rst.onclick=()=>{
+    if(!MUYU.total()){toast('还没有攒下功德');return;}
+    if(!confirm('功德要清零重新开始吗？'))return;
+    MUYU.reset(); toast('功德已清零，重新开始修行');
+  };
+  MUYU.render();
+}
+
+/* 卡片上的「敲一记」按钮：只敲木鱼，不打开详情窗口 */
+(function(){
+  const pill=$('#muKnock'); if(!pill)return;
+  pill.addEventListener('click',e=>{e.stopPropagation();MUYU.knock();});
+  MUYU.init();
+})();
+
 function openLauncher(){
   if(window.JYMO)JYMO.beforeLauncher();
   $('#launcher').classList.add('open');
