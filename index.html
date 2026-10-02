@@ -1090,6 +1090,387 @@ mark{background:rgba(110,164,255,.32);color:inherit;border-radius:4px;padding:0 
   *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
 }
 </style>
+
+<!-- ============================================================
+     Liquid Glass 液态玻璃视觉层
+     · 只覆盖「外观」：模糊 / 折射感 / 高光 / 圆角 / 阴影 / 背景
+     · 不改变任何 DOM 结构、布局尺寸与交互逻辑
+     · 需要回滚时，整段删除本 <style> 与文末 lg 脚本即可
+     ============================================================ -->
+<style id="liquid-glass">
+/* ---------- 1. 玻璃设计令牌 ---------- */
+:root{
+  /* 先给一套深色默认值，避免主题脚本执行前出现透明闪屏 */
+  --card-bg:rgba(40,56,108,.40);
+  --card-bg-strong:rgba(24,38,80,.54);
+  --card-inner:rgba(8,16,42,.40);
+  --card-inner-soft:rgba(255,255,255,.08);
+  --card-border:rgba(255,255,255,.16);
+  --card-border-hover:rgba(255,255,255,.42);
+  --nav-bg:rgba(18,30,66,.34);
+  --chip:rgba(255,255,255,.12);
+  --track:rgba(255,255,255,.16);
+  --scrim:rgba(4,9,26,.46);
+
+  --lg-blur:22px;
+  --lg-blur-strong:34px;
+  --lg-sat:200%;
+  --lg-bright:1.04;
+  --lg-x:50%;
+  --lg-y:-30%;
+  --lg-chip:rgba(255,255,255,.09);
+  --lg-glare:rgba(255,255,255,.17);
+  --lg-sheen:rgba(255,255,255,.07);
+  --lg-rim:linear-gradient(145deg,
+      rgba(255,255,255,.80) 0%,
+      rgba(255,255,255,.26) 15%,
+      rgba(255,255,255,.05) 36%,
+      rgba(255,255,255,.02) 58%,
+      rgba(255,255,255,.14) 80%,
+      rgba(255,255,255,.62) 100%);
+  --lg-rim-soft:linear-gradient(150deg,
+      rgba(255,255,255,.34) 0%,
+      rgba(255,255,255,.06) 42%,
+      rgba(255,255,255,.16) 100%);
+  --lg-inner:inset 0 1px 0 rgba(255,255,255,.22),
+             inset 0 -24px 38px -28px rgba(255,255,255,.36),
+             inset 0 0 0 .5px rgba(255,255,255,.07);
+  --lg-drop:0 20px 46px rgba(2,6,22,.40), 0 2px 10px rgba(2,6,22,.26);
+  --lg-drop-hi:0 30px 74px rgba(2,6,22,.52), 0 4px 16px rgba(2,6,22,.32);
+  --lg-hair:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.22),rgba(255,255,255,0));
+}
+html[data-theme="dark"]{
+  --card-bg:rgba(40,56,108,.40);
+  --card-bg-strong:rgba(24,38,80,.54);
+  --card-inner:rgba(8,16,42,.40);
+  --card-inner-soft:rgba(255,255,255,.08);
+  --card-border:rgba(255,255,255,.16);
+  --card-border-hover:rgba(255,255,255,.42);
+  --nav-bg:rgba(18,30,66,.34);
+  --chip:rgba(255,255,255,.12);
+  --track:rgba(255,255,255,.16);
+  --scrim:rgba(4,9,26,.46);
+  --lg-chip:rgba(255,255,255,.09);
+  --lg-glare:rgba(255,255,255,.17);
+  --lg-sheen:rgba(255,255,255,.07);
+  --lg-rim:linear-gradient(145deg,
+      rgba(255,255,255,.80) 0%,
+      rgba(255,255,255,.26) 15%,
+      rgba(255,255,255,.05) 36%,
+      rgba(255,255,255,.02) 58%,
+      rgba(255,255,255,.14) 80%,
+      rgba(255,255,255,.62) 100%);
+  --lg-rim-soft:linear-gradient(150deg,
+      rgba(255,255,255,.34) 0%,
+      rgba(255,255,255,.06) 42%,
+      rgba(255,255,255,.16) 100%);
+  --lg-inner:inset 0 1px 0 rgba(255,255,255,.22),
+             inset 0 -24px 38px -28px rgba(255,255,255,.36),
+             inset 0 0 0 .5px rgba(255,255,255,.07);
+  --lg-drop:0 20px 46px rgba(2,6,22,.40), 0 2px 10px rgba(2,6,22,.26);
+  --lg-drop-hi:0 30px 74px rgba(2,6,22,.52), 0 4px 16px rgba(2,6,22,.32);
+  --lg-hair:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.22),rgba(255,255,255,0));
+  --shadow:0 20px 46px rgba(2,6,22,.40), 0 2px 10px rgba(2,6,22,.26);
+  --shadow-hover:0 30px 74px rgba(2,6,22,.52), 0 4px 16px rgba(2,6,22,.32);
+}
+html[data-theme="light"]{
+  --card-bg:rgba(255,255,255,.44);
+  --card-bg-strong:rgba(255,255,255,.64);
+  --card-inner:rgba(255,255,255,.52);
+  --card-inner-soft:rgba(255,255,255,.58);
+  --card-border:rgba(255,255,255,.92);
+  --card-border-hover:#ffffff;
+  --nav-bg:rgba(246,250,255,.42);
+  --chip:rgba(255,255,255,.55);
+  --lg-chip:rgba(255,255,255,.58);
+  --lg-glare:rgba(255,255,255,.9);
+  --lg-sheen:rgba(255,255,255,.42);
+  --lg-rim:linear-gradient(145deg,
+      rgba(255,255,255,1) 0%,
+      rgba(255,255,255,.72) 16%,
+      rgba(255,255,255,.38) 38%,
+      rgba(255,255,255,.42) 60%,
+      rgba(255,255,255,.78) 82%,
+      rgba(255,255,255,1) 100%);
+  --lg-rim-soft:linear-gradient(150deg,
+      rgba(255,255,255,.95) 0%,
+      rgba(255,255,255,.4) 45%,
+      rgba(255,255,255,.7) 100%);
+  --lg-inner:inset 0 1px 0 rgba(255,255,255,.95),
+             inset 0 -24px 38px -28px rgba(255,255,255,.9),
+             inset 0 0 0 .5px rgba(255,255,255,.6);
+  --lg-drop:0 20px 46px rgba(40,60,120,.16), 0 2px 10px rgba(40,60,120,.10);
+  --lg-drop-hi:0 30px 74px rgba(40,60,120,.24), 0 4px 16px rgba(40,60,120,.14);
+  --lg-hair:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.95),rgba(255,255,255,0));
+  --shadow:0 20px 46px rgba(40,60,120,.16), 0 2px 10px rgba(40,60,120,.10);
+  --shadow-hover:0 30px 74px rgba(40,60,120,.24), 0 4px 16px rgba(40,60,120,.14);
+}
+
+/* ---------- 2. 背景：极光 + 缓慢流动 + 玻璃颗粒 ---------- */
+.bg-gradient{filter:saturate(112%)}
+.bg-blob{filter:blur(104px)}
+.bg-blob.b1{animation:lgDrift1 26s ease-in-out infinite alternate}
+.bg-blob.b2{animation:lgDrift2 34s ease-in-out infinite alternate}
+.bg-blob.b3{animation:lgDrift3 30s ease-in-out infinite alternate}
+@keyframes lgDrift1{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(6vw,4vh,0) scale(1.14)}}
+@keyframes lgDrift2{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(-7vw,6vh,0) scale(1.10)}}
+@keyframes lgDrift3{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(4vw,-6vh,0) scale(1.16)}}
+.bg::after{
+  content:"";position:absolute;inset:-25%;
+  background:conic-gradient(from 200deg at 34% 42%,
+    rgba(110,170,255,.16),rgba(170,130,255,.13),rgba(90,220,255,.10),
+    rgba(140,160,255,.14),rgba(110,170,255,.16));
+  filter:blur(72px);
+  animation:lgAurora 38s ease-in-out infinite alternate;
+  pointer-events:none;
+}
+html[data-theme="light"] .bg::after{
+  background:conic-gradient(from 200deg at 34% 42%,
+    rgba(150,190,255,.30),rgba(195,170,255,.24),rgba(150,220,255,.22),
+    rgba(170,190,255,.26),rgba(150,190,255,.30));
+}
+@keyframes lgAurora{from{transform:translate3d(-3%,-2%,0) scale(1)}to{transform:translate3d(3%,2%,0) scale(1.08)}}
+/* 玻璃颗粒：叠在壁纸之上、所有内容之下，会被玻璃的 backdrop-filter 一并折射 */
+.bg-wp::after{
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='4' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='160' height='160' filter='url(%23n)' opacity='0.055'/></svg>"),var(--scrim-overlay);
+  background-size:160px 160px,cover;
+  background-repeat:repeat,no-repeat;
+  background-position:0 0,center;
+}
+body[data-motion="off"] .bg-blob,body[data-motion="off"] .bg::after{animation:none!important}
+
+/* ---------- 3. 主玻璃面板：液态边缘 + 指针高光 ---------- */
+/* 注意：这里不能改 position —— .nav/.popover/.toast 原本就是 fixed，
+   覆盖成 relative 会让弹出菜单掉回文档流（出现在左上角） */
+:is(.nav,.banner,.card,.window,.popover,.launch-panel,.toast){
+  backdrop-filter:blur(var(--lg-blur-strong)) saturate(var(--lg-sat)) brightness(var(--lg-bright));
+  -webkit-backdrop-filter:blur(var(--lg-blur-strong)) saturate(var(--lg-sat)) brightness(var(--lg-bright));
+  box-shadow:var(--lg-drop),var(--lg-inner);
+  transition:box-shadow .45s cubic-bezier(.2,.7,.2,1),
+             transform .45s cubic-bezier(.2,.7,.2,1),
+             border-color .35s ease,
+             opacity .5s ease;
+}
+/* 只有原本就是 static 的窗口类面板才需要建立定位上下文，供伪元素定位 */
+:is(.window,.launch-panel){position:relative}
+/* 顶栏是固定条，阴影单独收紧 */
+.nav{box-shadow:0 10px 32px rgba(2,6,22,.34),var(--lg-inner)}
+html[data-theme="light"] .nav{box-shadow:0 10px 32px rgba(40,60,120,.14),var(--lg-inner)}
+.nav{border-bottom-color:transparent;
+  background-image:var(--lg-hair);background-size:100% 1px;
+  background-position:0 100%;background-repeat:no-repeat}
+/* 1px 环状「折射棱边」：只在这圈棱边上做高光渐变 */
+:is(.nav,.banner,.card,.window,.popover,.launch-panel,.toast)::before{
+  content:"";position:absolute;inset:0;box-sizing:border-box;
+  border-radius:inherit;padding:1.2px;
+  background:var(--lg-rim);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;
+  mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  mask-composite:exclude;
+  pointer-events:none;z-index:5;
+  transition:filter .35s ease,opacity .35s ease;
+}
+/* 内层镜面：z-index:-1 ⇒ 压在内容之下、面板背景之上，文字对比度不受影响 */
+:is(.nav,.banner,.card,.window,.popover,.launch-panel,.toast)::after{
+  content:"";position:absolute;inset:0;
+  border-radius:inherit;pointer-events:none;z-index:-1;
+  background:
+    radial-gradient(380px 380px at var(--lg-x) var(--lg-y),var(--lg-glare),transparent 62%),
+    linear-gradient(158deg,var(--lg-sheen),transparent 46%);
+  opacity:.55;
+  transition:opacity .45s ease;
+}
+html[data-theme="dark"] :is(.banner,.card,.window,.popover,.launch-panel,.toast)::after{mix-blend-mode:screen}
+:is(.nav,.banner,.card,.window,.popover,.launch-panel,.toast).lg-lit::after{opacity:1}
+:is(.nav,.banner,.card,.window,.popover,.launch-panel,.toast).lg-lit::before{filter:brightness(1.3) saturate(1.1)}
+.card:hover,.banner:hover{
+  transform:translateY(-5px) scale(1.006);
+  border-color:var(--card-border-hover);
+  box-shadow:var(--lg-drop-hi),var(--lg-inner);
+}
+.card:hover::before,.banner:hover::before{filter:brightness(1.45) saturate(1.15)}
+.banner:hover{transform:translateY(-3px) scale(1.004)}
+.card:active{transform:translateY(-2px) scale(.997)}
+
+/* ---------- 4. 内嵌玻璃块：轻折射 + 顶部聚光 ---------- */
+/* 注意：.chat-msgs/.chat-hello/.chat-bar/.dp-files 等原本无背景的「纯容器」不参与，
+   否则 AI 对话、文件传送弹窗里会显出一块明显的方框 */
+:is(.dark-body,.note-preview,.tl-mini,.todo-mini,.tile-grid-wrap,.about-stat,
+    .hw-cell,.hw-per,.photos-empty,.cal-panel,.setting-i,.seg){
+  position:relative;
+  background-image:linear-gradient(158deg,var(--lg-sheen),transparent 58%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14),
+             inset 0 -1px 0 rgba(255,255,255,.04),
+             inset 0 0 0 .5px rgba(255,255,255,.05);
+}
+html[data-theme="light"] :is(.dark-body,.note-preview,.tl-mini,.todo-mini,.tile-grid-wrap,
+    .about-stat,.hw-cell,.hw-per,.photos-empty,.cal-panel,.setting-i,.seg){
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 0 0 0 .5px rgba(255,255,255,.65);
+}
+
+/* ---------- 5. 玻璃控件与图标：加一层镜面釉 ---------- */
+:is(.icon-btn,.win-close,.lb-btn,.banner-arrow){
+  background:var(--lg-chip);
+  backdrop-filter:blur(14px) saturate(170%);
+  -webkit-backdrop-filter:blur(14px) saturate(170%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.24),0 2px 10px rgba(2,6,22,.18);
+}
+html[data-theme="light"] :is(.icon-btn,.win-close,.lb-btn,.banner-arrow){
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 2px 10px rgba(40,60,120,.14);
+}
+/* 注意：.mini-play 原本就是 position:absolute（钉在卡片右下角），不能改成 relative */
+.brand-mark,.nav-avatar,.app-ic,.prof-ring,.seg button.on,
+.btn-primary,.switch.on{position:relative}
+.brand-mark::before,.nav-avatar::before,.app-ic::before,.mini-play::before,
+.prof-ring::before,.seg button.on::before,.btn-primary::before,.switch.on::before{
+  content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(180deg,rgba(255,255,255,.46),rgba(255,255,255,.12) 44%,rgba(255,255,255,0) 64%);
+}
+/* 小圆播放键本身是高饱和色块，釉面调淡一点，避免盖住播放图标 */
+.mini-play::before{background:linear-gradient(180deg,rgba(255,255,255,.30),rgba(255,255,255,0) 58%)}
+.brand-mark::before{background:linear-gradient(180deg,rgba(255,255,255,.5),rgba(255,255,255,.1) 52%,transparent 70%)}
+.nav-avatar{position:relative}
+.nav-avatar::before{background:linear-gradient(180deg,rgba(255,255,255,.4),transparent 55%);
+  border-radius:50%;box-shadow:inset 0 0 0 1px rgba(255,255,255,.35)}
+/* 列表行 / 小控件：默认只加釉光，悬停时才起模糊（避免大量 backdrop-filter 拖慢滚动） */
+:is(.chip,.tag,.seg,.pop-item,.cal-nav,.win-close,.todo-line,.f-stars div,.f-dos span){
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.18),inset 0 0 0 .5px rgba(255,255,255,.05);
+}
+:is(.social-i,.proj-i,.note-i,.fav-i,.song-i,.media-i,.dp-file){
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14);
+}
+:is(.social-i,.proj-i,.note-i,.fav-i,.song-i,.media-i,.dp-file,.pop-item,.todo-line):hover{
+  backdrop-filter:blur(12px) saturate(160%);
+  -webkit-backdrop-filter:blur(12px) saturate(160%);
+}
+html[data-theme="light"] :is(.chip,.tag,.seg,.pop-item,.cal-nav,.win-close,.todo-line,.f-stars div,.f-dos span){
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.95),inset 0 0 0 .5px rgba(255,255,255,.6);
+}
+.seg{border:1px solid var(--card-border)}
+.seg button.on{overflow:hidden}
+.seg button.on::before{border-radius:inherit;background:linear-gradient(180deg,rgba(255,255,255,.36),transparent 60%)}
+.btn,.btn-primary,.btn-ghost{backdrop-filter:blur(12px) saturate(160%);-webkit-backdrop-filter:blur(12px) saturate(160%)}
+.btn-primary{overflow:hidden}
+
+/* ---------- 6. 照片格子：圆角 + 玻璃遮罩 ---------- */
+.tile-grid{gap:6px;padding:6px 6px 0}
+.tile{border-radius:9px}
+.more-mask{
+  background:rgba(4,9,26,.42);
+  backdrop-filter:blur(7px) saturate(160%);
+  -webkit-backdrop-filter:blur(7px) saturate(160%);
+}
+html[data-theme="light"] .more-mask{background:rgba(250,252,255,.5);color:var(--text-1)}
+
+/* ---------- 7. 弹窗 / 启动器 / 灯箱层级质感 ---------- */
+.window{border-radius:30px}
+.launch-panel{border-radius:34px}
+.scrim{backdrop-filter:blur(18px) saturate(150%);-webkit-backdrop-filter:blur(18px) saturate(150%)}
+.launcher{backdrop-filter:blur(28px) saturate(150%);-webkit-backdrop-filter:blur(28px) saturate(150%)}
+.win-hd{border-bottom-color:transparent;
+  background-image:var(--lg-hair);background-size:100% 1px;
+  background-position:0 100%;background-repeat:no-repeat}
+.win-body::-webkit-scrollbar{width:10px}
+.win-body::-webkit-scrollbar-thumb{
+  background:rgba(255,255,255,.18);border-radius:99px;
+  border:3px solid transparent;background-clip:content-box;
+}
+.lightbox{backdrop-filter:blur(26px) saturate(150%);-webkit-backdrop-filter:blur(26px) saturate(150%)}
+.lightbox img{border-radius:18px;box-shadow:0 40px 100px rgba(0,0,0,.6),
+  inset 0 0 0 1px rgba(255,255,255,.18)}
+.lb-count{
+  background:rgba(10,18,42,.5);border:1px solid var(--card-border);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+}
+/* Toast 保持深色玻璃胶囊，两个主题下都清晰 */
+.toast{background:rgba(14,22,48,.62);color:#fff}
+
+/* ---------- 8. 排版微调 ---------- */
+.card-hd .hd-text h3,.win-hd h3,.banner h1{letter-spacing:.2px}
+.banner h1{font-size:18.5px}
+.dark-body .mini-link{text-shadow:0 0 18px rgba(127,176,255,.45)}
+.footer a{border-bottom-color:transparent}
+.footer a:hover{border-bottom-color:var(--card-border)}
+
+@media (max-width:640px){
+  .window{border-radius:26px}
+  .launch-panel{border-radius:28px}
+}
+</style>
+<script>
+/* 液态玻璃开关：必须在首屏渲染前生效，否则会先出现玻璃再突然消失（闪烁）。
+   整层效果就是一个独立的 <style id="liquid-glass">，关闭 = 禁用该样式表，可 100% 回到原版外观。 */
+(function(){
+  var on=true;
+  try{var s=JSON.parse(localStorage.getItem('jy-settings')||'{}');on=s.glass!=='off';}catch(e){}
+  if(!on){
+    var el=document.getElementById('liquid-glass');
+    if(el)el.disabled=true;
+    document.documentElement.setAttribute('data-glass','off');
+  }
+})();
+</script>
+<style id="motion-plus">
+/* ========================= 动效增强层 =========================
+   纯追加覆盖，不改任何 HTML 结构与 JS 逻辑。
+   整层随「设置 → 界面动效」联动（body[data-motion="off"] 会关掉这里全部动画）。
+   JS 动效层就绪时会给 <html> 打 data-mo="ready"，用来停掉会被 JS 接管的
+   单向入场动画，避免同一元素被 CSS / WAAPI 两套动画同时驱动。 */
+
+/* ---------- 1. 由 JS 负责「从哪来、回哪去」的容器：停掉原单向入场动画 ---------- */
+html[data-mo="ready"] :is(.scrim,.launcher,.lightbox,.window,.launch-panel,.popover,.lightbox img){
+  animation:none!important;
+}
+
+/* ---------- 2. Toast：弹性弹入 ---------- */
+.toast.show{animation:moToastIn .5s cubic-bezier(.16,.86,.26,1.04) both}
+@keyframes moToastIn{
+  0%{opacity:0;transform:translateX(-50%) translateY(26px) scale(.9)}
+  55%{opacity:1;transform:translateX(-50%) translateY(-3px) scale(1.015)}
+  100%{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
+}
+
+/* ---------- 3. 首屏入场：位移 + 轻微缩放，缓动更「有重量」 ---------- */
+.card{
+  transform:translateY(30px) scale(.972);
+  transition:transform .6s cubic-bezier(.16,.84,.24,1),border-color .35s,box-shadow .4s;
+}
+.banner{opacity:0;transition:opacity .55s ease,transform .35s cubic-bezier(.2,.7,.2,1),border-color .35s}
+.banner.in{opacity:1}
+
+/* ---------- 4. 列表 / 控件：按压反馈（补充原有的悬停反馈） ---------- */
+:is(.pop-item,.social-i,.proj-i,.note-i,.fav-i,.song-i,.media-i,.setting-i,.dp-file,.seg button,.chip,.tag,.launch-i){
+  transition:background .2s ease,color .2s ease,border-color .2s ease,
+             box-shadow .2s ease,transform .18s cubic-bezier(.2,.8,.25,1);
+}
+:is(.pop-item,.social-i,.proj-i,.note-i,.fav-i,.song-i,.media-i,.setting-i,.dp-file,.seg button,.chip,.tag,.launch-i):active{
+  transform:scale(.97);
+}
+.launch-i:active{transform:scale(.93)}
+
+/* ---------- 5. 卡片内的小物件：悬停联动 ---------- */
+.card .app-ic{transition:transform .42s cubic-bezier(.2,.8,.25,1),background .3s ease,box-shadow .3s ease}
+.card:hover .app-ic{transform:translateY(-2px) scale(1.06)}
+.hd-action{transition:transform .38s cubic-bezier(.2,.8,.25,1),color .25s ease}
+.card:hover .hd-action{transform:translateX(3px);color:var(--text-1)}
+.win-close svg{transition:transform .38s cubic-bezier(.2,.8,.25,1)}
+.win-close:hover svg{transform:rotate(90deg)}
+.switch::after{transition:left .3s cubic-bezier(.2,.9,.3,1.35),transform .2s ease}
+.switch:active::after{transform:scale(.86)}
+
+/* ---------- 6. 顶栏：滚动后浮起来 ---------- */
+.nav{transition:box-shadow .38s ease,border-color .38s ease,background .38s ease}
+html.mo-scrolled .nav{box-shadow:0 14px 36px rgba(0,0,0,.34);border-bottom-color:transparent}
+html[data-theme="light"].mo-scrolled .nav{box-shadow:0 14px 34px rgba(28,58,140,.16)}
+
+/* ---------- 7. 主题切换：整页颜色渐变（切换瞬间临时挂载） ---------- */
+html.mo-theme,html.mo-theme *:not(.bg-blob):not(.bg-wp){
+  transition:background-color .42s ease,background .42s ease,color .42s ease,
+             border-color .42s ease,box-shadow .42s ease,fill .42s ease,stroke .42s ease,
+             opacity .42s ease,transform .42s ease;
+}
+</style>
 </head>
 <body data-wp="on" data-motion="on">
 
@@ -2085,6 +2466,11 @@ const T = {
       </span>
     </div>
     <div class="setting-i">
+      <span class="s-ic" style="background:linear-gradient(145deg,#8ee0ff,#5e5ce6)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7.6 4.6v8.8L12 21l-7.6-4.6V7.6z"/><path d="M12 12l7.6-4.6M12 12v8.6M12 12L4.4 7.4"/></svg></span>
+      <div><h5>液态玻璃</h5><p>卡片和窗口的磨砂折射质感，关闭即回到简洁扁平样式</p></div>
+      <span class="switch ${glassEnabled()?'on':''}" id="swGlass"></span>
+    </div>
+    <div class="setting-i">
       <span class="s-ic" style="background:linear-gradient(145deg,#ff6a8e,#c01e52)">${ICONS.music}</span>
       <div><h5>界面动效</h5><p>卡片浮起、弹窗过渡等动画</p></div>
       <span class="switch ${document.body.dataset.motion!=='off'?'on':''}" id="swMotion"></span>
@@ -2291,6 +2677,7 @@ async function chatSend(text){
 
 function openApp(id){
   if(!T[id])return;
+  if(window.JYMO)JYMO.beforeApp();          // 取消上一轮未播完的退场动画，避免动画叠加
   currentApp=id;
   const m=META[id];
   $('#window').className='window'+(id==='photos'?' wide':id==='assistant'?' ai':id==='speedtest'?' speed':id==='hardware'?' hw':id==='drop'?' drop':'');
@@ -2303,10 +2690,17 @@ function openApp(id){
     <div class="win-body">${T[id]()}</div>`;
   $('#scrim').classList.add('open');
   bindWindow(id);
+  if(window.JYMO)JYMO.enterApp(id);         // 从点击的那张卡片 / 图标处「长」出来
 }
 function closeApp(){
   if(currentApp==='drop'&&typeof dpLeave==='function')dpLeave(); // 关闭文件传送即下线
-  $('#scrim').classList.remove('open');currentApp=null;
+  const at=currentApp;
+  const fin=()=>{
+    if(currentApp!==at)return;              // 期间已经换成别的窗口了，别把新窗口关掉
+    $('#scrim').classList.remove('open');currentApp=null;
+  };
+  if(window.JYMO&&JYMO.exitApp(fin))return; // 先原路缩回来源，播完再真正隐藏
+  fin();
 }
 
 function bindWindow(id){
@@ -2319,7 +2713,7 @@ function bindWindow(id){
     $$('#window [data-soon]').forEach(b=>b.onclick=()=>toast(b.dataset.soon+' 主页即将开通，先发邮件吧'));
   }
   if(id==='photos'){
-    $$('[data-photo]').forEach(t=>t.onclick=()=>openLb(+t.dataset.photo));
+    $$('[data-photo]').forEach(t=>t.onclick=()=>openLb(+t.dataset.photo,t));
   }
   if(id==='notes'){
     bindDlgSearch('notes');
@@ -2457,8 +2851,16 @@ function bindWindow(id){
     $('#swMotion').onclick=function(){
       const on=document.body.dataset.motion!=='off';
       document.body.dataset.motion=on?'off':'on';saveSettings();this.classList.toggle('on',!on);
+      if(window.JYMO&&on)JYMO.stopAll();   // 关掉动效时，把正在跑的动画一起收掉
+    };
+    $('#swGlass').onclick=function(){
+      const next=!glassEnabled();          // 当前关着 → 打开
+      applyGlass(next);
+      this.classList.toggle('on',next);
+      toast(next?'已开启液态玻璃':'已关闭液态玻璃');
     };
     $$('[data-theme-btn]').forEach(b=>b.onclick=()=>{
+      if(window.JYMO)JYMO.themeGlow();     // 主题切换时整页颜色渐变
       document.documentElement.dataset.theme=b.dataset.themeBtn;saveSettings();
       $$('[data-theme-btn]').forEach(x=>x.classList.toggle('on',x===b));
     });
@@ -3774,16 +4176,27 @@ document.addEventListener('keydown',e=>{
 
 /* ========================= 灯箱 ========================= */
 let lbIndex=0;
-function openLb(i){lbIndex=i;showLb();$('#lightbox').classList.add('open');}
-function showLb(){
+function openLb(i,fromEl){
+  lbIndex=i;
+  if(window.JYMO)JYMO.setOrigin(fromEl);      // 记住点的是哪张照片，关闭时飞回去
+  showLb();
+  $('#lightbox').classList.add('open');
+  if(window.JYMO)JYMO.enterLightbox();
+}
+function showLb(dir){
   const p=photos[lbIndex];if(!p)return;
   $('#lbImg').src=p.src;$('#lbImg').alt=p.name;
   $('#lbCount').textContent=(lbIndex+1)+' / '+photos.length+' · '+p.name;
+  if(dir&&window.JYMO)JYMO.slideLb(dir);
 }
-function closeLb(){$('#lightbox').classList.remove('open');}
+function closeLb(){
+  const fin=()=>$('#lightbox').classList.remove('open');
+  if(window.JYMO&&JYMO.exitLightbox(fin))return;   // 原路飞回那张缩略图
+  fin();
+}
 $('#lbClose').onclick=closeLb;
-$('#lbPrev').onclick=()=>{lbIndex=(lbIndex-1+photos.length)%photos.length;showLb();};
-$('#lbNext').onclick=()=>{lbIndex=(lbIndex+1)%photos.length;showLb();};
+$('#lbPrev').onclick=()=>{lbIndex=(lbIndex-1+photos.length)%photos.length;showLb(-1);};
+$('#lbNext').onclick=()=>{lbIndex=(lbIndex+1)%photos.length;showLb(1);};
 $('#lightbox').addEventListener('click',e=>{if(e.target.id==='lightbox')closeLb();});
 
 /* ========================= 卡片 / 启动器 / 菜单 ========================= */
@@ -3802,6 +4215,7 @@ document.addEventListener('click',e=>{
   if(card.closest('#launcher'))return;
   // 顶栏仅头像可打开弹窗，九宫格/加号有自己的处理逻辑
   if(card.closest('.nav') && !card.classList.contains('nav-avatar'))return;
+  if(window.JYMO)JYMO.setOrigin(card);   // 记住来源：弹窗从这张卡片「长」出来
   openApp(card.dataset.open);
 });
 document.addEventListener('keydown',e=>{
@@ -3809,7 +4223,7 @@ document.addEventListener('keydown',e=>{
     if($('#lightbox').classList.contains('open'))closeLb();
     else if($('#launcher').classList.contains('open'))closeLauncher();
     else if($('#scrim').classList.contains('open'))closeApp();
-    $('#popover').classList.remove('open');
+    closePopover();
   }
   if($('#lightbox').classList.contains('open')){
     if(e.key==='ArrowLeft')$('#lbPrev').click();
@@ -3818,7 +4232,7 @@ document.addEventListener('keydown',e=>{
   if((e.key==='Enter'||e.key===' ') && e.target.matches('[data-open],.banner')){
     e.preventDefault();
     if(e.target.classList.contains('banner'))scrollToApps();
-    else openApp(e.target.dataset.open);
+    else{if(window.JYMO)JYMO.setOrigin(e.target);openApp(e.target.dataset.open);}
   }
 });
 
@@ -3829,14 +4243,26 @@ function buildLauncher(){
     </button>`).join('');
 }
 buildLauncher();
-function openLauncher(){$('#launcher').classList.add('open');}
-function closeLauncher(){$('#launcher').classList.remove('open');}
+function openLauncher(){
+  if(window.JYMO)JYMO.beforeLauncher();
+  $('#launcher').classList.add('open');
+  if(window.JYMO)JYMO.enterLauncher();
+}
+function closeLauncher(next){
+  const l=$('#launcher');
+  const fin=()=>{l.classList.remove('open'); if(typeof next==='function')next();};
+  if(window.JYMO&&JYMO.exitLauncher(fin))return;  // 原路收回九宫格按钮
+  fin();
+}
 $('#launchBtn').onclick=openLauncher;
 $('#launchClose').onclick=closeLauncher;
 $('#launcher').addEventListener('click',e=>{
   if(e.target.id==='launcher')closeLauncher();
   const b=e.target.closest('.launch-i');
-  if(b){closeLauncher();setTimeout(()=>openApp(b.dataset.open),120);}
+  if(b){
+    if(window.JYMO)JYMO.setOrigin(b);
+    closeLauncher(()=>openApp(b.dataset.open));   // 启动器先收回，再从该图标处弹出窗口
+  }
 });
 
 function copyEmail(){
@@ -3845,9 +4271,25 @@ function copyEmail(){
     ()=>toast(EMAIL,false)
   );
 }
-$('#plusBtn').onclick=e=>{e.stopPropagation();$('#popover').classList.toggle('open');};
+function openPopover(){
+  const p=$('#popover');
+  if(window.JYMO)JYMO.beforePopover();
+  p.classList.add('open');
+  if(window.JYMO)JYMO.enterPopover();
+}
+function closePopover(){
+  const p=$('#popover');
+  if(!p.classList.contains('open'))return;
+  const fin=()=>p.classList.remove('open');
+  if(window.JYMO&&JYMO.exitPopover(fin))return;   // 原路缩回加号按钮
+  fin();
+}
+$('#plusBtn').onclick=e=>{
+  e.stopPropagation();
+  $('#popover').classList.contains('open')?closePopover():openPopover();
+};
 document.addEventListener('click',e=>{
-  if(!e.target.closest('#popover')&&!e.target.closest('#plusBtn'))$('#popover').classList.remove('open');
+  if(!e.target.closest('#popover')&&!e.target.closest('#plusBtn'))closePopover();
 });
 $('#popover').addEventListener('click',e=>{
   const b=e.target.closest('[data-action]');if(!b)return;
@@ -3855,17 +4297,33 @@ $('#popover').addEventListener('click',e=>{
   if(a==='mail')location.href='mailto:'+EMAIL;
   if(a==='copy')copyEmail();
   if(a==='top')window.scrollTo({top:0,behavior:'smooth'});
-  $('#popover').classList.remove('open');
+  closePopover();
 });
 
 function scrollToApps(){document.getElementById('apps').scrollIntoView({behavior:'smooth'});}
 $('#banner').onclick=scrollToApps;
 
+/* ========================= 液态玻璃开关 =========================
+   整层视觉都写在 <style id="liquid-glass"> 里，所以「关闭」= 禁用这张样式表，
+   页面立刻回到原版外观；再打开时原样恢复，不需要任何样式回滚逻辑。 */
+function glassEnabled(){
+  const el=document.getElementById('liquid-glass');
+  return !el||!el.disabled;
+}
+function applyGlass(on,persist){
+  const el=document.getElementById('liquid-glass');
+  if(el)el.disabled=!on;
+  if(on)document.documentElement.removeAttribute('data-glass');
+  else document.documentElement.setAttribute('data-glass','off');
+  if(persist!==false)saveSettings();
+}
+
 /* ========================= 设置持久化 ========================= */
 function saveSettings(){
   localStorage.setItem('jy-settings',JSON.stringify({
     theme:document.documentElement.dataset.theme,
-    wp:document.body.dataset.wp,motion:document.body.dataset.motion
+    wp:document.body.dataset.wp,motion:document.body.dataset.motion,
+    glass:glassEnabled()?'on':'off'
   }));
 }
 (function initSettings(){
@@ -3874,6 +4332,8 @@ function saveSettings(){
   document.documentElement.dataset.theme=s.theme||'dark';
   document.body.dataset.wp=s.wp||'on';
   document.body.dataset.motion=s.motion||'on';
+  // head 里的脚本已经处理过一次；这里兜底同步，且不写回存储
+  applyGlass(s.glass!=='off',false);
 })();
 
 /* ========================= 入场动画 ========================= */
@@ -3905,6 +4365,339 @@ loadMusic();
 loadNotes();
 fetchWeather();
 syncMusicUI();
+/* ========================= 液态玻璃：指针高光跟随 =========================
+   鼠标划过玻璃面板时，把指针位置写成 --lg-x / --lg-y，
+   CSS 里的 ::after 用它渲染一层会「跟着手走」的镜面高光。
+   只在精确指针设备上启用；滚动时同步重算，位置不会错位。 */
+(function liquidGlassPointer(){
+  let fine=false,reduce=false;
+  try{
+    fine=window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+    reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }catch(e){}
+  if(!fine)return;
+
+  const SEL='.nav,.popover,.banner,.card,.window,.launch-panel,.toast';
+  let cur=null,ticking=false,mx=0,my=0;
+
+  function paint(){
+    ticking=false;
+    if(!cur||!cur.isConnected)return;
+    const r=cur.getBoundingClientRect();
+    if(!r.width||!r.height)return;
+    const x=Math.max(0,Math.min(100,((mx-r.left)/r.width)*100));
+    const y=Math.max(0,Math.min(100,((my-r.top)/r.height)*100));
+    cur.style.setProperty('--lg-x',x.toFixed(2)+'%');
+    cur.style.setProperty('--lg-y',y.toFixed(2)+'%');
+  }
+  function schedule(){ if(cur&&!ticking){ticking=true;requestAnimationFrame(paint);} }
+
+  window.addEventListener('pointermove',e=>{
+    if(!glassEnabled())return;   // 设置里关掉液态玻璃后不再做高光跟随
+    mx=e.clientX;my=e.clientY;
+    const el=(e.target&&e.target.closest)?e.target.closest(SEL):null;
+    if(el!==cur){
+      if(cur){cur.classList.remove('lg-lit');cur.style.removeProperty('--lg-x');cur.style.removeProperty('--lg-y');}
+      cur=el;
+      if(cur)cur.classList.add('lg-lit');
+    }
+    schedule();
+  },{passive:true});
+
+  window.addEventListener('pointerleave',()=>{
+    if(cur){cur.classList.remove('lg-lit');cur.style.removeProperty('--lg-x');cur.style.removeProperty('--lg-y');cur=null;}
+  },{passive:true});
+
+  window.addEventListener('scroll',schedule,{passive:true});
+  if(reduce){/* 保留静态顶光，仅不做跟随 */}
+})();
+</script>
+<script>
+/* ========================= 动效增强层（从哪来，回哪去） =========================
+   1. 弹窗 / 启动器 / 灯箱 / 加号浮层：以「点击的来源元素」为起点做 FLIP 动画，
+      打开时从那里长出来，关闭时原路缩回，动画播完才真正隐藏。
+   2. 弹窗内部换页（笔记详情 / 日历翻月 / 搜索重渲染）：新内容错峰浮入。
+   3. 全局：顶栏滚动浮起、主题切换整页渐变、Toast 弹性弹入、列表按压反馈。
+   全部受「设置 → 界面动效」与系统「减少动态效果」双重控制。 */
+(function(){
+  var root=document.documentElement, body=document.body;
+  var reduce=false;
+  try{reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;}catch(e){}
+
+  function can(){return !reduce && body.dataset.motion!=='off';}
+
+  var EASE='cubic-bezier(.22,.9,.26,1)';       // 进场：先快后缓，像减速落位
+  var EASE_OUT='cubic-bezier(.5,.02,.7,.28)';  // 退场：先缓后快，像被吸回原点
+
+  /* ---------- 统一登记自己创建的动画，便于整体回收（防止 fill:forwards 残留） ---------- */
+  var anims=new WeakMap(), pend=new WeakMap();
+  function play(el,kf,opt){
+    if(!can()||!el||!el.animate)return null;
+    var a;
+    try{a=el.animate(kf,opt||{});}catch(e){return null;}
+    var l=anims.get(el);
+    if(!l){l=[];anims.set(el,l);}
+    l.push(a);
+    return a;
+  }
+  function release(el){
+    var l=anims.get(el);
+    if(l){l.forEach(function(a){try{a.cancel();}catch(e){}});anims.set(el,[]);}
+    var p=pend.get(el);
+    if(p){pend.delete(el);try{p.anim.cancel();}catch(e){}}
+  }
+  function stopAll(){
+    try{
+      Array.prototype.forEach.call(document.querySelectorAll('*'),function(el){
+        if(el.getAnimations)el.getAnimations().forEach(function(a){a.cancel();});
+      });
+    }catch(e){}
+    anims=new WeakMap();pend=new WeakMap();
+  }
+
+  /* ---------- 来源快照与 FLIP 位移 ---------- */
+  var src=null;
+  function rct(el){
+    if(!el||el.nodeType!==1||!el.getBoundingClientRect)return null;
+    var r=el.getBoundingClientRect();
+    if(!r.width||!r.height)return null;
+    return {x:r.left+r.width/2,y:r.top+r.height/2,w:r.width,h:r.height};
+  }
+  function setOrigin(el){
+    if(el&&el.nodeType!==1&&el.currentTarget)el=el.currentTarget;  // 兼容事件对象
+    var r=rct(el);
+    if(r)src=r;
+    return r;
+  }
+  function fromOf(el,id){
+    if(src)return src;      // 用点击瞬间定格的矩形，元素之后被隐藏也不会算错
+    if(id)return rct(document.querySelector('[data-open="'+id+'"]'))||rct(el);
+    return rct(el);
+  }
+  function flipTF(from,to,k){
+    var dx=from.x-(to.left+to.width/2), dy=from.y-(to.top+to.height/2);
+    var s=Math.max(from.w/to.width,from.h/to.height);
+    s=Math.min(1,Math.max(.06,s))*(k||1);
+    return 'translate3d('+dx.toFixed(1)+'px,'+dy.toFixed(1)+'px,0) scale('+s.toFixed(3)+')';
+  }
+  function rad(el){try{return getComputedStyle(el).borderRadius;}catch(e){return '20px';}}
+
+  function grow(el,from,opt){
+    opt=opt||{};
+    release(el);
+    var to=el.getBoundingClientRect(), kf=null;
+    if(from&&to.width&&to.height){
+      kf=[{transform:flipTF(from,to,1),opacity:(opt.fromOpacity==null?.08:opt.fromOpacity),borderRadius:'22px'},
+          {transform:'none',opacity:1,borderRadius:rad(el)}];
+    }
+    if(!kf)kf=[{transform:'translateY('+(opt.rise||18)+'px) scale(.975)',opacity:0},{transform:'none',opacity:1}];
+    return play(el,kf,{duration:opt.dur||520,easing:EASE,fill:'backwards'});
+  }
+  function shrink(el,from,opt,done){
+    opt=opt||{};done=done||function(){};
+    if(!can()||!el||!el.animate){release(el);done();return false;}
+    var prev=pend.get(el);
+    if(prev){pend.delete(el);try{prev.anim.cancel();}catch(e){}}
+    var to=el.getBoundingClientRect(), kf=null;
+    if(from&&to.width&&to.height){
+      kf=[{transform:'none',opacity:1,borderRadius:rad(el)},
+          {transform:flipTF(from,to,opt.shrink||.94),opacity:0,borderRadius:'22px'}];
+    }else if(opt.corner){
+      kf=[{transform:'none',opacity:1},{transform:'scale(.88) translateY(-8px)',opacity:0}];
+    }else{
+      kf=[{transform:'none',opacity:1},{transform:'translateY(14px) scale(.975)',opacity:0}];
+    }
+    var a;
+    try{a=el.animate(kf,{duration:opt.dur||320,easing:EASE_OUT,fill:'forwards'});}
+    catch(e){done();return false;}
+    var rec={anim:a};
+    rec.done=function(){
+      if(pend.get(el)!==rec)return;      // 已被新一轮动画接管
+      pend.delete(el);
+      try{a.cancel();}catch(e){}
+      done();
+    };
+    pend.set(el,rec);
+    a.onfinish=rec.done;
+    return true;
+  }
+
+  var scrim,win,launcher,panel,pop,lb,lbImg,launchBtn;
+  function grab(){
+    if(win)return;
+    scrim=document.getElementById('scrim');
+    win=document.getElementById('window');
+    launcher=document.getElementById('launcher');
+    panel=document.getElementById('launchPanel');
+    pop=document.getElementById('popover');
+    lb=document.getElementById('lightbox');
+    lbImg=document.getElementById('lbImg');
+    launchBtn=document.getElementById('launchBtn');
+  }
+
+  var themeT=null;
+  window.JYMO={
+    setOrigin:setOrigin,
+
+    /* ---------- 通用弹窗 ---------- */
+    beforeApp:function(){grab();release(scrim);release(win);},
+    enterApp:function(id){
+      grab();
+      if(!can())return;
+      var from=fromOf(win,id);
+      win._moFrom=from;
+      play(scrim,[{opacity:0},{opacity:1}],{duration:260,easing:'linear',fill:'backwards'});
+      grow(win,from,{dur:540,fromOpacity:.05});
+    },
+    exitApp:function(done){
+      grab();
+      play(scrim,[{opacity:1},{opacity:0}],{duration:300,easing:'linear',fill:'forwards'});
+      return shrink(win,win._moFrom||src,{dur:340},done);
+    },
+
+    /* ---------- 启动器 ---------- */
+    beforeLauncher:function(){grab();release(launcher);release(panel);},
+    enterLauncher:function(){
+      grab();
+      if(!can())return;
+      var from=rct(launchBtn)||src;
+      panel._moFrom=from;
+      play(launcher,[{opacity:0},{opacity:1}],{duration:250,easing:'linear',fill:'backwards'});
+      grow(panel,from,{dur:470,fromOpacity:.06});
+      var kids=panel.children,n=Math.min(kids.length,24);
+      for(var i=0;i<n;i++){
+        play(kids[i],[{opacity:0,transform:'translateY(16px) scale(.88)'},{opacity:1,transform:'none'}],
+          {duration:420,easing:EASE,delay:130+i*24,fill:'backwards'});
+      }
+    },
+    exitLauncher:function(done){
+      grab();
+      play(launcher,[{opacity:1},{opacity:0}],{duration:300,easing:'linear',fill:'forwards'});
+      return shrink(panel,panel._moFrom||rct(launchBtn)||src,{dur:300},done);
+    },
+
+    /* ---------- 加号浮层（贴右上角展开 / 收回） ---------- */
+    beforePopover:function(){grab();release(pop);},
+    enterPopover:function(){
+      grab();
+      if(!can())return;
+      pop.style.transformOrigin='100% 0';
+      play(pop,[{opacity:0,transform:'scale(.9) translateY(-10px)'},{opacity:1,transform:'none'}],
+        {duration:300,easing:EASE,fill:'backwards'});
+      var items=pop.querySelectorAll('.pop-item'),n=Math.min(items.length,8);
+      for(var i=0;i<n;i++){
+        play(items[i],[{opacity:0,transform:'translateY(-6px)'},{opacity:1,transform:'none'}],
+          {duration:320,easing:EASE,delay:40+i*30,fill:'backwards'});
+      }
+    },
+    exitPopover:function(done){
+      grab();
+      pop.style.transformOrigin='100% 0';
+      return shrink(pop,null,{dur:220,corner:true},done);
+    },
+
+    /* ---------- 照片灯箱（飞回被点的那张缩略图） ---------- */
+    enterLightbox:function(){
+      grab();
+      if(!can())return;
+      var from=src||rct(lbImg);
+      lbImg._moFrom=from;
+      play(lb,[{opacity:0},{opacity:1}],{duration:220,easing:'linear',fill:'backwards'});
+      grow(lbImg,from,{dur:440,fromOpacity:.1});
+      var btns=lb.querySelectorAll('.lb-btn'),n=Math.min(btns.length,4);
+      for(var i=0;i<n;i++)play(btns[i],[{opacity:0},{opacity:1}],{duration:300,easing:EASE,delay:140,fill:'backwards'});
+    },
+    exitLightbox:function(done){
+      grab();
+      play(lb,[{opacity:1},{opacity:0}],{duration:260,easing:'linear',fill:'forwards'});
+      return shrink(lbImg,lbImg._moFrom||src,{dur:320},done);
+    },
+    slideLb:function(dir){
+      grab();
+      if(!can())return;
+      play(lbImg,[{opacity:.25,transform:'translateX('+(30*dir)+'px) scale(.985)'},{opacity:1,transform:'none'}],
+        {duration:340,easing:EASE});
+    },
+
+    /* ---------- 主题切换：整页颜色渐变 ---------- */
+    themeGlow:function(){
+      if(!can())return;
+      root.classList.add('mo-theme');
+      clearTimeout(themeT);
+      themeT=setTimeout(function(){root.classList.remove('mo-theme');},480);
+    },
+    stopAll:stopAll
+  };
+
+  /* ---------- 弹窗内部换页：新内容错峰浮入 ---------- */
+  (function watchSwap(){
+    var host=document.getElementById('window');
+    if(!host)return;
+    var last=0;
+    new MutationObserver(function(recs){
+      if(!can())return;
+      var heads=[],bodies=[],kids=[];
+      Array.prototype.forEach.call(recs,function(r){
+        Array.prototype.forEach.call(r.addedNodes,function(n){
+          if(n.nodeType!==1||!n.classList)return;
+          if(n.closest&&n.closest('#toast,#popover,#launcher,#lightbox'))return;
+          if(n.classList.contains('win-body'))bodies.push(n);
+          else if(n.classList.contains('win-hd'))heads.push(n);
+          else if(n.parentNode&&n.parentNode.classList&&n.parentNode.classList.contains('win-body')
+                  &&!(n.closest&&n.closest('.chat-msgs')))kids.push(n);
+        });
+      });
+      heads.forEach(function(h){
+        play(h,[{opacity:0,transform:'translateY(-12px)'},{opacity:1,transform:'none'}],
+          {duration:440,easing:EASE,delay:50,fill:'backwards'});
+      });
+      bodies.forEach(function(b){
+        var n=Math.min(b.children.length,12);
+        for(var i=0;i<n;i++){
+          play(b.children[i],[{opacity:0,transform:'translateY(12px)'},{opacity:1,transform:'none'}],
+            {duration:380,easing:EASE,delay:70+i*22,fill:'backwards'});
+        }
+      });
+      if(kids.length){
+        var now=Date.now();
+        if(now-last<180)return;     // 渐进式填充（测速、硬件检测）不重复触发
+        last=now;
+        kids.slice(0,8).forEach(function(k,i){
+          play(k,[{opacity:0,transform:'translateY(10px)'},{opacity:1,transform:'none'}],
+            {duration:380,easing:EASE,delay:i*26,fill:'backwards'});
+        });
+      }
+    }).observe(host,{childList:true,subtree:true});
+  })();
+
+  /* ---------- 首屏横幅：上浮入场（位移交给 JS，避免和悬停位移打架） ---------- */
+  (function bannerIn(){
+    var b=document.getElementById('banner');
+    if(!b)return;
+    var io=new MutationObserver(function(){
+      if(!b.classList.contains('in'))return;
+      io.disconnect();
+      play(b,[{transform:'translateY(22px) scale(.985)'},{transform:'none'}],
+        {duration:640,easing:EASE,fill:'backwards'});
+    });
+    io.observe(b,{attributes:true,attributeFilter:['class']});
+  })();
+
+  /* ---------- 顶栏：滚动后浮起 ---------- */
+  (function navScroll(){
+    if(!document.querySelector('.nav'))return;
+    var t=false;
+    function upd(){
+      t=false;
+      root.classList.toggle('mo-scrolled',(window.pageYOffset||window.scrollY||0)>8);
+    }
+    window.addEventListener('scroll',function(){if(!t){t=true;requestAnimationFrame(upd);}},{passive:true});
+    upd();
+  })();
+
+  /* 就绪：停用会被上面接管的单向入场动画，避免两套动画叠着跑 */
+  root.setAttribute('data-mo','ready');
+})();
 </script>
 </body>
 </html>
