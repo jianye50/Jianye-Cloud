@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>鉴业的主页 · JianYe Cloud</title>
+<title>Jianye Cloud</title>
 <link rel="icon" type="image/x-icon" href="icon.ico">
 <link rel="shortcut icon" type="image/x-icon" href="icon.ico">
 <link rel="apple-touch-icon" href="icon.ico">
@@ -15,63 +15,59 @@
   --radius-lg: 24px;
   --radius-md: 18px;
   --nav-h: 56px;
+  /* 壁纸压暗层（背景功能的一部分，与深浅色主题无关） */
+  --scrim-overlay:linear-gradient(rgba(0,0,0,.32),rgba(0,0,0,.38));
 }
 html[data-theme="dark"]{
   --text-1:#ffffff;
-  --text-2:rgba(232,238,255,.72);
-  --text-3:rgba(220,228,255,.46);
-  --card-bg:rgba(30,44,86,.52);
-  --card-bg-strong:rgba(22,36,74,.72);
-  --card-inner:rgba(5,11,30,.72);
+  --text-2:rgba(242,242,245,.74);
+  --text-3:rgba(235,235,240,.48);
+  --card-bg:rgba(28,28,32,.56);
+  --card-bg-strong:rgba(20,20,24,.76);
+  --card-inner:rgba(0,0,0,.48);
   --card-inner-soft:rgba(255,255,255,.05);
   --card-border:rgba(255,255,255,.12);
   --card-border-hover:rgba(255,255,255,.28);
-  --nav-bg:rgba(16,27,60,.55);
-  --scrim:rgba(4,9,26,.62);
-  --scrim-solid:rgba(10,17,42,.92);
-  --shadow:0 18px 50px rgba(2,6,22,.5);
-  --shadow-hover:0 26px 70px rgba(2,6,22,.62);
-  --scrim-overlay:linear-gradient(rgba(4,10,30,.55),rgba(4,10,30,.62));
-  --blob-1:rgba(76,120,255,.34);
-  --blob-2:rgba(126,84,255,.28);
-  --blob-3:rgba(44,140,255,.22);
-  --accent:#4d8dff;
+  --nav-bg:rgba(22,22,26,.58);
+  --scrim:rgba(0,0,0,.62);
+  --scrim-solid:rgba(14,14,17,.94);
+  --shadow:0 18px 50px rgba(0,0,0,.5);
+  --shadow-hover:0 26px 70px rgba(0,0,0,.62);
+  --accent:#f2f3f5;
+  --accent-2:#bcbfc6;
+  --accent-fg:#0b0b0d;
   --track:rgba(255,255,255,.14);
   --chip:rgba(255,255,255,.09);
-  --wp-opacity:.34;
   color-scheme:dark;
 }
 html[data-theme="light"]{
-  --text-1:#16233f;
-  --text-2:rgba(22,35,63,.68);
-  --text-3:rgba(22,35,63,.45);
-  --card-bg:rgba(255,255,255,.66);
-  --card-bg-strong:rgba(255,255,255,.82);
-  --card-inner:rgba(244,247,255,.85);
-  --card-inner-soft:rgba(20,40,90,.05);
+  --text-1:#18191c;
+  --text-2:rgba(24,25,28,.68);
+  --text-3:rgba(24,25,28,.45);
+  --card-bg:rgba(255,255,255,.68);
+  --card-bg-strong:rgba(255,255,255,.84);
+  --card-inner:rgba(246,246,248,.88);
+  --card-inner-soft:rgba(0,0,0,.05);
   --card-border:rgba(255,255,255,.75);
   --card-border-hover:rgba(255,255,255,.95);
-  --nav-bg:rgba(238,243,255,.55);
-  --scrim:rgba(120,140,190,.38);
-  --scrim-solid:rgba(238,242,252,.94);
-  --shadow:0 18px 50px rgba(40,60,120,.22);
-  --shadow-hover:0 26px 70px rgba(40,60,120,.3);
-  --scrim-overlay:linear-gradient(rgba(225,235,255,.42),rgba(220,232,255,.5));
-  --blob-1:rgba(110,150,255,.4);
-  --blob-2:rgba(150,120,255,.32);
-  --blob-3:rgba(90,170,255,.28);
-  --accent:#1a6cff;
-  --track:rgba(20,40,90,.12);
-  --chip:rgba(20,40,90,.07);
-  --wp-opacity:.16;
+  --nav-bg:rgba(248,248,250,.58);
+  --scrim:rgba(0,0,0,.28);
+  --scrim-solid:rgba(244,244,246,.94);
+  --shadow:0 18px 50px rgba(0,0,0,.16);
+  --shadow-hover:0 26px 70px rgba(0,0,0,.22);
+  --accent:#26272b;
+  --accent-2:#0e0f11;
+  --accent-fg:#ffffff;
+  --track:rgba(0,0,0,.10);
+  --chip:rgba(0,0,0,.06);
   color-scheme:light;
 }
-/* 透明主题：面板不填色，只留磨砂模糊 + 发丝棱边，背景渐变与壁纸直接透出来。
-   文字沿用深色的白字（背景仍是深蓝渐变），保证在各种壁纸下都读得清。 */
+/* 透明主题：面板不填色，只留磨砂模糊 + 发丝棱边，背景底色与壁纸直接透出来。
+   文字沿用深色的白字（底色是中性深灰，壁纸也偏暗），保证在各种壁纸下都读得清。 */
 html[data-theme="clear"]{
   --text-1:#ffffff;
-  --text-2:rgba(234,240,255,.78);
-  --text-3:rgba(224,232,255,.55);
+  --text-2:rgba(240,242,246,.78);
+  --text-3:rgba(232,234,240,.55);
   --card-bg:transparent;
   --card-bg-strong:rgba(255,255,255,.04);
   --card-inner:rgba(255,255,255,.045);
@@ -79,18 +75,15 @@ html[data-theme="clear"]{
   --card-border:rgba(255,255,255,.24);
   --card-border-hover:rgba(255,255,255,.48);
   --nav-bg:transparent;
-  --scrim:rgba(4,9,26,.32);
-  --scrim-solid:rgba(9,16,40,.5);
-  --shadow:0 18px 50px rgba(2,6,22,.26);
-  --shadow-hover:0 26px 70px rgba(2,6,22,.38);
-  --scrim-overlay:linear-gradient(rgba(4,10,30,.28),rgba(4,10,30,.34));
-  --blob-1:rgba(76,120,255,.34);
-  --blob-2:rgba(126,84,255,.28);
-  --blob-3:rgba(44,140,255,.22);
-  --accent:#4d8dff;
+  --scrim:rgba(0,0,0,.34);
+  --scrim-solid:rgba(10,10,13,.55);
+  --shadow:0 18px 50px rgba(0,0,0,.26);
+  --shadow-hover:0 26px 70px rgba(0,0,0,.38);
+  --accent:#f2f3f5;
+  --accent-2:#bcbfc6;
+  --accent-fg:#0b0b0d;
   --track:rgba(255,255,255,.16);
   --chip:rgba(255,255,255,.10);
-  --wp-opacity:.34;
   color-scheme:dark;
 }
 *{margin:0;padding:0;box-sizing:border-box}
@@ -105,32 +98,24 @@ body{
 body[data-motion="off"] *{animation:none!important;transition:none!important}
 button{font-family:inherit;color:inherit;border:none;background:none;cursor:pointer}
 img{display:block;max-width:100%}
-::selection{background:rgba(77,141,255,.4)}
+::selection{background:rgba(128,130,140,.42)}
 
-/* ===================== 动态背景 ===================== */
+/* ===================== 背景 =====================
+   背景只有一个来源：「壁纸背景」这个独立开关，与深浅色主题无关。
+   主题（透明 / 深色 / 浅色）只负责组件配色，自身不携带任何背景装饰。
+   壁纸关掉时，看到的就是下面这块纯中性页面底色。 */
+html[data-theme="dark"],html[data-theme="clear"]{background:#0a0a0c}
+html[data-theme="light"]{background:#f2f2f4}
 .bg{position:fixed;inset:0;z-index:-2;overflow:hidden}
-.bg-gradient{
-  position:absolute;inset:0;
-  background:
-    radial-gradient(120% 90% at 18% -10%, #2f5cc4 0%, transparent 55%),
-    radial-gradient(100% 80% at 95% 0%, #27206e 0%, transparent 50%),
-    linear-gradient(150deg,#0a1f52 0%,#16327e 38%,#1d2f78 68%,#0c1a48 100%);
-}
-html[data-theme="light"] .bg-gradient{
-  background:
-    radial-gradient(120% 90% at 18% -10%, #a9c6ff 0%, transparent 55%),
-    radial-gradient(100% 80% at 95% 0%, #c9bdff 0%, transparent 55%),
-    linear-gradient(150deg,#9fb9ee 0%,#c2d3f7 45%,#aebfe9 75%,#93a8d8 100%);
-}
-.bg-blob{position:absolute;border-radius:50%;filter:blur(90px)}
-.bg-blob.b1{width:55vw;height:55vw;left:-14vw;top:6vh;background:var(--blob-1)}
-.bg-blob.b2{width:46vw;height:46vw;right:-12vw;top:26vh;background:var(--blob-2)}
-.bg-blob.b3{width:40vw;height:40vw;left:26vw;bottom:-18vh;background:var(--blob-3)}
+/* 旧的渐变 / 彩色光斑装饰层：保留占位但不再显示，方便随时还原 */
+.bg-gradient{position:absolute;inset:0;background:transparent}
+.bg-blob{display:none}
 .bg-wp{
   position:absolute;inset:0;
-  background-image:url("%E5%A3%81%E7%BA%B8.png");
-  background-size:cover;background-position:center;
-  opacity:var(--wp-opacity);
+  /* 背景图由「设置 → 背景图片」选择后写入 --wp-img，来源是站点根目录的「背景」文件夹；
+     没有选择（或选「纯色」）时为 none，直接显示上面的中性底色 */
+  background-image:var(--wp-img,none);
+  background-size:cover;background-position:center;background-repeat:no-repeat;
   transition:opacity .5s ease;
 }
 .bg-wp::after{content:"";position:absolute;inset:0;background:var(--scrim-overlay)}
@@ -146,16 +131,9 @@ body[data-wp="off"] .bg-wp{opacity:0}
   -webkit-backdrop-filter:blur(28px) saturate(180%);
   border-bottom:1px solid var(--card-border);
 }
+/* 左上角只留文字品牌名，不再显示「鉴」字图标 */
 .brand{display:flex;align-items:center;gap:11px;font-weight:650;letter-spacing:.2px}
-.brand-mark{
-  width:30px;height:30px;border-radius:9px;
-  display:grid;place-items:center;
-  background:linear-gradient(145deg,#6ea4ff,#2b5ce0 55%,#1d3fb0);
-  box-shadow:0 4px 12px rgba(40,90,220,.5), inset 0 1px 0 rgba(255,255,255,.35);
-  font-size:15px;color:#fff;font-weight:700;
-}
-.brand small{display:block;font-size:11px;font-weight:500;color:var(--text-3);letter-spacing:1.5px}
-.brand strong{font-size:15px;line-height:1.1}
+.brand strong{font-size:16px;line-height:1.1}
 .nav-actions{display:flex;align-items:center;gap:10px}
 .icon-btn{
   width:38px;height:38px;border-radius:50%;
@@ -315,7 +293,7 @@ body[data-wp="off"] .bg-wp{opacity:0}
 }
 .more-mask{
   position:absolute;inset:0;z-index:2;display:grid;place-items:center;
-  background:rgba(4,9,26,.55);color:#fff;font-size:26px;font-weight:700;
+  background:rgba(0,0,0,.55);color:#fff;font-size:26px;font-weight:700;
   backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);
 }
 .tile-grid.is-empty{display:flex;align-items:center;justify-content:center}
@@ -347,11 +325,11 @@ body[data-wp="off"] .bg-wp{opacity:0}
   width:66px;height:66px;border-radius:50%;display:grid;place-items:center;
   background:var(--card-inner-soft);margin-bottom:4px;
 }
-.dark-body .big-ic svg{width:32px;height:32px;color:#7fb0ff}
+.dark-body .big-ic svg{width:32px;height:32px;color:var(--accent)}
 .dark-body h4{font-size:16.5px;font-weight:630}
 .dark-body p{font-size:13px;color:var(--text-2);line-height:1.6;max-width:240px}
 .dark-body .mini-link{
-  margin-top:8px;font-size:13px;color:#7fb0ff;font-weight:600;
+  margin-top:8px;font-size:13px;color:var(--accent);font-weight:600;
   display:inline-flex;align-items:center;gap:5px;
 }
 .skills-preview{width:100%;display:flex;flex-direction:column;gap:14px;padding:6px 4px 0}
@@ -359,7 +337,7 @@ body[data-wp="off"] .bg-wp{opacity:0}
 .sk-row span{width:52px;flex:none;color:var(--text-2);text-align:left}
 .sk-bar{flex:1;height:6px;border-radius:3px;background:var(--track);overflow:hidden}
 .sk-bar i{display:block;height:100%;border-radius:3px;
-  background:linear-gradient(90deg,#6ea4ff,#9d7bff);width:0;
+  background:linear-gradient(90deg,var(--accent),var(--accent-2));width:0;
   transition:width 1s cubic-bezier(.2,.7,.2,.1)}
 .card.in .sk-bar i{width:var(--v)}
 
@@ -379,7 +357,7 @@ body[data-wp="off"] .bg-wp{opacity:0}
   background:var(--card-inner);display:flex;flex-direction:column;justify-content:center;gap:18px;padding-left:26px}
 .tl-mini .tl-i{position:relative;padding-left:20px;font-size:12.5px;color:var(--text-2)}
 .tl-mini .tl-i::before{content:"";position:absolute;left:0;top:4px;width:9px;height:9px;border-radius:50%;
-  background:linear-gradient(145deg,#6ea4ff,#5b44d6);box-shadow:0 0 0 3px var(--card-inner)}
+  background:linear-gradient(145deg,var(--accent),var(--accent-2));box-shadow:0 0 0 3px var(--card-inner)}
 .tl-mini .tl-i b{display:block;color:var(--text-1);font-size:13px;margin-bottom:2px}
 
 .todo-mini{flex:1;margin:2px 16px 16px;padding:16px 18px;border-radius:14px;
@@ -515,9 +493,9 @@ body[data-wp="off"] .bg-wp{opacity:0}
   display:inline-flex;align-items:center;gap:8px;transition:.2s;
 }
 .btn svg{width:16px;height:16px}
-.btn-primary{background:linear-gradient(145deg,#4d92ff,#2b66e6);color:#fff;
-  box-shadow:0 8px 22px rgba(40,100,230,.45)}
-.btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(40,100,230,.55)}
+.btn-primary{background:linear-gradient(145deg,var(--accent),var(--accent-2));color:var(--accent-fg);
+  box-shadow:0 8px 22px rgba(0,0,0,.32)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(0,0,0,.42)}
 .btn-ghost{background:var(--chip);border:1px solid var(--card-border)}
 .btn-ghost:hover{background:var(--card-inner-soft)}
 .social-list{margin-top:22px;display:flex;flex-direction:column;gap:8px}
@@ -598,12 +576,12 @@ mark{background:rgba(110,164,255,.32);color:inherit;border-radius:4px;padding:0 
 /* 时间线 */
 .timeline{position:relative;margin-left:10px;padding-left:26px}
 .timeline::before{content:"";position:absolute;left:7px;top:8px;bottom:8px;width:2px;
-  background:linear-gradient(var(--accent),rgba(120,90,255,.3))}
+  background:linear-gradient(var(--accent),rgba(128,128,138,.15))}
 .tl-item{position:relative;padding:0 0 26px 6px}
 .tl-item:last-child{padding-bottom:0}
 .tl-item::before{content:"";position:absolute;left:-26px;top:5px;width:14px;height:14px;border-radius:50%;
-  background:linear-gradient(145deg,#6ea4ff,#7d5cff);
-  box-shadow:0 0 0 4px var(--card-inner),0 0 12px rgba(110,140,255,.7)}
+  background:linear-gradient(145deg,var(--accent),var(--accent-2));
+  box-shadow:0 0 0 4px var(--card-inner),0 0 12px rgba(255,255,255,.22)}
 .tl-item time{font-size:12px;color:var(--accent);font-weight:600}
 .tl-item h5{font-size:15px;margin:5px 0 4px}
 .tl-item p{font-size:13px;color:var(--text-2);line-height:1.6}
@@ -619,14 +597,14 @@ mark{background:rgba(110,164,255,.32);color:inherit;border-radius:4px;padding:0 
 .cal-mini-f p{font-size:13px;color:var(--text-2);line-height:1.55;margin:8px 0 8px}
 .cal-mini-meta{font-size:11.5px;color:var(--text-3);letter-spacing:.5px}
 .cap-badge{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:650;
-  color:#fff;background:linear-gradient(135deg,#7d5cff,#4a36c4);padding:4px 11px;border-radius:99px;
-  box-shadow:0 2px 8px rgba(125,92,255,.35)}
+  color:var(--accent-fg);background:linear-gradient(135deg,var(--accent),var(--accent-2));padding:4px 11px;border-radius:99px;
+  box-shadow:0 2px 8px rgba(0,0,0,.28)}
 
 /* 日历弹窗 */
 .cal-bar{display:flex;align-items:center;gap:8px;margin-bottom:12px}
 .cal-nav{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;
   background:var(--chip);color:var(--text-2);transition:.2s}
-.cal-nav:hover{background:var(--accent);color:#fff}
+.cal-nav:hover{background:var(--accent);color:var(--accent-fg)}
 .cal-nav svg{width:17px;height:17px}
 .cal-title{flex:1;text-align:center;font-size:16px;font-weight:650;letter-spacing:.5px}
 .cal-today{padding:7px 15px;font-size:12.5px;border-radius:99px}
@@ -637,13 +615,13 @@ mark{background:rgba(110,164,255,.32);color:inherit;border-radius:4px;padding:0 
 .cal-d{aspect-ratio:1;display:grid;place-items:center;font-size:13.5px;border-radius:50%;
   color:var(--text-1);transition:.15s}
 .cal-d:not(.empty):hover{background:var(--chip)}
-.cal-d.today{background:linear-gradient(145deg,#6ea4ff,#7d5cff);color:#fff;font-weight:700;
-  box-shadow:0 3px 10px rgba(110,140,255,.5)}
+.cal-d.today{background:linear-gradient(145deg,var(--accent),var(--accent-2));color:var(--accent-fg);font-weight:700;
+  box-shadow:0 3px 10px rgba(0,0,0,.35)}
 .cal-d.empty{pointer-events:none}
 
 /* 星座运势卡 */
-.fortune-card{margin-top:14px;background:linear-gradient(160deg,rgba(125,92,255,.14),rgba(74,54,196,.08));
-  border:1px solid rgba(125,92,255,.28);border-radius:18px;padding:18px 20px}
+.fortune-card{margin-top:14px;background:linear-gradient(160deg,rgba(255,255,255,.10),rgba(255,255,255,.03));
+  border:1px solid rgba(255,255,255,.14);border-radius:18px;padding:18px 20px}
 .f-hd{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .f-sign{appearance:none;-webkit-appearance:none;border:none;font:inherit;font-size:11.5px;font-weight:650;cursor:pointer;outline:none;text-align:center;text-align-last:center}
 .f-sign option{color:#1c1c28;background:#fff}
@@ -825,7 +803,7 @@ mark{background:rgba(110,164,255,.32);color:inherit;border-radius:4px;padding:0 
 .asw-txt{flex:1;min-width:0}
 .asw-txt h3{font-size:16.5px;font-weight:650}
 .asw-txt p{font-size:12.5px;color:var(--text-3);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.asw-open{flex:none;display:inline-flex;align-items:center;gap:7px;padding:9px 17px;border-radius:99px;font-size:13px;font-weight:600;color:#fff;background:linear-gradient(145deg,#64d2ff,#5e5ce6);box-shadow:0 4px 14px rgba(94,92,230,.35)}
+.asw-open{flex:none;display:inline-flex;align-items:center;gap:7px;padding:9px 17px;border-radius:99px;font-size:13px;font-weight:600;color:#fff;background:linear-gradient(145deg,var(--accent),var(--accent-2));color:var(--accent-fg);box-shadow:0 4px 14px rgba(0,0,0,.3)}
 .asw-open svg{width:13px;height:13px}
 @media (max-width:820px){.asw-open span{display:none}.asw-open{padding:9px 11px}}
 
@@ -858,7 +836,7 @@ mark{background:rgba(110,164,255,.32);color:inherit;border-radius:4px;padding:0 
 .st-cell b{display:block;font-size:19px;font-weight:600;font-variant-numeric:tabular-nums}
 .st-cell span{display:block;font-size:10.5px;color:var(--text-3);margin-top:3px;white-space:nowrap}
 .st-cell.dl b{color:#30d158}
-.st-cell.ul b{color:#64d2ff}
+.st-cell.ul b{color:var(--text-1)}
 .st-go{width:82px;height:82px;border-radius:50%;flex:none;
   font-size:20px;font-weight:800;letter-spacing:2px;color:#fff;
   background:linear-gradient(160deg,#1d3fb0,#0a84ff);
@@ -879,7 +857,7 @@ mark{background:rgba(110,164,255,.32);color:inherit;border-radius:4px;padding:0 
 .hdw-txt{flex:1;min-width:0}
 .hdw-txt h3{font-size:16.5px;font-weight:650;white-space:nowrap}
 .hdw-txt p{font-size:12.5px;color:var(--text-3);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hdw-open{flex:none;background:linear-gradient(145deg,#bf5af2,#5e5ce6);box-shadow:0 4px 14px rgba(191,90,242,.35)}
+.hdw-open{flex:none;background:linear-gradient(145deg,var(--accent),var(--accent-2));color:var(--accent-fg);box-shadow:0 4px 14px rgba(0,0,0,.3)}
 .ic-hardware{background:linear-gradient(160deg,#bf5af2,#0a84ff)}
 .ic-hardware svg,.hdw-open svg{color:#fff}
 
@@ -889,7 +867,7 @@ mark{background:rgba(110,164,255,.32);color:inherit;border-radius:4px;padding:0 
 .dpw-txt{flex:1;min-width:0}
 .dpw-txt h3{font-size:16.5px;font-weight:650;white-space:nowrap}
 .dpw-txt p{font-size:12.5px;color:var(--text-3);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.dpw-open{flex:none;background:linear-gradient(145deg,#64d2ff,#30d158);box-shadow:0 4px 14px rgba(48,209,88,.3)}
+.dpw-open{flex:none;background:linear-gradient(145deg,var(--accent),var(--accent-2));color:var(--accent-fg);box-shadow:0 4px 14px rgba(0,0,0,.3)}
 .ic-drop{background:linear-gradient(160deg,#64d2ff,#30d158)}
 .ic-drop svg,.dpw-open svg{color:#fff}
 @media (max-width:1100px){
@@ -908,7 +886,7 @@ mark{background:rgba(110,164,255,.32);color:inherit;border-radius:4px;padding:0 
   background:transparent;border:none;outline:none;font-family:inherit;text-transform:uppercase;font-variant-numeric:tabular-nums;padding:2px 0}
 .dp-room-input:focus{border-bottom:1.5px solid var(--accent)}
 .dp-mini{margin-left:10px;font-size:11px;padding:4px 10px;border-radius:99px;background:var(--chip);border:1px solid var(--card-border);color:var(--text-2);cursor:pointer;font-family:inherit;transition:.2s}
-.dp-mini:hover{background:var(--accent);color:#fff;border-color:transparent}
+.dp-mini:hover{background:var(--accent);color:var(--accent-fg);border-color:transparent}
 .dp-namebox input{width:100%;font-size:15px;font-weight:630;background:transparent;border:none;outline:none;color:var(--text-1);font-family:inherit;padding:2px 0}
 .dp-status{font-size:12.5px;color:var(--text-3);text-align:center;min-height:17px}
 .dp-status.ok{color:#30d158}
@@ -917,9 +895,9 @@ mark{background:rgba(110,164,255,.32);color:inherit;border-radius:4px;padding:0 
 .dp-peer{display:flex;flex-direction:column;align-items:center;gap:6px;background:none;border:none;cursor:pointer;font-family:inherit;padding:4px 6px;border-radius:12px;transition:.2s}
 .dp-peer:hover{background:var(--chip);transform:translateY(-2px)}
 .dp-avatar{width:62px;height:62px;border-radius:50%;display:grid;place-items:center;font-size:24px;font-weight:700;color:#fff;
-  background:linear-gradient(150deg,#64d2ff,#0a84ff);box-shadow:0 6px 16px rgba(10,132,255,.35)}
+  background:linear-gradient(150deg,var(--accent),var(--accent-2));color:var(--accent-fg);box-shadow:0 6px 16px rgba(0,0,0,.3)}
 .dp-avatar svg{width:30px;height:30px}
-.dp-peer.me .dp-avatar{background:linear-gradient(150deg,#5e5ce6,#bf5af2);box-shadow:0 6px 16px rgba(191,90,242,.35)}
+.dp-peer.me .dp-avatar{background:linear-gradient(150deg,var(--accent),var(--accent-2));box-shadow:0 6px 16px rgba(0,0,0,.3)}
 .dp-peer span.nm{font-size:11.5px;color:var(--text-2);max-width:92px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dp-peer.me span.nm{color:var(--text-1);font-weight:630}
 /* 拖放文件到设备球：悬停高亮，提示可松手发送 */
@@ -934,7 +912,7 @@ mark{background:rgba(110,164,255,.32);color:inherit;border-radius:4px;padding:0 
 .dp-file .fm b{display:block;font-size:13px;font-weight:630;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dp-file .fm span{font-size:11px;color:var(--text-3)}
 .dp-bar{height:4px;border-radius:2px;background:var(--track);margin-top:5px;overflow:hidden}
-.dp-bar i{display:block;height:100%;width:0;border-radius:2px;background:linear-gradient(90deg,#30d158,#64d2ff);transition:width .2s}
+.dp-bar i{display:block;height:100%;width:0;border-radius:2px;background:linear-gradient(90deg,var(--accent),var(--accent-2));transition:width .2s}
 .dp-save{flex:none;font-size:12px;font-weight:600;padding:7px 14px;border-radius:99px;border:none;color:#fff;
   background:linear-gradient(145deg,#30d158,#0aa562);cursor:pointer;font-family:inherit}
 .dp-save:disabled{opacity:.5;cursor:not-allowed}
@@ -970,7 +948,7 @@ mark{background:rgba(110,164,255,.32);color:inherit;border-radius:4px;padding:0 
 .hw-net-row b{font-size:12.5px;font-weight:600;text-align:right;word-break:break-all;min-width:0}
 .hw-re{align-self:center;border:1px solid var(--card-border);background:var(--chip);color:var(--text-1);
   font-family:inherit;font-size:13px;font-weight:600;padding:9px 22px;border-radius:99px;cursor:pointer;transition:.2s}
-.hw-re:hover{background:var(--accent);color:#fff;border-color:transparent}
+.hw-re:hover{background:var(--accent);color:var(--accent-fg);border-color:transparent}
 .hw-re:disabled{opacity:.55;cursor:not-allowed}
 .hw-meta{font-size:11px;color:var(--text-3);text-align:center;line-height:1.6;word-break:break-all}
 @media (max-width:520px){
@@ -987,7 +965,7 @@ mark{background:rgba(110,164,255,.32);color:inherit;border-radius:4px;padding:0 
 .chat-msgs::-webkit-scrollbar-thumb{background:var(--track);border-radius:4px}
 .msg{max-width:80%;padding:11px 15px;border-radius:17px;font-size:14px;line-height:1.65;white-space:pre-wrap;word-break:break-word;animation:msgIn .25s ease}
 @keyframes msgIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-.msg.user{align-self:flex-end;background:linear-gradient(145deg,#4d92ff,#2b66e6);color:#fff;border-bottom-right-radius:5px;box-shadow:0 3px 10px rgba(43,102,230,.3)}
+.msg.user{align-self:flex-end;background:linear-gradient(145deg,var(--accent),var(--accent-2));color:var(--accent-fg);border-bottom-right-radius:5px;box-shadow:0 3px 10px rgba(0,0,0,.26)}
 .msg.bot{align-self:flex-start;background:var(--card-inner);border:1px solid var(--card-border);color:var(--text-1);border-bottom-left-radius:5px}
 .msg.typing{display:flex;gap:5px;align-items:center;padding:14px 17px}
 .msg.typing i{width:7px;height:7px;border-radius:50%;background:var(--text-3);animation:tp 1.1s ease-in-out infinite}
@@ -996,14 +974,14 @@ mark{background:rgba(110,164,255,.32);color:inherit;border-radius:4px;padding:0 
 @keyframes tp{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-4px);opacity:1}}
 .chat-hello{text-align:center;padding:26px 10px 6px;color:var(--text-2)}
 .chat-hello .ch-ic{width:60px;height:60px;border-radius:18px;margin:0 auto 13px;display:grid;place-items:center;
-  background:linear-gradient(160deg,#64d2ff,#5e5ce6);box-shadow:0 8px 22px rgba(94,92,230,.35)}
+  background:linear-gradient(160deg,var(--accent),var(--accent-2));color:var(--accent-fg);box-shadow:0 8px 22px rgba(0,0,0,.3)}
 .chat-hello .ch-ic svg{width:32px;height:32px;color:#fff}
 .chat-hello h4{font-size:16px;font-weight:650;color:var(--text-1);margin-bottom:5px}
 .chat-hello p{font-size:12.5px}
 .chat-sugg{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:14px 6px 4px}
 .chat-sugg button{font-size:12.5px;padding:8px 14px;border-radius:99px;background:var(--chip);
   border:1px solid var(--card-border);color:var(--text-1);cursor:pointer;transition:.2s;font-family:inherit}
-.chat-sugg button:hover{background:var(--accent);color:#fff;border-color:transparent}
+.chat-sugg button:hover{background:var(--accent);color:var(--accent-fg);border-color:transparent}
 .chat-bar{flex:none;display:flex;gap:10px;padding:14px 16px;border-top:1px solid var(--card-border)}
 .chat-bar input{flex:1;min-width:0;font-size:14px;padding:11px 16px;border-radius:99px;
   background:var(--card-inner);border:1px solid var(--card-border);color:var(--text-1);font-family:inherit;outline:none}
@@ -1018,7 +996,7 @@ mark{background:rgba(110,164,255,.32);color:inherit;border-radius:4px;padding:0 
   background:var(--card-inner);margin-bottom:10px;
 }
 .setting-i .s-ic{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;flex:none;
-  background:linear-gradient(150deg,#8e7bff,#5b44d6)}
+  background:linear-gradient(150deg,var(--accent),var(--accent-2));color:var(--accent-fg)}
 .setting-i .s-ic svg{width:20px;height:20px;color:#fff}
 .setting-i>div{flex:1;min-width:0} /* 中间文字可收缩换行，不挤压两侧 */
 .setting-i h5{font-size:14.5px;font-weight:630}
@@ -1027,11 +1005,11 @@ mark{background:rgba(110,164,255,.32);color:inherit;border-radius:4px;padding:0 
   background:var(--track);transition:.25s;flex:none}
 .switch::after{content:"";position:absolute;top:2.5px;left:3px;width:24px;height:24px;border-radius:50%;
   background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.3);transition:.25s}
-.switch.on{background:linear-gradient(145deg,#4d92ff,#2b66e6)}
+.switch.on{background:linear-gradient(145deg,var(--accent),var(--accent-2))}
 .switch.on::after{left:23px}
 .seg{margin-left:auto;display:flex;background:var(--card-inner);border-radius:11px;padding:3px;gap:2px;flex:none}
 .seg button{padding:7px 14px;border-radius:9px;font-size:12.5px;color:var(--text-2);white-space:nowrap;flex:none}
-.seg button.on{background:var(--accent);color:#fff;font-weight:600}
+.seg button.on{background:var(--accent);color:var(--accent-fg);font-weight:600}
 /* 超窄屏幕：压缩设置行间距，保证图标与主题按钮不挤压 */
 @media(max-width:400px){
   .setting-i{gap:10px;padding:14px}
@@ -1109,7 +1087,7 @@ mark{background:rgba(110,164,255,.32);color:inherit;border-radius:4px;padding:0 
   .photos-grid{grid-template-columns:repeat(2,1fr)}
   .launch-panel{grid-template-columns:repeat(3,1fr);gap:22px 14px;padding:28px 20px}
   .about-grid{grid-template-columns:1fr}
-  .brand small{display:none}
+
   .lb-prev{left:8px}.lb-next{right:8px}
   .win-body{padding:18px 16px 22px}
 }
@@ -1137,7 +1115,7 @@ mark{background:rgba(110,164,255,.32);color:inherit;border-radius:4px;padding:0 
   --nav-bg:rgba(18,30,66,.34);
   --chip:rgba(255,255,255,.12);
   --track:rgba(255,255,255,.16);
-  --scrim:rgba(4,9,26,.46);
+  --scrim:rgba(0,0,0,.46);
 
   --lg-blur:22px;
   --lg-blur-strong:34px;
@@ -1162,8 +1140,8 @@ mark{background:rgba(110,164,255,.32);color:inherit;border-radius:4px;padding:0 
   --lg-inner:inset 0 1px 0 rgba(255,255,255,.22),
              inset 0 -24px 38px -28px rgba(255,255,255,.36),
              inset 0 0 0 .5px rgba(255,255,255,.07);
-  --lg-drop:0 20px 46px rgba(2,6,22,.40), 0 2px 10px rgba(2,6,22,.26);
-  --lg-drop-hi:0 30px 74px rgba(2,6,22,.52), 0 4px 16px rgba(2,6,22,.32);
+  --lg-drop:0 20px 46px rgba(0,0,0,.40), 0 2px 10px rgba(0,0,0,.26);
+  --lg-drop-hi:0 30px 74px rgba(0,0,0,.52), 0 4px 16px rgba(0,0,0,.32);
   --lg-hair:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.22),rgba(255,255,255,0));
 }
 html[data-theme="dark"]{
@@ -1176,7 +1154,7 @@ html[data-theme="dark"]{
   --nav-bg:rgba(18,30,66,.34);
   --chip:rgba(255,255,255,.12);
   --track:rgba(255,255,255,.16);
-  --scrim:rgba(4,9,26,.46);
+  --scrim:rgba(0,0,0,.46);
   --lg-chip:rgba(255,255,255,.09);
   --lg-glare:rgba(255,255,255,.17);
   --lg-sheen:rgba(255,255,255,.07);
@@ -1194,11 +1172,11 @@ html[data-theme="dark"]{
   --lg-inner:inset 0 1px 0 rgba(255,255,255,.22),
              inset 0 -24px 38px -28px rgba(255,255,255,.36),
              inset 0 0 0 .5px rgba(255,255,255,.07);
-  --lg-drop:0 20px 46px rgba(2,6,22,.40), 0 2px 10px rgba(2,6,22,.26);
-  --lg-drop-hi:0 30px 74px rgba(2,6,22,.52), 0 4px 16px rgba(2,6,22,.32);
+  --lg-drop:0 20px 46px rgba(0,0,0,.40), 0 2px 10px rgba(0,0,0,.26);
+  --lg-drop-hi:0 30px 74px rgba(0,0,0,.52), 0 4px 16px rgba(0,0,0,.32);
   --lg-hair:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.22),rgba(255,255,255,0));
-  --shadow:0 20px 46px rgba(2,6,22,.40), 0 2px 10px rgba(2,6,22,.26);
-  --shadow-hover:0 30px 74px rgba(2,6,22,.52), 0 4px 16px rgba(2,6,22,.32);
+  --shadow:0 20px 46px rgba(0,0,0,.40), 0 2px 10px rgba(0,0,0,.26);
+  --shadow-hover:0 30px 74px rgba(0,0,0,.52), 0 4px 16px rgba(0,0,0,.32);
 }
 html[data-theme="light"]{
   --card-bg:rgba(255,255,255,.44);
@@ -1242,20 +1220,8 @@ html[data-theme="light"]{
 @keyframes lgDrift1{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(6vw,4vh,0) scale(1.14)}}
 @keyframes lgDrift2{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(-7vw,6vh,0) scale(1.10)}}
 @keyframes lgDrift3{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(4vw,-6vh,0) scale(1.16)}}
-.bg::after{
-  content:"";position:absolute;inset:-25%;
-  background:conic-gradient(from 200deg at 34% 42%,
-    rgba(110,170,255,.16),rgba(170,130,255,.13),rgba(90,220,255,.10),
-    rgba(140,160,255,.14),rgba(110,170,255,.16));
-  filter:blur(72px);
-  animation:lgAurora 38s ease-in-out infinite alternate;
-  pointer-events:none;
-}
-html[data-theme="light"] .bg::after{
-  background:conic-gradient(from 200deg at 34% 42%,
-    rgba(150,190,255,.30),rgba(195,170,255,.24),rgba(150,220,255,.22),
-    rgba(170,190,255,.26),rgba(150,190,255,.30));
-}
+/* 旧版极光装饰层：停用（背景改为完全由「壁纸背景」开关决定） */
+.bg::after{display:none}
 @keyframes lgAurora{from{transform:translate3d(-3%,-2%,0) scale(1)}to{transform:translate3d(3%,2%,0) scale(1.08)}}
 /* 玻璃颗粒：叠在壁纸之上、所有内容之下，会被玻璃的 backdrop-filter 一并折射 */
 .bg-wp::after{
@@ -1281,7 +1247,7 @@ body[data-motion="off"] .bg-blob,body[data-motion="off"] .bg::after{animation:no
 /* 只有原本就是 static 的窗口类面板才需要建立定位上下文，供伪元素定位 */
 :is(.window,.launch-panel){position:relative}
 /* 顶栏是固定条，阴影单独收紧 */
-.nav{box-shadow:0 10px 32px rgba(2,6,22,.34),var(--lg-inner)}
+.nav{box-shadow:0 10px 32px rgba(0,0,0,.34),var(--lg-inner)}
 html[data-theme="light"] .nav{box-shadow:0 10px 32px rgba(40,60,120,.14),var(--lg-inner)}
 .nav{border-bottom-color:transparent;
   background-image:var(--lg-hair);background-size:100% 1px;
@@ -1341,22 +1307,21 @@ html[data-theme="light"] :is(.dark-body,.note-preview,.tl-mini,.todo-mini,.tile-
   background:var(--lg-chip);
   backdrop-filter:blur(14px) saturate(170%);
   -webkit-backdrop-filter:blur(14px) saturate(170%);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.24),0 2px 10px rgba(2,6,22,.18);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.24),0 2px 10px rgba(0,0,0,.18);
 }
 html[data-theme="light"] :is(.icon-btn,.win-close,.lb-btn,.banner-arrow){
   box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 2px 10px rgba(40,60,120,.14);
 }
 /* 注意：.mini-play 原本就是 position:absolute（钉在卡片右下角），不能改成 relative */
-.brand-mark,.nav-avatar,.app-ic,.prof-ring,.seg button.on,
+.nav-avatar,.app-ic,.prof-ring,.seg button.on,
 .btn-primary,.switch.on{position:relative}
-.brand-mark::before,.nav-avatar::before,.app-ic::before,.mini-play::before,
+.nav-avatar::before,.app-ic::before,.mini-play::before,
 .prof-ring::before,.seg button.on::before,.btn-primary::before,.switch.on::before{
   content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
   background:linear-gradient(180deg,rgba(255,255,255,.46),rgba(255,255,255,.12) 44%,rgba(255,255,255,0) 64%);
 }
 /* 小圆播放键本身是高饱和色块，釉面调淡一点，避免盖住播放图标 */
 .mini-play::before{background:linear-gradient(180deg,rgba(255,255,255,.30),rgba(255,255,255,0) 58%)}
-.brand-mark::before{background:linear-gradient(180deg,rgba(255,255,255,.5),rgba(255,255,255,.1) 52%,transparent 70%)}
 .nav-avatar{position:relative}
 .nav-avatar::before{background:linear-gradient(180deg,rgba(255,255,255,.4),transparent 55%);
   border-radius:50%;box-shadow:inset 0 0 0 1px rgba(255,255,255,.35)}
@@ -1384,7 +1349,7 @@ html[data-theme="light"] :is(.chip,.tag,.seg,.pop-item,.cal-nav,.win-close,.todo
 .tile-grid{gap:6px;padding:6px 6px 0}
 .tile{border-radius:9px}
 .more-mask{
-  background:rgba(4,9,26,.42);
+  background:rgba(0,0,0,.42);
   backdrop-filter:blur(7px) saturate(160%);
   -webkit-backdrop-filter:blur(7px) saturate(160%);
 }
@@ -1416,7 +1381,7 @@ html[data-theme="light"] .more-mask{background:rgba(250,252,255,.5);color:var(--
 /* ---------- 8. 排版微调 ---------- */
 .card-hd .hd-text h3,.win-hd h3,.banner h1{letter-spacing:.2px}
 .banner h1{font-size:18.5px}
-.dark-body .mini-link{text-shadow:0 0 18px rgba(127,176,255,.45)}
+.dark-body .mini-link{text-shadow:none}
 .footer a{border-bottom-color:transparent}
 .footer a:hover{border-bottom-color:var(--card-border)}
 
@@ -1436,6 +1401,11 @@ html[data-theme="light"] .more-mask{background:rgba(250,252,255,.5);color:var(--
   var picked=false;
   try{picked=localStorage.getItem('jy-theme-chosen')==='1';}catch(e){}
   document.documentElement.dataset.theme=(picked&&s.theme)?s.theme:'clear';
+  /* 背景图（「背景」文件夹里选的那张）也提前写进 CSS 变量，
+     刷新时不会先空一下再铺上；名字做 URL 编码，避免文件名里的引号/括号破坏 url() */
+  if(typeof s.wpImg==='string'&&s.wpImg){
+    document.documentElement.style.setProperty('--wp-img','url("背景/'+encodeURIComponent(s.wpImg)+'")');
+  }
   if(!on){
     var el=document.getElementById('liquid-glass');
     if(el)el.disabled=true;
@@ -1505,9 +1475,12 @@ html.mo-theme,html.mo-theme *:not(.bg-blob):not(.bg-wp){
 </style>
 <style id="theme-clear">
 /* ========================= 透明主题（clear） =========================
-   在「外观主题」里与深色 / 浅色并列的第三档：所有组件不再填色，
-   只保留磨砂模糊 + 折射棱边 + 发丝分割线，让背景渐变和壁纸直接透出来。
+   在「外观主题」里与深色 / 浅色并列的第三档，也是默认主题：
+   组件完全不填色，只留磨砂模糊 + 折射棱边 + 发丝分割线；
+   背景与深色 / 浅色一致，只由「壁纸背景」开关决定。
    整块独立成表，删除即回滚（该主题会退化成普通深色）。 */
+
+/* 0. 背景：与其他主题一致，只由「壁纸背景」开关决定，本主题不额外加任何底色 */
 
 /* 1. 玻璃层令牌：把「内嵌釉光」也调成透明，只留棱边 */
 html[data-theme="clear"]{
@@ -1528,8 +1501,8 @@ html[data-theme="clear"]{
   --lg-inner:inset 0 1px 0 rgba(255,255,255,.22),
              inset 0 -24px 38px -28px rgba(255,255,255,.26),
              inset 0 0 0 .5px rgba(255,255,255,.08);
-  --lg-drop:0 20px 46px rgba(2,6,22,.24), 0 2px 10px rgba(2,6,22,.14);
-  --lg-drop-hi:0 30px 74px rgba(2,6,22,.34), 0 4px 16px rgba(2,6,22,.18);
+  --lg-drop:0 20px 46px rgba(0,0,0,.24), 0 2px 10px rgba(0,0,0,.14);
+  --lg-drop-hi:0 30px 74px rgba(0,0,0,.34), 0 4px 16px rgba(0,0,0,.18);
   --lg-hair:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.28),rgba(255,255,255,0));
 }
 
@@ -1540,13 +1513,13 @@ html[data-theme="clear"] :is(.nav,.banner,.card,.window,.popover,.launch-panel,.
   -webkit-backdrop-filter:blur(30px) saturate(165%);
 }
 html[data-theme="clear"] :is(.banner,.card){
-  box-shadow:0 16px 44px rgba(2,6,22,.24),inset 0 1px 0 rgba(255,255,255,.16);
+  box-shadow:0 16px 44px rgba(0,0,0,.24),inset 0 1px 0 rgba(255,255,255,.16);
 }
 html[data-theme="clear"] :is(.banner,.card):hover{
-  box-shadow:0 24px 62px rgba(2,6,22,.32),inset 0 1px 0 rgba(255,255,255,.24);
+  box-shadow:0 24px 62px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,255,255,.24);
 }
-html[data-theme="clear"] .nav{box-shadow:0 10px 30px rgba(2,6,22,.2),inset 0 1px 0 rgba(255,255,255,.12)}
-html[data-theme="clear"].mo-scrolled .nav{box-shadow:0 14px 34px rgba(2,6,22,.28)}
+html[data-theme="clear"] .nav{box-shadow:0 10px 30px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,255,255,.12)}
+html[data-theme="clear"].mo-scrolled .nav{box-shadow:0 14px 34px rgba(0,0,0,.28)}
 
 /* 3. 浮层（加号菜单 / 提示条 / 九宫格面板）：留一丝白，免得文字飘在花背景上不好认 */
 html[data-theme="clear"] :is(.popover,.launch-panel,.toast){
@@ -1561,7 +1534,7 @@ html[data-theme="clear"] .lightbox{background:rgba(3,7,20,.46)}
 html[data-theme="clear"] .lb-btn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.22)}
 html[data-theme="clear"] .lb-btn:hover{background:rgba(255,255,255,.18)}
 html[data-theme="clear"] .lb-count{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2)}
-html[data-theme="clear"] .more-mask{background:rgba(4,9,26,.3)}
+html[data-theme="clear"] .more-mask{background:rgba(0,0,0,.3)}
 
 /* 5. 控件与列表行：描边更淡，透明底上不再出现「框中框」 */
 html[data-theme="clear"] :is(.chip,.tag,.seg,.dp-file,.hw-cell,.setting-i,.tile-grid-wrap,.cal-panel){
@@ -1570,6 +1543,47 @@ html[data-theme="clear"] :is(.chip,.tag,.seg,.dp-file,.hw-cell,.setting-i,.tile-
 html[data-theme="clear"] :is(.win-hd,.chat-bar){border-color:rgba(255,255,255,.14)}
 html[data-theme="clear"] .win-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,.22)}
 html[data-theme="clear"] .switch:not(.on){background:rgba(255,255,255,.16)}
+</style>
+<style id="wallpaper-picker">
+/* ===================== 设置 · 背景图片选择器 =====================
+   背景图与「图片」文件夹同样自动扫描站点根目录下的「背景」文件夹，
+   选中项记在 localStorage（jy-settings.wpImg），并写入 --wp-img 作用到 .bg-wp；
+   第一项「纯色」= 不铺任何图，只显示中性底色。 */
+.wp-card{padding:16px 18px 18px;border-radius:15px;background:var(--card-inner);margin-bottom:10px}
+.wp-head{display:flex;align-items:flex-start;gap:12px;margin-bottom:12px}
+.wp-head>div{flex:1;min-width:0}
+.wp-head h5{font-size:14.5px;font-weight:630}
+.wp-head p{font-size:12px;color:var(--text-2);margin-top:2px}
+.wp-cur{
+  flex:none;max-width:45%;font-size:11.5px;padding:5px 11px;border-radius:999px;
+  background:var(--chip);color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.wp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px}
+.wp-item{
+  position:relative;display:block;padding:0;aspect-ratio:16/10;border-radius:12px;overflow:hidden;
+  background:var(--chip);border:1px solid var(--card-border);
+  transition:transform .28s cubic-bezier(.22,1,.36,1),border-color .28s,box-shadow .28s;
+}
+.wp-item img{width:100%;height:100%;object-fit:cover}
+.wp-item:hover{transform:translateY(-3px);border-color:var(--card-border-hover)}
+.wp-item.on{border-color:var(--accent);box-shadow:inset 0 0 0 2px var(--accent)}
+.wp-tick{
+  position:absolute;right:6px;top:6px;width:20px;height:20px;border-radius:50%;
+  display:none;place-items:center;background:var(--accent);color:var(--accent-fg);
+  box-shadow:0 2px 8px rgba(0,0,0,.35);
+}
+.wp-tick svg{width:12px;height:12px}
+.wp-item.on .wp-tick{display:grid}
+.wp-none{position:relative;display:grid;place-items:center;align-content:center;gap:5px}
+.wp-none em{font-size:11.5px;font-style:normal;color:var(--text-3)}
+.wp-none.on em{color:var(--text-1)}
+.wp-sk{aspect-ratio:16/10;border-radius:12px;background:var(--chip);border:1px solid var(--card-border);opacity:.45}
+.wp-hint{font-size:12px;color:var(--text-3);line-height:1.75}
+.wp-hint b{color:var(--text-1);font-weight:600}
+@media (max-width:640px){
+  .wp-grid{grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px}
+  .wp-card{padding:14px}
+}
 </style>
 </head>
 <body data-wp="on" data-motion="on">
@@ -1585,8 +1599,7 @@ html[data-theme="clear"] .switch:not(.on){background:rgba(255,255,255,.16)}
 <!-- 顶部导航 -->
 <header class="nav">
   <div class="brand">
-    <span class="brand-mark">鉴</span>
-    <span><strong>鉴业</strong><small>JIANYE CLOUD</small></span>
+    <span><strong>Jianye Cloud</strong></span>
   </div>
   <div class="nav-actions">
     <button class="icon-btn" id="plusBtn" aria-label="快捷操作" title="快捷操作">
@@ -1833,6 +1846,7 @@ html[data-theme="clear"] .switch:not(.on){background:rgba(255,255,255,.16)}
 <script>
 /* ========================= 图标库 ========================= */
 const ICONS = {
+  wallpaper:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="m4.5 17.5 4.5-4.5 3.6 3.4L16 13l4 4.2"/></svg>',
   photos:'<svg viewBox="0 0 48 48"><g fill="#fff"><path d="M24 12a13 13 0 0 0-9.6 21.6A13 13 0 0 0 33 35.4 13 13 0 0 0 24 12z" opacity=".95"/><g fill="#ff375f"><circle cx="24" cy="11" r="6.2"/><circle cx="36" cy="18" r="6.2"/></g><circle cx="38" cy="30" r="6.2" fill="#ff9f0a"/><circle cx="31" cy="40" r="6.2" fill="#bf5af2"/><circle cx="17" cy="40" r="6.2" fill="#5e5ce6"/><circle cx="10" cy="30" r="6.2" fill="#0a84ff"/><circle cx="12" cy="18" r="6.2" fill="#30d158"/><circle cx="24" cy="25.5" r="7.6" fill="#fff"/></g></svg>',
   mail:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2.5" y="4.5" width="19" height="15" rx="3"/><path d="m3.5 6.5 8.5 6.5 8.5-6.5"/></svg>',
   drive:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"><path d="M3 10a4 4 0 0 1 4-4 5 5 0 0 1 9.6-1.5A4.5 4.5 0 0 1 21 13.5 4.5 4.5 0 0 1 16.5 18H7a4 4 0 0 1-4-8z"/></svg>',
@@ -1880,6 +1894,11 @@ const MUSIC_DIR = '音乐/';
 const AUDIO_RE = /\.(mp3|m4a|flac|wav|ogg|opus|aac|wma)$/i;
 let songs = [];         // [{src, name}]
 let musicStatus='loading';
+/* 背景图来自站点根目录下的「背景」文件夹：自动扫描，增删图片后刷新即可 */
+const BG_DIR = '背景/';
+let wallpapers = [];    // [{src, name}]
+let wpStatus = 'loading';
+let wpChosen = '';      // 当前选中的背景文件名，'' = 纯色（不铺图）
 
 const PROJECTS = [
   {t:'一键系统重装',d:'让系统重装变得像点一下按钮那样简单的工具站。',tags:['系统工具','Windows'],u:'https://jianyeos.mysxl.cn/',ic:'drive',c1:'#5b8cff',c2:'#3a4fd6'},
@@ -1941,11 +1960,14 @@ function esc(s){return s.replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;
 
 /* ========================= 卡片预览渲染 ========================= */
 // 照片墙
-const PH_PALETTES=[['#3a5bbf','#17265e'],['#4a3fb0','#1b1746'],['#2f6fb0','#102a4a']];
+const PH_PALETTES=[['rgba(255,255,255,.09)','rgba(255,255,255,.02)'],['rgba(255,255,255,.07)','rgba(255,255,255,.015)'],['rgba(255,255,255,.08)','rgba(255,255,255,.025)']];
 function makeTile(ph,i){
   const d=document.createElement('div');
   d.className='tile';
-  const pal=PH_PALETTES[i%3];
+  // 占位色块中性（照片未加载时的骨架），不带任何主题色
+  const pal=document.documentElement.dataset.theme==='light'
+    ? ['rgba(0,0,0,.07)','rgba(0,0,0,.02)']
+    : PH_PALETTES[i%3];
   d.style.setProperty('--p1',pal[0]); d.style.setProperty('--p2',pal[1]);
   if(ph){
     const img=new Image();
@@ -2040,6 +2062,63 @@ async function loadPhotos(){
   META.photos[3]='图库 · '+photos.length+' 张照片';
   renderHomeTiles();
   if(currentApp==='photos'){ $('#window .win-body').innerHTML=T.photos(); bindWindow('photos'); }
+}
+
+/* ========================= 背景图片（扫描「背景」文件夹） =========================
+   和「图片」文件夹走同一套 listDirFiles：本地服务器读目录列表，
+   静态托管回退 GitHub API 列目录。选择结果写进 --wp-img，直接作用在 .bg-wp 上。 */
+function wpSrc(name){ return BG_DIR+encodeURIComponent(name); }
+function applyWallpaper(name,persist){
+  wpChosen=name||'';
+  document.documentElement.style.setProperty('--wp-img',wpChosen?`url("${wpSrc(wpChosen)}")`:'none');
+  if(persist!==false)saveSettings();
+}
+async function loadWallpapers(){
+  const urls=await listDirFiles(BG_DIR,IMG_RE);
+  if(urls){
+    wallpapers=urls.map(src=>{
+      const file=decodeURIComponent(src.split('/').pop().split('?')[0]);
+      return {src,name:file};
+    }).sort((a,b)=>b.name.localeCompare(a.name,'zh-Hans-CN',{numeric:true}));
+    wpStatus='ready';
+  }else{
+    wpStatus='error'; wallpapers=[];
+  }
+  // 上次选的图被删掉了 → 回到纯色，避免留一个打不开的背景
+  if(wpChosen && !wallpapers.some(w=>w.name===wpChosen))applyWallpaper('',false);
+  if(currentApp==='settings'){ $('#window .win-body').innerHTML=T.settings(); bindWindow('settings'); }
+}
+/* 设置面板里的背景选择区 */
+function wpPickerHtml(){
+  let body;
+  if(wpStatus==='loading'){
+    body='<div class="wp-grid">'+Array.from({length:8},()=>'<span class="wp-sk"></span>').join('')+'</div>';
+  }else if(!wallpapers.length){
+    body=`<p class="wp-hint">
+      <b>「背景」文件夹${wpStatus==='error'?'读取失败':'还是空的'}</b><br>
+      ${wpStatus==='error'
+        ? '用本地服务器打开本页即可自动读取；静态托管时会回退到 GitHub 仓库列目录。'
+        : '把图片放进站点的「背景」文件夹后刷新页面，就会出现在这里。'}</p>`;
+  }else{
+    const none=`<button class="wp-item wp-none ${wpChosen?'':'on'}" data-wp-pick="" title="不铺背景图">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M8.5 15.5 12 11l3 3.5" opacity=".55"/></svg>
+      <em>纯色</em><span class="wp-tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span></button>`;
+    const items=wallpapers.map(w=>`
+      <button class="wp-item ${wpChosen===w.name?'on':''}" data-wp-pick="${esc(w.name)}" title="${esc(w.name)}">
+        <img src="${w.src}" alt="${esc(w.name)}" loading="lazy">
+        <span class="wp-tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+      </button>`).join('');
+    body='<div class="wp-grid">'+none+items+'</div>';
+  }
+  const cur=wpChosen?esc(wpChosen.replace(/\.[^.]+$/,'')):'纯色';
+  const sub=wpStatus==='loading'?'正在扫描「背景」文件夹…'
+    :wpStatus==='error'?'「背景」文件夹读取失败'
+    :`来自站点的「背景」文件夹 · 共 ${wallpapers.length} 张 · 点击即可切换`;
+  return `<div class="wp-card">
+    <div class="wp-head">
+      <div><h5>背景图片</h5><p>${sub}</p></div>
+      <span class="wp-cur" title="${cur}">${cur}</span>
+    </div>${body}</div>`;
 }
 
 /* ========================= 全局音乐播放器 ========================= */
@@ -2225,7 +2304,7 @@ const T = {
       <div class="st-gauge">
         <svg viewBox="0 0 200 118">
           <defs><linearGradient id="stGrad" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0" stop-color="#30d158"/><stop offset=".55" stop-color="#64d2ff"/><stop offset="1" stop-color="#0a84ff"/>
+            <stop offset="0" stop-color="#e9eaee"/><stop offset=".55" stop-color="#9fa1a8"/><stop offset="1" stop-color="#55575e"/>
           </linearGradient></defs>
           <path class="st-arc-bg" d="M24 104 A76 76 0 0 1 176 104" pathLength="100"/>
           <path class="st-arc" id="stArc" d="M24 104 A76 76 0 0 1 176 104" pathLength="100" stroke-dasharray="0 100" style="opacity:0"/>
@@ -2402,7 +2481,7 @@ const T = {
     <div class="skill-group"><h5>${g.g}</h5>
       <div class="skill-bars">${g.items.map(it=>`
         <div class="skill-line"><span>${it[0]}</span>
-          <div class="sk-bar"><i style="--v:${it[1]}%;width:${it[1]}%;background:linear-gradient(90deg,#6ea4ff,#9d7bff)"></i></div>
+          <div class="sk-bar"><i style="--v:${it[1]}%;width:${it[1]}%;background:linear-gradient(90deg,var(--accent),var(--accent-2))"></i></div>
           <em>${it[1]}%</em></div>`).join('')}</div>
     </div>`).join(''),
   calendar:()=>{
@@ -2553,13 +2632,14 @@ const T = {
     </div>`,
   settings:()=>`
     <div class="setting-i">
-      <span class="s-ic">${ICONS.fav}</span>
-      <div><h5>壁纸背景</h5><p>在蓝色渐变上叠加我的夜景壁纸</p></div>
+      <span class="s-ic">${ICONS.wallpaper}</span>
+      <div><h5>壁纸背景</h5><p>背景是独立功能：开启后显示下面选中的背景图，关闭则只留纯色底（与深浅色主题无关）</p></div>
       <span class="switch ${document.body.dataset.wp!=='off'?'on':''}" id="swWp"></span>
     </div>
+    ${wpPickerHtml()}
     <div class="setting-i">
       <span class="s-ic" style="background:linear-gradient(145deg,#4cc8ff,#1f6fe0)">${ICONS.about}</span>
-      <div><h5>外观主题</h5><p>组件全部透明（默认），也可切换深色的夜、浅色的白天</p></div>
+      <div><h5>外观主题</h5><p>只改变组件配色：透明（默认）/ 深色黑玻璃 / 浅色白玻璃，不携带背景</p></div>
       <span class="seg">
         <button data-theme-btn="clear" class="${document.documentElement.dataset.theme==='clear'?'on':''}">透明</button>
         <button data-theme-btn="dark" class="${document.documentElement.dataset.theme==='dark'?'on':''}">深色</button>
@@ -2948,7 +3028,21 @@ function bindWindow(id){
     $('#swWp').onclick=function(){
       const on=document.body.dataset.wp!=='off';
       document.body.dataset.wp=on?'off':'on';saveSettings();this.classList.toggle('on',!on);
+      if(!on&&!wpChosen)toast('背景已开启，但还没选图，目前仍是纯色底');
     };
+    // 背景图选择：点缩略图即切换，第一项「纯色」= 不铺图
+    $$('#window [data-wp-pick]').forEach(b=>b.onclick=()=>{
+      const name=b.dataset.wpPick||'';
+      applyWallpaper(name);
+      $$('#window [data-wp-pick]').forEach(x=>x.classList.toggle('on',x===b));
+      const cur=$('#window .wp-cur');
+      if(cur){ cur.textContent=name?name.replace(/\.[^.]+$/,''):'纯色'; cur.title=cur.textContent; }
+      if(name&&document.body.dataset.wp==='off'){          // 选了图顺手把背景开关打开
+        document.body.dataset.wp='on';saveSettings();
+        const sw=$('#swWp'); if(sw)sw.classList.add('on');
+      }
+      toast(name?'背景已切换':'已切回纯色底');
+    });
     $('#swMotion').onclick=function(){
       const on=document.body.dataset.motion!=='off';
       document.body.dataset.motion=on?'off':'on';saveSettings();this.classList.toggle('on',!on);
@@ -4426,7 +4520,8 @@ function saveSettings(){
   localStorage.setItem('jy-settings',JSON.stringify({
     theme:document.documentElement.dataset.theme,
     wp:document.body.dataset.wp,motion:document.body.dataset.motion,
-    glass:glassEnabled()?'on':'off'
+    glass:glassEnabled()?'on':'off',
+    wpImg:wpChosen            // 选中的背景文件名，'' = 纯色
   }));
 }
 (function initSettings(){
@@ -4439,6 +4534,8 @@ function saveSettings(){
   document.body.dataset.motion=s.motion||'on';
   // head 里的脚本已经处理过一次；这里兜底同步，且不写回存储
   applyGlass(s.glass!=='off',false);
+  // 背景图：恢复上次选中的那张（'' / 没存过 = 纯色），同样不写回存储
+  applyWallpaper(typeof s.wpImg==='string'?s.wpImg:'',false);
 })();
 
 /* ========================= 入场动画 ========================= */
@@ -4466,6 +4563,7 @@ if('IntersectionObserver' in window){
 
 /* ========================= 读取图片文件夹 ========================= */
 loadPhotos();
+loadWallpapers();
 loadMusic();
 loadNotes();
 fetchWeather();
