@@ -434,6 +434,15 @@ body[data-wp="off"] .bg-wp{opacity:0}
 .win-ext:hover{background:var(--card-border-hover);color:var(--text-1);border-color:var(--card-border-hover)}
 .win-ext svg{width:13px;height:13px;flex:none}
 .win-ext+.win-close{margin-left:0}
+/* 手机端：空间不足，只留外链图标（圆形，与关闭按钮同规格），避免文字被挤压溢出 */
+@media (max-width:640px){
+  .win-ext{width:34px;height:34px;padding:0;justify-content:center;border-radius:50%}
+  .win-ext .win-ext-tx{display:none}
+  .win-ext svg{width:16px;height:16px}
+  .win-ext+.win-close{margin-left:8px}
+  .window.drop .win-ext,.window.drop .win-close{flex:none}
+  .window.drop .win-hd > div{min-width:0}
+}
 .win-body{padding:22px 24px 26px;overflow-y:auto}
 .win-body::-webkit-scrollbar{width:8px}
 .win-body::-webkit-scrollbar-thumb{background:var(--track);border-radius:4px}
@@ -3036,7 +3045,7 @@ function openApp(id){
     <div class="win-hd">
       <span class="app-ic ${m[1]}">${ICONS[m[2]]}</span>
       <div><h3 id="winTitle">${m[0]}</h3><p>${m[3]}</p></div>
-      ${id==='drop'?`<a class="win-ext" href="https://jianye.pages.dev/drop" target="_blank" rel="noopener" title="在新标签页打开独立版文件传送">独立版<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6"/><path d="M20 4 11 13"/><path d="M19 14v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h5"/></svg></a>`:''}
+      ${id==='drop'?`<a class="win-ext" href="https://jianye.pages.dev/drop" target="_blank" rel="noopener" title="打开独立版文件传送（新标签页）"><span class="win-ext-tx">独立版</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6"/><path d="M20 4 11 13"/><path d="M19 14v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h5"/></svg></a>`:''}
       <button class="win-close" id="winClose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
     </div>
     <div class="win-body">${T[id]()}</div>`;
