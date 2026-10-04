@@ -1,0 +1,4 @@
+# Cloudflare Pages 重写规则
+# /search?q=xxx  →  /search.html(保持 URL 不变)
+
+/search  /search.html  200

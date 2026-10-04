@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>鉴业的浏览器主页</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --text: #1f1f1f;
+    --subtle: #666666;
+    --box-bg: #f3f3f3;
+    --box-border: #e0e0e0;
+    --btn-bg: #1f1f1f;
+    --btn-text: #ffffff;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1f1f1f;
+      --text: #f3f3f3;
+      --subtle: #9a9a9a;
+      --box-bg: #2b2b2b;
+      --box-border: #3a3a3a;
+      --btn-bg: #f3f3f3;
+      --btn-text: #1f1f1f;
+    }
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    transition: background .3s ease, color .3s ease;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 48px;
+    user-select: none;
+  }
+
+  /* 时钟 */
+  #clock {
+    font-size: clamp(56px, 10vw, 110px);
+    font-weight: 200;
+    letter-spacing: 2px;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+
+  #date {
+    text-align: center;
+    color: var(--subtle);
+    font-size: 15px;
+    margin-top: 14px;
+    font-weight: 300;
+    letter-spacing: 1px;
+  }
+
+  /* 搜索框 */
+  .search-wrap {
+    width: min(620px, 86vw);
+    position: relative;
+  }
+
+  .search-box {
+    display: flex;
+    align-items: center;
+    background: var(--box-bg);
+    border: 1px solid var(--box-border);
+    border-radius: 999px;
+    padding: 6px 8px 6px 22px;
+    transition: background .3s ease, border-color .3s ease, box-shadow .2s ease;
+  }
+
+  .search-box:focus-within {
+    border-color: var(--subtle);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, .12);
+  }
+
+  .search-box svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: var(--subtle);
+    stroke-width: 2;
+    stroke-linecap: round;
+    flex-shrink: 0;
+  }
+
+  #search-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--text);
+    font-size: 16px;
+    padding: 12px 14px;
+  }
+
+  #search-input::placeholder { color: var(--subtle); }
+
+  #search-btn {
+    border: none;
+    outline: none;
+    background: var(--btn-bg);
+    color: var(--btn-text);
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: opacity .2s ease, background .3s ease, color .3s ease;
+  }
+
+  #search-btn:hover { opacity: .85; }
+
+  #search-btn svg {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+  }
+
+  /* 引擎切换 */
+  .engines {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  .eng {
+    font: inherit;
+    font-size: 12.5px;
+    color: var(--subtle);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    padding: 4px 13px;
+    cursor: pointer;
+    transition: all .2s ease;
+  }
+
+  .eng:hover { color: var(--text); border-color: var(--box-border); }
+
+  .eng.active {
+    color: var(--btn-text);
+    background: var(--btn-bg);
+  }
+
+  /* 联想下拉 */
+  #suggest-panel {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    background: var(--box-bg);
+    border: 1px solid var(--box-border);
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 10px 32px rgba(0, 0, 0, .16);
+    display: none;
+    z-index: 10;
+  }
+
+  #suggest-panel.show { display: block; }
+
+  .sug-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 22px;
+    font-size: 15px;
+    cursor: pointer;
+    color: var(--text);
+  }
+
+  .sug-item svg {
+    width: 15px;
+    height: 15px;
+    fill: none;
+    stroke: var(--subtle);
+    stroke-width: 2;
+    stroke-linecap: round;
+    flex-shrink: 0;
+  }
+
+  .sug-item.active, .sug-item:hover { background: var(--btn-bg); color: var(--btn-text); }
+  .sug-item.active svg, .sug-item:hover svg { stroke: var(--btn-text); }
+
+  .sug-item b { font-weight: 600; }
+</style>
+</head>
+<body>
+
+  <div>
+    <div id="clock">00:00</div>
+    <div id="date"></div>
+  </div>
+
+  <div class="search-wrap">
+    <form class="search-box" id="search-form">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="11" cy="11" r="7"></circle>
+        <line x1="16.5" y1="16.5" x2="21" y2="21"></line>
+      </svg>
+      <input id="search-input" type="text" placeholder="搜索网页…" autocomplete="off" autofocus>
+      <button id="search-btn" type="submit" title="搜索">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </button>
+    </form>
+    <div id="suggest-panel"></div>
+  </div>
+
+  <div class="engines" id="engines"></div>
+
+<script>
+  /* ---------- 搜索引擎配置 ---------- */
+  // 第一个是自建引擎(本站 /search),其余为外部引擎。
+  // 若自建后端未部署好,切到外部引擎仍可正常使用。
+  const ENGINES = [
+    { id: 'mine',   name: '本站',        build: q => '/search?q=' + encodeURIComponent(q) },
+    { id: 'google', name: 'Google',      build: q => 'https://www.google.com/search?q=' + encodeURIComponent(q) },
+    { id: 'bing',   name: 'Bing',        build: q => 'https://www.bing.com/search?q=' + encodeURIComponent(q) },
+    { id: 'ddg',    name: 'DuckDuckGo',  build: q => 'https://duckduckgo.com/?q=' + encodeURIComponent(q) },
+  ];
+
+  let engineId = localStorage.getItem('engine') || 'mine';
+  if (!ENGINES.some(e => e.id === engineId)) engineId = 'mine';
+
+  const enginesEl = document.getElementById('engines');
+  enginesEl.innerHTML = ENGINES.map(e =>
+    `<button class="eng${e.id === engineId ? ' active' : ''}" data-id="${e.id}" type="button">${e.name}</button>`
+  ).join('');
+
+  enginesEl.addEventListener('click', (ev) => {
+    const btn = ev.target.closest('.eng');
+    if (!btn) return;
+    engineId = btn.dataset.id;
+    localStorage.setItem('engine', engineId);
+    enginesEl.querySelectorAll('.eng').forEach(b => b.classList.toggle('active', b.dataset.id === engineId));
+    // 切换引擎后,联想词源同步切换(本站/Bing 用百度联想,Google 用 Google 联想)
+    if (input.value.trim()) { sugItems = []; fetchSuggest(input.value.trim()); }
+    input.focus();
+  });
+
+  function currentEngine() {
+    return ENGINES.find(e => e.id === engineId) || ENGINES[0];
+  }
+
+  /* ---------- 时钟 ---------- */
+  const clockEl = document.getElementById('clock');
+  const dateEl = document.getElementById('date');
+  const weekDays = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
+
+  function pad(n) { return String(n).padStart(2, '0'); }
+
+  function tick() {
+    const now = new Date();
+    clockEl.textContent = pad(now.getHours()) + ':' + pad(now.getMinutes());
+    dateEl.textContent = now.getFullYear() + ' 年 ' + (now.getMonth() + 1) + ' 月 ' + now.getDate() + ' 日 · ' + weekDays[now.getDay()];
+  }
+  tick();
+  setInterval(tick, 1000);
+
+  /* ---------- 搜索 ---------- */
+  const form = document.getElementById('search-form');
+  const input = document.getElementById('search-input');
+  const panel = document.getElementById('suggest-panel');
+
+  function search(q) {
+    if (!q) return;
+    window.location.href = currentEngine().build(q);
+  }
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    search(input.value.trim());
+  });
+
+  /* ---------- 实时联想(JSONP,避免跨域限制) ---------- */
+  let sugTimer = null;
+  let sugItems = [];       // 当前联想词
+  let activeIdx = -1;      // 键盘高亮索引
+  let jsonpSeq = 0;        // 防止旧请求覆盖新结果
+  let lastQuery = '';
+
+  function hideSuggest() {
+    // 只隐藏面板,保留 sugItems 缓存,点击搜索框时可以直接恢复显示
+    panel.classList.remove('show');
+    panel.innerHTML = '';
+    activeIdx = -1;
+  }
+
+  function renderSuggest() {
+    if (!sugItems.length) { hideSuggest(); return; }
+    const q = input.value.trim();
+    panel.innerHTML = sugItems.map((s, i) => {
+      // 高亮匹配部分
+      let html = s;
+      if (q) {
+        const idx = s.toLowerCase().indexOf(q.toLowerCase());
+        if (idx >= 0) {
+          html = s.slice(0, idx) + '<b>' + s.slice(idx, idx + q.length) + '</b>' + s.slice(idx + q.length);
+        }
+      }
+      return '<div class="sug-item" data-i="' + i + '">' +
+        '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><line x1="16.5" y1="16.5" x2="21" y2="21"></line></svg>' +
+        '<span>' + html + '</span></div>';
+    }).join('');
+    activeIdx = -1;
+    panel.classList.add('show');
+  }
+
+  function setActive(i) {
+    const items = panel.querySelectorAll('.sug-item');
+    items.forEach(el => el.classList.remove('active'));
+    activeIdx = i;
+    if (i >= 0 && i < items.length) items[i].classList.add('active');
+  }
+
+  /* JSONP 联想:百度(中文场景好)与 Google 二选一 */
+  function jsonpSuggest(url, cbParam, extract) {
+    return new Promise((resolve) => {
+      const seq = ++jsonpSeq;
+      const cbName = '__sugCb' + seq; // 每个请求独立回调,避免并发互相污染
+      const script = document.createElement('script');
+      const timer = setTimeout(() => { delete window[cbName]; script.remove(); resolve([]); }, 3000);
+      window[cbName] = function (data) {
+        clearTimeout(timer);
+        delete window[cbName];
+        script.remove();
+        if (seq !== jsonpSeq) return resolve(null); // 已有更新的请求,丢弃旧响应
+        resolve(extract(data) || []);
+      };
+      script.onerror = () => { clearTimeout(timer); delete window[cbName]; script.remove(); resolve([]); };
+      script.src = url + encodeURIComponent(input.value.trim()) + '&' + cbParam + '=' + cbName;
+      document.body.appendChild(script);
+    });
+  }
+
+  async function fetchSuggest(q) {
+    let arr = [];
+    if (engineId === 'google') {
+      arr = await jsonpSuggest('https://suggestqueries.google.com/complete/search?client=chrome&q=', 'callback',
+        d => Array.isArray(d) && Array.isArray(d[1]) ? d[1] : []);
+    } else {
+      arr = await jsonpSuggest('https://suggestion.baidu.com/su?wd=', 'cb',
+        d => (d && Array.isArray(d.s)) ? d.s : (Array.isArray(d) && Array.isArray(d[1]) ? d[1] : []));
+    }
+    if (arr === null) return; // 过期响应
+    sugItems = arr.filter(x => typeof x === 'string').slice(0, 8);
+    renderSuggest();
+  }
+
+  input.addEventListener('focus', () => {
+    // 点击搜索框时:有内容就恢复联想(优先用缓存,无缓存则重新请求)
+    const q = input.value.trim();
+    if (q) {
+      if (sugItems.length) renderSuggest();
+      else fetchSuggest(q);
+    }
+  });
+
+  input.addEventListener('input', () => {
+    const q = input.value.trim();
+    if (!q) { lastQuery = ''; hideSuggest(); return; }
+    if (q === lastQuery) { renderSuggest(); return; } // 同词重新聚焦/输入时直接恢复
+    lastQuery = q;
+    clearTimeout(sugTimer);
+    sugTimer = setTimeout(() => fetchSuggest(q), 120); // 轻微防抖
+  });
+
+  input.addEventListener('keydown', (e) => {
+    if (!panel.classList.contains('show')) return;
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setActive((activeIdx + 1) % sugItems.length);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setActive((activeIdx - 1 + sugItems.length) % sugItems.length);
+    } else if (e.key === 'Escape') {
+      hideSuggest();
+    } else if (e.key === 'Enter' && activeIdx >= 0) {
+      e.preventDefault();
+      search(sugItems[activeIdx]);
+    }
+  });
+
+  panel.addEventListener('mousedown', (e) => {
+    const item = e.target.closest('.sug-item');
+    if (item) {
+      e.preventDefault(); // 防止 input 失焦
+      search(sugItems[+item.dataset.i]);
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.search-wrap')) hideSuggest();
+  });
+</script>
+</body>
+</html>

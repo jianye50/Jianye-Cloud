@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>搜索</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --text: #1f1f1f;
+    --subtle: #666666;
+    --link: #1a4fd6;
+    --box-bg: #f3f3f3;
+    --box-border: #e0e0e0;
+    --btn-bg: #1f1f1f;
+    --btn-text: #ffffff;
+    --tag-bg: #ececec;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1f1f1f;
+      --text: #f3f3f3;
+      --subtle: #9a9a9a;
+      --link: #7aa7ff;
+      --box-bg: #2b2b2b;
+      --box-border: #3a3a3a;
+      --btn-bg: #f3f3f3;
+      --btn-text: #1f1f1f;
+      --tag-bg: #333333;
+    }
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  }
+  body { padding: 28px 20px 80px; }
+
+  /* 顶部:Logo + 搜索框 */
+  .top {
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    max-width: 900px;
+    margin: 0 auto 26px;
+  }
+  .logo {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: .5px;
+    text-decoration: none;
+    color: var(--text);
+    flex-shrink: 0;
+  }
+  .logo span { color: var(--subtle); font-weight: 300; }
+
+  .search-box {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    background: var(--box-bg);
+    border: 1px solid var(--box-border);
+    border-radius: 999px;
+    padding: 4px 6px 4px 18px;
+    transition: border-color .2s ease, box-shadow .2s ease;
+  }
+  .search-box:focus-within {
+    border-color: var(--subtle);
+    box-shadow: 0 4px 20px rgba(0,0,0,.10);
+  }
+  .search-box svg.mag { width: 17px; height: 17px; fill: none; stroke: var(--subtle); stroke-width: 2; stroke-linecap: round; flex-shrink: 0; }
+  #q {
+    flex: 1;
+    border: none; outline: none; background: transparent;
+    color: var(--text); font-size: 15px; padding: 10px 12px;
+  }
+  #q::placeholder { color: var(--subtle); }
+  #go {
+    border: none; outline: none; cursor: pointer;
+    background: var(--btn-bg); color: var(--btn-text);
+    width: 34px; height: 34px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    transition: opacity .2s ease;
+  }
+  #go:hover { opacity: .85; }
+  #go svg { width: 15px; height: 15px; stroke: currentColor; }
+
+  /* 选项条 */
+  .bar {
+    max-width: 900px; margin: 0 auto 22px;
+    display: flex; align-items: center; gap: 14px;
+    font-size: 13px; color: var(--subtle); flex-wrap: wrap;
+    min-height: 20px;
+  }
+  .bar label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
+  .bar a { color: var(--subtle); text-decoration: none; border-bottom: 1px dotted var(--box-border); }
+  .bar a:hover { color: var(--text); }
+  .engines { display: inline-flex; gap: 6px; }
+  .pill {
+    background: var(--tag-bg); border-radius: 999px;
+    padding: 2px 9px; font-size: 11px; color: var(--subtle);
+  }
+
+  /* 结果列表 */
+  .wrap { max-width: 900px; margin: 0 auto; }
+  .item { padding: 18px 0; border-bottom: 1px solid var(--box-border); }
+  .item:last-child { border-bottom: none; }
+  .item .site { font-size: 12.5px; color: var(--subtle); margin-bottom: 5px; word-break: break-all; }
+  .item h3 { font-size: 18px; font-weight: 500; line-height: 1.4; margin-bottom: 6px; }
+  .item h3 a { color: var(--link); text-decoration: none; }
+  .item h3 a:hover { text-decoration: underline; }
+  .item p { font-size: 14px; color: var(--subtle); line-height: 1.65; }
+  .item .src { margin-top: 7px; display: flex; gap: 6px; }
+  .item .src .pill { font-size: 10.5px; }
+
+  .empty { text-align: center; padding: 70px 0; color: var(--subtle); font-size: 15px; line-height: 1.9; }
+  .empty a { color: var(--link); }
+
+  /* 骨架屏 */
+  .sk { padding: 18px 0; border-bottom: 1px solid var(--box-border); }
+  .sk i {
+    display: block; height: 12px; border-radius: 6px;
+    background: linear-gradient(90deg, var(--box-bg) 25%, var(--box-border) 50%, var(--box-bg) 75%);
+    background-size: 200% 100%; animation: sh 1.3s infinite;
+    margin-bottom: 9px;
+  }
+  .sk i:nth-child(1) { width: 30%; height: 10px; }
+  .sk i:nth-child(2) { width: 55%; height: 16px; }
+  .sk i:nth-child(3) { width: 85%; }
+  @keyframes sh { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+  /* 分页 */
+  .pager { max-width: 900px; margin: 34px auto 0; display: flex; justify-content: center; gap: 10px; }
+  .pager button {
+    font: inherit; font-size: 14px; cursor: pointer;
+    background: var(--box-bg); color: var(--text);
+    border: 1px solid var(--box-border); border-radius: 999px;
+    padding: 8px 20px; transition: opacity .2s ease;
+  }
+  .pager button:hover:not(:disabled) { opacity: .75; }
+  .pager button:disabled { opacity: .35; cursor: default; }
+
+  .flash { max-width: 900px; margin: 0 auto 16px; padding: 10px 14px; border: 1px solid var(--box-border); border-radius: 10px; font-size: 13px; color: var(--subtle); background: var(--box-bg); }
+
+  /* 诊断卡片 */
+  .diag { max-width: 900px; margin: 0 auto; border: 1px solid var(--box-border); border-radius: 12px; padding: 18px 20px; background: var(--box-bg); font-size: 13.5px; line-height: 1.85; }
+  .diag h4 { font-size: 14.5px; margin-bottom: 6px; font-weight: 600; color: var(--text); }
+  .diag code { background: var(--tag-bg); padding: 1px 6px; border-radius: 6px; font-size: 12.5px; }
+  .diag details { margin-top: 10px; color: var(--subtle); }
+  .diag summary { cursor: pointer; user-select: none; }
+  .diag pre { white-space: pre-wrap; word-break: break-all; font-size: 12px; margin-top: 6px; color: var(--subtle); }
+  .diag .actions { margin-top: 12px; display: flex; gap: 10px; flex-wrap: wrap; }
+  .diag button, .diag a.btn { font: inherit; font-size: 13px; cursor: pointer; background: var(--btn-bg); color: var(--btn-text); border: none; border-radius: 999px; padding: 7px 18px; text-decoration: none; display: inline-block; }
+</style>
+</head>
+<body>
+
+<div class="top">
+  <a class="logo" href="/">鉴业<span>搜索</span></a>
+  <form class="search-box" id="form">
+    <svg class="mag" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><line x1="16.5" y1="16.5" x2="21" y2="21"></line></svg>
+    <input id="q" type="text" placeholder="搜索网页…" autocomplete="off" autofocus>
+    <button id="go" type="submit" title="搜索">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+    </button>
+  </form>
+</div>
+
+<div class="bar" id="bar"></div>
+<div class="flash" id="flash" style="display:none"></div>
+<div class="wrap" id="list"></div>
+<div class="pager" id="pager" style="display:none">
+  <button id="prev">上一页</button>
+  <button id="next">下一页</button>
+</div>
+
+<script>
+const API = '/api/search';
+const FALLBACK = {
+  bing: q => 'https://www.bing.com/search?q=' + encodeURIComponent(q),
+  google: q => 'https://www.google.com/search?q=' + encodeURIComponent(q),
+  ddg: q => 'https://duckduckgo.com/?q=' + encodeURIComponent(q),
+};
+
+const form = document.getElementById('form');
+const qEl = document.getElementById('q');
+const list = document.getElementById('list');
+const bar = document.getElementById('bar');
+const pager = document.getElementById('pager');
+const flash = document.getElementById('flash');
+
+let page = 1;
+let currentQ = '';
+let lastCount = 0;
+
+/* ---------- URL 同步 ---------- */
+function readParams() {
+  const p = new URLSearchParams(location.search);
+  const q = p.get('q') || '';
+  const pg = Math.max(1, parseInt(p.get('page') || '1', 10) || 1);
+  // 兼容 hash 形式 ?q=#1
+  const h = (p.get('q') || '').match(/#(\d+)$/);
+  return { q: h ? q.replace(/#\d+$/, '') : q, page: pg };
+}
+
+function writeParams(q, pg, push = true) {
+  const usp = new URLSearchParams();
+  if (q) usp.set('q', q);
+  if (pg > 1) usp.set('page', String(pg));
+  const url = location.pathname + (usp.toString() ? '?' + usp : '');
+  if (push) history.pushState({ q, page: pg }, '', url);
+  else history.replaceState({ q, page: pg }, '', url);
+}
+
+/* ---------- 渲染 ---------- */
+function skeleton() {
+  list.innerHTML = Array.from({ length: 6 }).map(() =>
+    '<div class="sk"><i></i><i></i><i></i></div>').join('');
+  bar.innerHTML = '';
+  flash.style.display = 'none';
+  pager.style.display = 'none';
+}
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function highlight(text, q) {
+  const safe = esc(text);
+  if (!q) return safe;
+  const words = q.split(/\s+/).filter(w => w.length > 1).map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  if (!words.length) return safe;
+  return safe.replace(new RegExp('(' + words.join('|') + ')', 'gi'), '<b style="font-weight:600">$1</b>');
+}
+
+function render(data) {
+  const { results, query, engines, elapsed } = data;
+  lastCount = results.length;
+
+  bar.innerHTML =
+    `<span>找到约 ${results.length} 条结果 · 用时 ${elapsed}ms</span>` +
+    (engines.length ? `<span class="engines">来源:${engines.map(e => `<span class="pill">${esc(e)}</span>`).join('')}</span>` : '') +
+    `<label title="在本站搜索无结果时,自动改用备用引擎">
+       <input type="checkbox" id="fb" ${localStorage.getItem('fallback') === '1' ? 'checked' : ''}> 无结果时回退到 Bing
+     </label>`;
+
+  if (!results.length) {
+    list.innerHTML =
+      '<div class="empty">没有找到与「' + esc(query) + '」相关的结果。<br>' +
+      '换个说法试试,或 <a href="' + FALLBACK.bing(query) + '">用 Bing 搜索</a> · ' +
+      '<a href="' + FALLBACK.ddg(query) + '">用 DuckDuckGo 搜索</a></div>';
+    pager.style.display = 'none';
+    maybeFallback(query);
+    return;
+  }
+
+  list.innerHTML = results.map(r => `
+    <div class="item">
+      <div class="site">${esc(r.displayUrl || r.url)}</div>
+      <h3><a href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">${highlight(r.title, query)}</a></h3>
+      ${r.snippet ? '<p>' + highlight(r.snippet, query) + '</p>' : ''}
+      ${(r.engines && r.engines.length) ? '<div class="src">' + r.engines.map(e => `<span class="pill">${esc(e)}</span>`).join('') + '</div>' : ''}
+    </div>`).join('');
+
+  pager.style.display = 'flex';
+  document.getElementById('prev').disabled = page <= 1;
+  document.getElementById('next').disabled = results.length < 5;
+}
+
+function maybeFallback(q) {
+  if (localStorage.getItem('fallback') !== '1') return;
+  flash.style.display = 'block';
+  flash.textContent = '本站索引暂无结果,3 秒后自动跳转到 Bing…';
+  setTimeout(() => { location.href = FALLBACK.bing(q); }, 3000);
+}
+
+/* ---------- 后端诊断 ---------- */
+async function diagnose() {
+  try {
+    const res = await fetch(API + '?q=__ping', { headers: { Accept: 'application/json' } });
+    const text = await res.text().catch(() => '');
+    let kind;
+    if (res.ok && text.trim().startsWith('{')) kind = 'ok';
+    else if (res.status === 404) kind = 'no-function';
+    else if (res.ok) kind = 'bad-body';
+    else kind = 'http-' + res.status;
+    return { kind, status: res.status, sample: text.slice(0, 160) };
+  } catch (e) {
+    return { kind: 'network', status: 0, error: String((e && e.message) || e) };
+  }
+}
+
+function diagHTML(d, q) {
+  let title = '', hint = '';
+  if (location.protocol === 'file:') {
+    title = '这是本地文件方式打开,没有后端,属正常现象';
+    hint = '你正在用 <code>file://</code> 直接打开 HTML。搜索后端必须跑在 Cloudflare Pages Functions 里:' +
+      '把项目推送到 GitHub 并按 README 连接 Cloudflare Pages(构建输出目录填 <code>public</code>),' +
+      '或本地用 <code>wrangler pages dev public</code> 调试。';
+  } else if (d.kind === 'no-function') {
+    title = '后端函数未部署(/api/search 返回 404)';
+    hint = 'Cloudflare Pages 没有识别到 Functions。请检查三点:' +
+      '① 仓库根目录下存在 <code>functions/api/search.js</code>(与 <code>public</code> 平级,不是放在 public 里面);' +
+      '② Pages 构建输出目录填的是 <code>public</code>;' +
+      '③ 部署方式是 Git 集成或 wrangler 命令行——面板里直接拖拽上传是不会部署 Functions 的。修复后重新部署。';
+  } else if (d.kind === 'bad-body') {
+    title = '/api/search 返回的不是 JSON';
+    hint = '该路径返回了 HTML(HTTP ' + d.status + '),通常是路由被覆盖或 Functions 未生效,见 README「故障排查」。';
+  } else if (d.kind.startsWith('http-')) {
+    title = '后端返回 HTTP ' + d.status;
+    hint = 'API 存在但报错了,可展开下方详情查看原始响应,或稍后重试。';
+  } else {
+    title = '无法连接后端(网络错误)';
+    hint = 'fetch 请求被拒绝。如果你是在本地预览面板里看到这句话,这是正常的——预览环境没有后端;' +
+      '部署到 Cloudflare Pages 后即可正常使用。';
+  }
+  return '<div class="diag">' +
+    '<h4>' + title + '</h4>' +
+    '<div>' + hint + '</div>' +
+    '<div class="actions">' +
+      '<button id="retry" type="button">重试</button>' +
+      '<a class="btn" href="' + FALLBACK.bing(q) + '">用 Bing 搜索</a>' +
+      '<a class="btn" href="' + FALLBACK.ddg(q) + '">用 DuckDuckGo 搜索</a>' +
+    '</div>' +
+    '<details><summary>诊断详情</summary><pre>protocol: ' + esc(location.protocol) +
+    '\napi check: ' + esc(d.kind) + ' (HTTP ' + d.status + ')' +
+    (d.sample ? '\nbody: ' + esc(d.sample) : '') +
+    (d.error ? '\nerror: ' + esc(d.error) : '') + '</pre></details>' +
+  '</div>';
+}
+
+/* ---------- 请求 ---------- */
+async function doSearch(q, pg) {
+  if (!q) { list.innerHTML = ''; bar.innerHTML = ''; pager.style.display = 'none'; return; }
+  currentQ = q; page = pg;
+  skeleton();
+  writeParams(q, pg);
+
+  try {
+    const res = await fetch(`${API}?q=${encodeURIComponent(q)}&page=${pg}`);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    render(await res.json());
+  } catch (err) {
+    flash.style.display = 'none';
+    const d = await diagnose();
+    list.innerHTML = diagHTML(d, q);
+    const btn = document.getElementById('retry');
+    if (btn) btn.addEventListener('click', () => doSearch(currentQ, page));
+  }
+}
+
+/* ---------- 事件 ---------- */
+form.addEventListener('submit', e => {
+  e.preventDefault();
+  doSearch(qEl.value.trim(), 1);
+});
+
+document.getElementById('prev').addEventListener('click', () => doSearch(currentQ, page - 1));
+document.getElementById('next').addEventListener('click', () => doSearch(currentQ, page + 1));
+
+document.addEventListener('change', e => {
+  if (e.target.id === 'fb') localStorage.setItem('fallback', e.target.checked ? '1' : '0');
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === '/' && document.activeElement !== qEl) { e.preventDefault(); qEl.focus(); }
+});
+
+window.addEventListener('popstate', () => {
+  const { q, page: pg } = readParams();
+  qEl.value = q;
+  if (q) doSearch(q, pg);
+});
+
+/* ---------- 启动 ---------- */
+(function init() {
+  const { q, page: pg } = readParams();
+  if (q) { qEl.value = q; doSearch(q, pg); }
+  else { qEl.focus(); }
+})();
+</script>
+</body>
+</html>
