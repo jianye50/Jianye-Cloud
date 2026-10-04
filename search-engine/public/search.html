@@ -176,6 +176,8 @@
 </div>
 
 <script>
+// 后端部署在「仓库根目录」的 functions/api/search.js(站点根 /api/search)。
+// 本页面位于 /search-engine/public/,所以必须用根路径而不是相对路径。
 const API = '/api/search';
 const FALLBACK = {
   bing: q => 'https://www.bing.com/search?q=' + encodeURIComponent(q),
@@ -306,7 +308,9 @@ function diagHTML(d, q) {
       '③ 部署方式是 Git 集成或 wrangler 命令行——面板里直接拖拽上传是不会部署 Functions 的。修复后重新部署。';
   } else if (d.kind === 'bad-body') {
     title = '/api/search 返回的不是 JSON';
-    hint = '该路径返回了 HTML(HTTP ' + d.status + '),通常是路由被覆盖或 Functions 未生效,见 README「故障排查」。';
+    hint = '该路径返回了 HTML(HTTP ' + d.status + ')。这几乎总是意味着 <b>Functions 没有部署</b>——Pages 的 SPA 回退把主页顶替了 API 响应。' +
+      '请检查:① GitHub 仓库根目录有 <code>functions/api/search.js</code>(与 public 平级);' +
+      '② 部署方式是 Git 集成或 wrangler(面板拖拽上传不含 Functions);③ 构建输出目录填 <code>public</code>。改完重新部署。';
   } else if (d.kind.startsWith('http-')) {
     title = '后端返回 HTTP ' + d.status;
     hint = 'API 存在但报错了,可展开下方详情查看原始响应,或稍后重试。';

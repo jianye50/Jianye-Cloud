@@ -125,7 +125,7 @@ Cloudflare Pages → 你的项目 → **Custom domains** → 添加域名,按提
 | 用面板拖拽上传部署的 | 直接上传不支持 Functions | 改用 Git 集成连接 GitHub,或 `wrangler pages deploy public` |
 | 仓库里没有 `functions/` 目录 | 路径不对 | `functions/` 必须在**仓库根目录**,与 `public` 平级;不要放进 public 里面 |
 | Pages 构建输出目录不是 `public` | 配置错 | Pages 项目设置 → Build output directory 填 `public` |
-| `/api/search` 返回 HTML 而非 JSON | 路由被覆盖 | 检查 `_redirects` 是否有通配规则盖住了 `/api/*` |
+| `/api/search` 返回 HTML 而非 JSON | Functions 未部署 + SPA 回退掩盖(输出目录有 index.html 且无 404.html 时,未匹配路径会返回主页,状态码还是 200) | 按 404 的三条检查:仓库根有 functions/、Git 集成部署、输出目录 public,改完重新部署 |
 | 返回 5xx | 上游引擎全挂 | 看结果页「诊断详情」;稍等或给 `viaSearx` 换实例 |
 
 > 修正配置后需要在 Pages 里触发重新部署(推一个 commit 或点 Retry deployment)才会生效。

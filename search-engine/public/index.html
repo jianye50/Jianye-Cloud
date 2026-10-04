@@ -229,10 +229,11 @@
 
 <script>
   /* ---------- 搜索引擎配置 ---------- */
-  // 第一个是自建引擎(本站 /search),其余为外部引擎。
-  // 若自建后端未部署好,切到外部引擎仍可正常使用。
+  // 本仓库是多项目站点(站点根 = 仓库根),搜索页位于 /search-engine/public/。
+  // Cloudflare Pages 会自动去掉 .html 后缀,所以用 /search-engine/public/search。
+  // 后端在站点根 /api/search(对应仓库根 functions/api/search.js)。
   const ENGINES = [
-    { id: 'mine',   name: '本站',        build: q => '/search?q=' + encodeURIComponent(q) },
+    { id: 'mine',   name: '本站',        build: q => '/search-engine/public/search?q=' + encodeURIComponent(q) },
     { id: 'google', name: 'Google',      build: q => 'https://www.google.com/search?q=' + encodeURIComponent(q) },
     { id: 'bing',   name: 'Bing',        build: q => 'https://www.bing.com/search?q=' + encodeURIComponent(q) },
     { id: 'ddg',    name: 'DuckDuckGo',  build: q => 'https://duckduckgo.com/?q=' + encodeURIComponent(q) },

@@ -51,22 +51,35 @@ const raw = document.getElementById('raw');
 const rows = [];
 function row(k, v, cls) { rows.push('<div class="row"><span class="k">' + k + '</span><span class="v ' + (cls || '') + '">' + v + '</span></div>'); }
 
+// 后端在站点根 /api/search(仓库根 functions/api/search.js)
+const API = '/api/search';
+
 (async () => {
   row('页面地址', location.href);
   row('协议', location.protocol, location.protocol === 'https:' ? 'ok' : 'bad');
+  row('后端地址', API + '  (站点根,对应仓库根 functions/api/search.js)');
 
   try {
-    const res = await fetch('/api/search?q=__ping');
+    const res = await fetch(API + '?q=__ping');
     const text = await res.text();
+    const t = text.trim();
     row('API 状态码', res.status, res.ok ? 'ok' : 'bad');
-    const isJson = text.trim().startsWith('{');
-    row('API 返回类型', isJson ? 'JSON(正常)' : '非 JSON(异常:' + (text.trim().slice(0, 60) || '空') + '…)', isJson ? 'ok' : 'bad');
+    const isJson = t.startsWith('{');
+    const isHtml = /<html|<!doctype/i.test(t) || t.includes('鉴业');
+    if (isJson) {
+      row('API 返回类型', 'JSON(Functions 已生效)', 'ok');
+    } else if (isHtml) {
+      row('API 返回类型', 'HTML —— Functions 未部署!Pages 的 SPA 回退把主页顶替了 API 响应(200 只是假象)', 'bad');
+      row('修复方法', '确认 GitHub 仓库根目录有 functions/api/search.js(与 public 平级);Pages 部署方式必须是 Git 集成或 wrangler(面板拖拽上传不含 Functions);构建输出目录填 public。改完重新部署', 'bad');
+    } else {
+      row('API 返回类型', '非 JSON(异常:' + (t.slice(0, 60) || '空') + '…)', 'bad');
+    }
     raw.textContent = '--- /api/search?q=__ping 原始响应(前 600 字符) ---\n' + text.slice(0, 600);
 
     if (isJson) {
       // 再做一次真实搜索,确认上游引擎可达
       try {
-        const r2 = await fetch('/api/search?q=cloudflare');
+        const r2 = await fetch(API + '?q=cloudflare');
         const d2 = await r2.json();
         row('真实搜索测试', '返回 ' + (d2.results || []).length + ' 条结果,来源:' + (d2.engines || []).join(', ') || '无', (d2.results || []).length ? 'ok' : 'bad');
         raw.textContent += '\n\n--- /api/search?q=cloudflare ---\n' + JSON.stringify(d2, null, 2).slice(0, 900);
