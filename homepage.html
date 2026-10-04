@@ -319,6 +319,7 @@
 
   #search-input {
     flex: 1;
+    min-width: 0; /* 关键：允许输入框自由收缩，否则固有最小宽度会把提交按钮挤出胶囊（窄屏/手机） */
     border: none;
     outline: none;
     background: transparent;
