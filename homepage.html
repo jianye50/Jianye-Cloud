@@ -44,6 +44,9 @@
     justify-content: center;
     gap: 48px;
     user-select: none;
+    min-height: 100vh;   /* 兜底 */
+    min-height: 100dvh;  /* 移动端动态视口：地址栏收起/展开时也保持真正垂直居中 */
+    padding: 24px 16px;  /* 小屏或键盘弹出时防止内容贴边 */
   }
 
   /* 时钟 */
@@ -53,6 +56,7 @@
     letter-spacing: 2px;
     font-variant-numeric: tabular-nums;
     line-height: 1;
+    text-align: center; /* 窄屏下日期比时钟宽时，时钟仍与日期居中对齐 */
   }
 
   #date {
@@ -94,6 +98,224 @@
     stroke-linecap: round;
     flex-shrink: 0;
   }
+
+  /* 引擎切换按钮（原放大镜位置） */
+  #engine-btn {
+    border: none;
+    outline: none;
+    background: transparent;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-left: -7px;
+    transition: background .2s ease;
+  }
+
+  #engine-btn:hover { background: rgba(128, 128, 128, .18); }
+
+  .engine-badge {
+    width: 20px;
+    height: 20px;
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: #ffffff;
+    line-height: 1;
+    user-select: none;
+  }
+
+  /* 引擎选择面板 */
+  #engine-panel {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    min-width: 232px;
+    background: var(--box-bg);
+    border: 1px solid var(--box-border);
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 10px 32px rgba(0, 0, 0, .16);
+    display: none;
+    z-index: 12;
+  }
+
+  #engine-panel.show { display: block; }
+
+  .engine-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    font-size: 15px;
+    cursor: pointer;
+    color: var(--text);
+    white-space: nowrap;
+  }
+
+  .engine-item:hover { background: var(--btn-bg); color: var(--btn-text); }
+  .engine-item .check { margin-left: auto; font-size: 13px; opacity: 0; padding-left: 16px; }
+  .engine-item.active .check { opacity: 1; }
+
+  /* 自定义引擎的删除按钮
+     基础状态：可见（保证任何设备都能删除）。
+     仅当设备确认具备「精确指针 + 支持悬停」时，才收敛为悬停显示，
+     避免 hover 能力检测不确定的设备（触屏笔记本 / 无头浏览器等）按钮消失。 */
+  .engine-item .del {
+    margin-left: 8px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    line-height: 1;
+    opacity: .55;
+    flex-shrink: 0;
+  }
+
+  .engine-item .del:hover { opacity: 1; background: rgba(255, 90, 90, .22); }
+  .engine-item.custom .check { padding-left: 8px; }
+
+  /* 精确鼠标设备：默认隐藏，悬停或聚焦该行时显示（保持桌面清爽） */
+  @media (hover: hover) and (pointer: fine) {
+    .engine-item .del { display: none; }
+    .engine-item.custom:hover .del,
+    .engine-item.custom:focus-within .del { display: flex; }
+  }
+
+  /* 触屏设备：常显并放大热区，方便手指点按 */
+  @media (hover: none), (pointer: coarse) {
+    .engine-item.custom .del {
+      display: flex;
+      position: relative;
+      width: 28px;
+      height: 28px;
+      font-size: 17px;
+      opacity: .6;
+      margin-left: 4px;
+    }
+    .engine-item.custom .del::after {
+      content: '';
+      position: absolute;
+      inset: -6px;
+    }
+  }
+
+  /* 面板里的“添加自定义引擎”入口 */
+  .engine-add {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    font-size: 14px;
+    cursor: pointer;
+    color: var(--subtle);
+    border-top: 1px solid var(--box-border);
+  }
+
+  .engine-add:hover { background: var(--btn-bg); color: var(--btn-text); }
+  .engine-add .plus { font-size: 16px; width: 20px; text-align: center; }
+
+  /* 自定义引擎表单（弹窗） */
+  #engine-form-mask {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, .45);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+    padding: 20px;
+  }
+
+  #engine-form-mask.show { display: flex; }
+
+  #engine-form {
+    width: min(420px, 100%);
+    background: var(--box-bg);
+    border: 1px solid var(--box-border);
+    border-radius: 18px;
+    padding: 22px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, .35);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  #engine-form h3 { font-size: 17px; font-weight: 600; color: var(--text); }
+
+  #engine-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--subtle);
+  }
+
+  #engine-form input[type="text"] {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--box-border);
+    border-radius: 10px;
+    padding: 9px 12px;
+    font-size: 14px;
+    color: var(--text);
+    outline: none;
+    font-family: inherit;
+  }
+
+  #engine-form input[type="text"]:focus { border-color: var(--subtle); }
+
+  #engine-form input[type="color"] {
+    width: 100%;
+    height: 38px;
+    border: 1px solid var(--box-border);
+    border-radius: 10px;
+    background: var(--bg);
+    padding: 3px;
+    cursor: pointer;
+  }
+
+  .ef-row { display: flex; gap: 12px; }
+  .ef-row label { flex: 1; }
+
+  #ef-msg { font-size: 12.5px; min-height: 16px; color: #e5484d; }
+  #ef-msg.ok { color: #2f9e44; }
+
+  .ef-actions { display: flex; justify-content: flex-end; gap: 10px; }
+
+  .ef-actions button {
+    border: 1px solid var(--box-border);
+    background: transparent;
+    color: var(--text);
+    padding: 9px 18px;
+    border-radius: 10px;
+    font-size: 14px;
+    cursor: pointer;
+    font-family: inherit;
+    transition: opacity .2s ease, background .2s ease;
+  }
+
+  .ef-actions button:hover { opacity: .85; }
+  .ef-actions #ef-save { background: var(--btn-bg); color: var(--btn-text); border-color: transparent; }
+
+  /* RTL（阿拉伯语 / 希伯来语）镜像适配 */
+  html[dir="rtl"] .search-box { padding: 6px 22px 6px 8px; }
+  html[dir="rtl"] #engine-btn { margin-left: 0; margin-right: -7px; }
+  html[dir="rtl"] #engine-panel { left: auto; right: 0; }
+  html[dir="rtl"] .engine-item .check { margin-left: 0; margin-right: auto; padding-left: 0; padding-right: 16px; }
+  html[dir="rtl"] .engine-item .del { margin-left: 0; margin-right: 8px; }
+  html[dir="rtl"] .ef-actions { justify-content: flex-start; }
+  html[dir="rtl"] .sug-item { padding: 11px 22px; }
 
   #search-input {
     flex: 1;
@@ -183,10 +405,7 @@
 
   <div class="search-wrap">
     <form class="search-box" id="search-form">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <circle cx="11" cy="11" r="7"></circle>
-        <line x1="16.5" y1="16.5" x2="21" y2="21"></line>
-      </svg>
+      <button id="engine-btn" type="button" title="切换搜索引擎"></button>
       <input id="search-input" type="text" placeholder="搜索网页…" autocomplete="off" autofocus>
       <button id="search-btn" type="submit" title="搜索">
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -196,31 +415,828 @@
       </button>
     </form>
     <div id="suggest-panel"></div>
+    <div id="engine-panel"></div>
+    <!-- 自定义搜索引擎表单 -->
+    <div id="engine-form-mask">
+      <form id="engine-form" autocomplete="off">
+        <h3 id="engine-form-title">添加自定义搜索引擎</h3>
+        <label><span class="ef-label" id="ef-label-name">名称</span><input id="ef-name" type="text" maxlength="24" placeholder="例如：知乎" required></label>
+        <label><span class="ef-label" id="ef-label-url">搜索网址（用 %s 代表关键词）</span><input id="ef-url" type="text" maxlength="300" placeholder="https://www.zhihu.com/search?q=%s" required></label>
+        <div class="ef-row">
+          <label><span class="ef-label" id="ef-label-letter">图标字母</span><input id="ef-letter" type="text" maxlength="2" placeholder="知"></label>
+          <label><span class="ef-label" id="ef-label-color">图标颜色</span><input id="ef-color" type="color" value="#5A6CF3"></label>
+        </div>
+        <p id="ef-msg"></p>
+        <div class="ef-actions">
+          <button type="button" id="ef-cancel">取消</button>
+          <button type="submit" id="ef-save">保存</button>
+        </div>
+      </form>
+    </div>
   </div>
 
 <script>
+  /* ---------- 多语言：自动识别系统/浏览器语言 ---------- */
+  const MONTHS = {
+    en: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],
+    fr: ['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'],
+    de: ['Jan.','Feb.','März','Apr.','Mai','Juni','Juli','Aug.','Sept.','Okt.','Nov.','Dez.'],
+    es: ['ene.','feb.','mar.','abr.','may.','jun.','jul.','ago.','sep.','oct.','nov.','dic.'],
+    pt: ['jan.','fev.','mar.','abr.','mai.','jun.','jul.','ago.','set.','out.','nov.','dez.'],
+    it: ['gen.','feb.','mar.','apr.','mag.','giu.','lug.','ago.','set.','ott.','nov.','dic.'],
+    nl: ['jan.','feb.','mrt.','apr.','mei','jun.','jul.','aug.','sep.','okt.','nov.','dec.'],
+    pl: ['sty','lut','mar','kwi','maj','cze','lip','sie','wrz','paź','lis','gru'],
+    tr: ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'],
+    th: ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'],
+    id: ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'],
+    hi: ['जनवरी','फ़रवरी','मार्च','अप्रैल','मई','जून','जुलाई','अगस्त','सितंबर','अक्टूबर','नवंबर','दिसंबर'],
+    sv: ['jan.','feb.','mars','apr.','maj','juni','juli','aug.','sep.','okt.','nov.','dec.'],
+    he: ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר']
+  };
+  // 俄语月份（属格形式）；阿语月份为音译
+  const MONTHS_RU = ['янв.','февр.','марта','апр.','мая','июн.','июл.','авг.','сент.','окт.','нояб.','дек.'];
+  const MONTHS_AR = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+
+  // 通用日期构造器：dateStyle 决定「日 月 年」还是「月 日, 年」等顺序
+  const fmt = (wd, m, d, y, months, dateStyle) => {
+    if (dateStyle === 'ymd') return y + '年' + m + '月' + d + '日 · ' + wd;      // 中日韩
+    if (dateStyle === 'dmy') return wd + ', ' + d + ' ' + months[m - 1] + ' ' + y; // 欧洲
+    return wd + ', ' + months[m - 1] + ' ' + d + ', ' + y;                      // 美式
+  };
+
+  const I18N = {
+    zh: {
+      htmlLang: 'zh-CN',
+      title: '鉴业的浏览器主页',
+      weekDays: ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'],
+      dateFormat: (y, m, d, wd) => y + ' 年 ' + m + ' 月 ' + d + ' 日 · ' + wd,
+      searchPlaceholder: '搜索网页…',
+      searchWith: (n) => '用' + n + '搜索网页…',
+      searchTitle: '搜索',
+      engineBtnLabel: '切换搜索引擎',
+      engineBtnTitle: (n) => '切换搜索引擎（当前：' + n + '）',
+      btnDelete: '删除',
+      addEngine: '添加自定义搜索引擎',
+      formTitle: '添加自定义搜索引擎',
+      fieldName: '名称',
+      fieldUrl: '搜索网址（用 %s 代表关键词）',
+      fieldLetter: '图标字母',
+      fieldColor: '图标颜色',
+      btnCancel: '取消',
+      btnSave: '保存',
+      hintExample: '例如：知乎',
+      engineNames: { bing: '必应', baidu: '百度', google: '谷歌', sogou: '搜狗', so360: '360', ddg: 'DuckDuckGo' }
+    },
+    en: {
+      htmlLang: 'en',
+      title: 'Jianye\u2019s Browser Homepage',
+      weekDays: ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],
+      dateFormat: (y, m, d, wd) => fmt(wd, m, d, y, MONTHS.en),
+      searchPlaceholder: 'Search the web…',
+      searchWith: (n) => 'Search the web with ' + n + '…',
+      searchTitle: 'Search',
+      engineBtnLabel: 'Switch search engine',
+      engineBtnTitle: (n) => 'Switch search engine (current: ' + n + ')',
+      btnDelete: 'Delete',
+      addEngine: 'Add custom search engine',
+      formTitle: 'Add custom search engine',
+      fieldName: 'Name',
+      fieldUrl: 'Search URL (%s = keyword)',
+      fieldLetter: 'Icon letter',
+      fieldColor: 'Icon color',
+      btnCancel: 'Cancel',
+      btnSave: 'Save',
+      hintExample: 'e.g. Wikipedia',
+      engineNames: { bing: 'Bing', baidu: 'Baidu', google: 'Google', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo' }
+    },
+    ja: {
+      htmlLang: 'ja',
+      title: '鑑業のブラウザホームページ',
+      weekDays: ['日曜日','月曜日','火曜日','水曜日','木曜日','金曜日','土曜日'],
+      dateFormat: (y, m, d, wd) => y + '年' + m + '月' + d + '日 · ' + wd,
+      searchPlaceholder: 'ウェブを検索…',
+      searchWith: (n) => n + 'で検索…',
+      searchTitle: '検索',
+      engineBtnLabel: '検索エンジンを切り替え',
+      engineBtnTitle: (n) => '検索エンジンを切り替え（現在：' + n + '）',
+      btnDelete: '削除',
+      addEngine: 'カスタム検索エンジンを追加',
+      formTitle: 'カスタム検索エンジンを追加',
+      fieldName: '名前',
+      fieldUrl: '検索URL（%s がキーワード）',
+      fieldLetter: 'アイコン文字',
+      fieldColor: 'アイコンの色',
+      btnCancel: 'キャンセル',
+      btnSave: '保存',
+      hintExample: '例：Wikipedia',
+      engineNames: { bing: 'Bing', baidu: '百度', google: 'Google', sogou: '搜狗', so360: '360', ddg: 'DuckDuckGo' }
+    },
+    ko: {
+      htmlLang: 'ko',
+      title: 'Jianye의 브라우저 홈페이지',
+      weekDays: ['일요일','월요일','화요일','수요일','목요일','금요일','토요일'],
+      dateFormat: (y, m, d, wd) => y + '년 ' + m + '월 ' + d + '일 · ' + wd,
+      searchPlaceholder: '웹 검색…',
+      searchWith: (n) => n + '으로 검색…',
+      searchTitle: '검색',
+      engineBtnLabel: '검색 엔진 전환',
+      engineBtnTitle: (n) => '검색 엔진 전환 (현재: ' + n + ')',
+      btnDelete: '삭제',
+      addEngine: '사용자 검색 엔진 추가',
+      formTitle: '사용자 검색 엔진 추가',
+      fieldName: '이름',
+      fieldUrl: '검색 URL (%s = 검색어)',
+      fieldLetter: '아이콘 문자',
+      fieldColor: '아이콘 색상',
+      btnCancel: '취소',
+      btnSave: '저장',
+      hintExample: '예: Wikipedia',
+      engineNames: { bing: 'Bing', baidu: '바이두', google: 'Google', sogou: '搜狗', so360: '360', ddg: 'DuckDuckGo' }
+    },
+    fr: {
+      htmlLang: 'fr',
+      title: 'Page d\u2019accueil de Jianye',
+      weekDays: ['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'],
+      dateFormat: (y, m, d, wd) => fmt(wd, m, d, y, MONTHS.fr, 'dmy'),
+      searchPlaceholder: 'Rechercher sur le Web…',
+      searchWith: (n) => 'Rechercher avec ' + n + '…',
+      searchTitle: 'Rechercher',
+      engineBtnLabel: 'Changer de moteur de recherche',
+      engineBtnTitle: (n) => 'Changer de moteur (actuel : ' + n + ')',
+      btnDelete: 'Supprimer',
+      addEngine: 'Ajouter un moteur personnalisé',
+      formTitle: 'Ajouter un moteur de recherche',
+      fieldName: 'Nom',
+      fieldUrl: 'URL de recherche (%s = mot-clé)',
+      fieldLetter: 'Lettre de l’icône',
+      fieldColor: 'Couleur',
+      btnCancel: 'Annuler',
+      btnSave: 'Enregistrer',
+      hintExample: 'ex. : Wikipédia',
+      engineNames: { bing: 'Bing', baidu: 'Baidu', google: 'Google', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo' }
+    },
+    de: {
+      htmlLang: 'de',
+      title: 'Jianyes Browser-Startseite',
+      weekDays: ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'],
+      dateFormat: (y, m, d, wd) => fmt(wd, m, d, y, MONTHS.de, 'dmy'),
+      searchPlaceholder: 'Das Web durchsuchen…',
+      searchWith: (n) => 'Mit ' + n + ' suchen…',
+      searchTitle: 'Suchen',
+      engineBtnLabel: 'Suchmaschine wechseln',
+      engineBtnTitle: (n) => 'Suchmaschine wechseln (aktuell: ' + n + ')',
+      btnDelete: 'Löschen',
+      addEngine: 'Eigene Suchmaschine hinzufügen',
+      formTitle: 'Eigene Suchmaschine hinzufügen',
+      fieldName: 'Name',
+      fieldUrl: 'Such-URL (%s = Suchbegriff)',
+      fieldLetter: 'Symbolbuchstabe',
+      fieldColor: 'Symbolfarbe',
+      btnCancel: 'Abbrechen',
+      btnSave: 'Speichern',
+      hintExample: 'z. B. Wikipedia',
+      engineNames: { bing: 'Bing', baidu: 'Baidu', google: 'Google', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo' }
+    },
+    es: {
+      htmlLang: 'es',
+      title: 'Página de inicio de Jianye',
+      weekDays: ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'],
+      dateFormat: (y, m, d, wd) => fmt(wd, m, d, y, MONTHS.es, 'dmy'),
+      searchPlaceholder: 'Buscar en la web…',
+      searchWith: (n) => 'Buscar con ' + n + '…',
+      searchTitle: 'Buscar',
+      engineBtnLabel: 'Cambiar de motor de búsqueda',
+      engineBtnTitle: (n) => 'Cambiar de motor (actual: ' + n + ')',
+      btnDelete: 'Eliminar',
+      addEngine: 'Añadir motor personalizado',
+      formTitle: 'Añadir motor de búsqueda',
+      fieldName: 'Nombre',
+      fieldUrl: 'URL de búsqueda (%s = palabra clave)',
+      fieldLetter: 'Letra del icono',
+      fieldColor: 'Color del icono',
+      btnCancel: 'Cancelar',
+      btnSave: 'Guardar',
+      hintExample: 'p. ej. Wikipedia',
+      engineNames: { bing: 'Bing', baidu: 'Baidu', google: 'Google', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo' }
+    },
+    pt: {
+      htmlLang: 'pt',
+      title: 'Página inicial de Jianye',
+      weekDays: ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'],
+      dateFormat: (y, m, d, wd) => fmt(wd, m, d, y, MONTHS.pt, 'dmy'),
+      searchPlaceholder: 'Pesquisar na web…',
+      searchWith: (n) => 'Pesquisar com ' + n + '…',
+      searchTitle: 'Pesquisar',
+      engineBtnLabel: 'Alterar mecanismo de pesquisa',
+      engineBtnTitle: (n) => 'Alterar mecanismo (atual: ' + n + ')',
+      btnDelete: 'Excluir',
+      addEngine: 'Adicionar mecanismo personalizado',
+      formTitle: 'Adicionar mecanismo de pesquisa',
+      fieldName: 'Nome',
+      fieldUrl: 'URL de pesquisa (%s = palavra-chave)',
+      fieldLetter: 'Letra do ícone',
+      fieldColor: 'Cor do ícone',
+      btnCancel: 'Cancelar',
+      btnSave: 'Salvar',
+      hintExample: 'ex.: Wikipédia',
+      engineNames: { bing: 'Bing', baidu: 'Baidu', google: 'Google', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo' }
+    },
+    ru: {
+      htmlLang: 'ru',
+      title: 'Домашняя страница Jianye',
+      weekDays: ['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'],
+      dateFormat: (y, m, d, wd) => wd + ', ' + d + ' ' + MONTHS_RU[m - 1] + ' ' + y,
+      searchPlaceholder: 'Поиск в интернете…',
+      searchWith: (n) => 'Искать в ' + n + '…',
+      searchTitle: 'Поиск',
+      engineBtnLabel: 'Сменить поисковую систему',
+      engineBtnTitle: (n) => 'Сменить поисковик (текущий: ' + n + ')',
+      btnDelete: 'Удалить',
+      addEngine: 'Добавить свою поисковую систему',
+      formTitle: 'Добавить свою поисковую систему',
+      fieldName: 'Название',
+      fieldUrl: 'URL поиска (%s = запрос)',
+      fieldLetter: 'Буква значка',
+      fieldColor: 'Цвет значка',
+      btnCancel: 'Отмена',
+      btnSave: 'Сохранить',
+      hintExample: 'напр. Википедия',
+      engineNames: { bing: 'Bing', baidu: 'Baidu', google: 'Google', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo' }
+    },
+    it: {
+      htmlLang: 'it',
+      title: 'Home page di Jianye',
+      weekDays: ['domenica','lunedì','martedì','mercoledì','giovedì','venerdì','sabato'],
+      dateFormat: (y, m, d, wd) => fmt(wd, m, d, y, MONTHS.it, 'dmy'),
+      searchPlaceholder: 'Cerca sul web…',
+      searchWith: (n) => 'Cerca con ' + n + '…',
+      searchTitle: 'Cerca',
+      engineBtnLabel: 'Cambia motore di ricerca',
+      engineBtnTitle: (n) => 'Cambia motore (attuale: ' + n + ')',
+      btnDelete: 'Elimina',
+      addEngine: 'Aggiungi motore personalizzato',
+      formTitle: 'Aggiungi motore di ricerca',
+      fieldName: 'Nome',
+      fieldUrl: 'URL di ricerca (%s = parola chiave)',
+      fieldLetter: 'Lettera icona',
+      fieldColor: 'Colore icona',
+      btnCancel: 'Annulla',
+      btnSave: 'Salva',
+      hintExample: 'es. Wikipedia',
+      engineNames: { bing: 'Bing', baidu: 'Baidu', google: 'Google', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo' }
+    },
+    ar: {
+      htmlLang: 'ar',
+      dir: 'rtl',
+      title: 'الصفحة الرئيسية لجيان يه',
+      weekDays: ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'],
+      dateFormat: (y, m, d, wd) => wd + '، ' + d + ' ' + MONTHS_AR[m - 1] + ' ' + y,
+      searchPlaceholder: 'ابحث في الويب…',
+      searchWith: (n) => 'ابحث باستخدام ' + n + '…',
+      searchTitle: 'بحث',
+      engineBtnLabel: 'تغيير محرك البحث',
+      engineBtnTitle: (n) => 'تغيير محرك البحث (الحالي: ' + n + ')',
+      btnDelete: 'حذف',
+      addEngine: 'إضافة محرك بحث مخصص',
+      formTitle: 'إضافة محرك بحث مخصص',
+      fieldName: 'الاسم',
+      fieldUrl: 'رابط البحث (%s = الكلمة)',
+      fieldLetter: 'حرف الأيقونة',
+      fieldColor: 'لون الأيقونة',
+      btnCancel: 'إلغاء',
+      btnSave: 'حفظ',
+      hintExample: 'مثال: ويكيبيديا',
+      engineNames: { bing: 'Bing', baidu: 'Baidu', google: 'Google', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo' }
+    },
+    nl: {
+      htmlLang: 'nl',
+      title: 'Startpagina van Jianye',
+      weekDays: ['zondag','maandag','dinsdag','woensdag','donderdag','vrijdag','zaterdag'],
+      dateFormat: (y, m, d, wd) => fmt(wd, m, d, y, MONTHS.nl, 'dmy'),
+      searchPlaceholder: 'Zoek op het web…',
+      searchWith: (n) => 'Zoeken met ' + n + '…',
+      searchTitle: 'Zoeken',
+      engineBtnLabel: 'Zoekmachine wijzigen',
+      engineBtnTitle: (n) => 'Zoekmachine wijzigen (huidig: ' + n + ')',
+      btnDelete: 'Verwijderen',
+      addEngine: 'Aangepaste zoekmachine toevoegen',
+      formTitle: 'Aangepaste zoekmachine toevoegen',
+      fieldName: 'Naam',
+      fieldUrl: 'Zoek-URL (%s = trefwoord)',
+      fieldLetter: 'Pictogramletter',
+      fieldColor: 'Pictogramkleur',
+      btnCancel: 'Annuleren',
+      btnSave: 'Opslaan',
+      hintExample: 'bv. Wikipedia',
+      engineNames: { bing: 'Bing', baidu: 'Baidu', google: 'Google', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo' }
+    },
+    pl: {
+      htmlLang: 'pl',
+      title: 'Strona główna Jianye',
+      weekDays: ['niedziela','poniedziałek','wtorek','środa','czwartek','piątek','sobota'],
+      dateFormat: (y, m, d, wd) => wd + ', ' + d + ' ' + MONTHS.pl[m - 1] + ' ' + y,
+      searchPlaceholder: 'Przeszukaj sieć…',
+      searchWith: (n) => 'Szukaj w ' + n + '…',
+      searchTitle: 'Szukaj',
+      engineBtnLabel: 'Zmień wyszukiwarkę',
+      engineBtnTitle: (n) => 'Zmień wyszukiwarkę (obecna: ' + n + ')',
+      btnDelete: 'Usuń',
+      addEngine: 'Dodaj własną wyszukiwarkę',
+      formTitle: 'Dodaj własną wyszukiwarkę',
+      fieldName: 'Nazwa',
+      fieldUrl: 'URL wyszukiwania (%s = słowo)',
+      fieldLetter: 'Litera ikony',
+      fieldColor: 'Kolor ikony',
+      btnCancel: 'Anuluj',
+      btnSave: 'Zapisz',
+      hintExample: 'np. Wikipedia',
+      engineNames: { bing: 'Bing', baidu: 'Baidu', google: 'Google', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo' }
+    },
+    tr: {
+      htmlLang: 'tr',
+      title: 'Jianye\u2019nin Tarayıcı Ana Sayfası',
+      weekDays: ['Pazar','Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi'],
+      dateFormat: (y, m, d, wd) => d + ' ' + MONTHS.tr[m - 1] + ' ' + y + ', ' + wd,
+      searchPlaceholder: 'Web\u2019de ara…',
+      searchWith: (n) => n + ' ile ara…',
+      searchTitle: 'Ara',
+      engineBtnLabel: 'Arama motorunu değiştir',
+      engineBtnTitle: (n) => 'Arama motorunu değiştir (mevcut: ' + n + ')',
+      btnDelete: 'Sil',
+      addEngine: 'Özel arama motoru ekle',
+      formTitle: 'Özel arama motoru ekle',
+      fieldName: 'Ad',
+      fieldUrl: 'Arama URL’si (%s = anahtar sözcük)',
+      fieldLetter: 'Simge harfi',
+      fieldColor: 'Simge rengi',
+      btnCancel: 'İptal',
+      btnSave: 'Kaydet',
+      hintExample: 'örn. Wikipedia',
+      engineNames: { bing: 'Bing', baidu: 'Baidu', google: 'Google', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo' }
+    },
+    th: {
+      htmlLang: 'th',
+      title: 'หน้าแรกเบราว์เซอร์ของ Jianye',
+      weekDays: ['วันอาทิตย์','วันจันทร์','วันอังคาร','วันพุธ','วันพฤหัสบดี','วันศุกร์','วันเสาร์'],
+      dateFormat: (y, m, d, wd) => wd + 'ที่ ' + d + ' ' + MONTHS.th[m - 1] + ' ' + (y + 543),
+      searchPlaceholder: 'ค้นหาเว็บ…',
+      searchWith: (n) => 'ค้นหาด้วย ' + n + '…',
+      searchTitle: 'ค้นหา',
+      engineBtnLabel: 'เปลี่ยนเครื่องมือค้นหา',
+      engineBtnTitle: (n) => 'เปลี่ยนเครื่องมือค้นหา (ปัจจุบัน: ' + n + ')',
+      btnDelete: 'ลบ',
+      addEngine: 'เพิ่มเครื่องมือค้นหาที่กำหนดเอง',
+      formTitle: 'เพิ่มเครื่องมือค้นหาที่กำหนดเอง',
+      fieldName: 'ชื่อ',
+      fieldUrl: 'URL ค้นหา (%s = คำค้น)',
+      fieldLetter: 'ตัวอักษรไอคอน',
+      fieldColor: 'สีไอคอน',
+      btnCancel: 'ยกเลิก',
+      btnSave: 'บันทึก',
+      hintExample: 'เช่น Wikipedia',
+      engineNames: { bing: 'Bing', baidu: 'Baidu', google: 'Google', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo' }
+    },
+    vi: {
+      htmlLang: 'vi',
+      title: 'Trang chủ trình duyệt của Jianye',
+      weekDays: ['Chủ nhật','Thứ hai','Thứ ba','Thứ tư','Thứ năm','Thứ sáu','Thứ bảy'],
+      dateFormat: (y, m, d, wd) => wd + ', ' + d + ' tháng ' + m + ' năm ' + y,
+      searchPlaceholder: 'Tìm kiếm trên web…',
+      searchWith: (n) => 'Tìm kiếm bằng ' + n + '…',
+      searchTitle: 'Tìm kiếm',
+      engineBtnLabel: 'Đổi công cụ tìm kiếm',
+      engineBtnTitle: (n) => 'Đổi công cụ tìm kiếm (hiện tại: ' + n + ')',
+      btnDelete: 'Xóa',
+      addEngine: 'Thêm công cụ tìm kiếm tùy chỉnh',
+      formTitle: 'Thêm công cụ tìm kiếm tùy chỉnh',
+      fieldName: 'Tên',
+      fieldUrl: 'URL tìm kiếm (%s = từ khóa)',
+      fieldLetter: 'Chữ trên biểu tượng',
+      fieldColor: 'Màu biểu tượng',
+      btnCancel: 'Hủy',
+      btnSave: 'Lưu',
+      hintExample: 'vd: Wikipedia',
+      engineNames: { bing: 'Bing', baidu: 'Baidu', google: 'Google', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo' }
+    },
+    id: {
+      htmlLang: 'id',
+      title: 'Beranda Peramban Jianye',
+      weekDays: ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'],
+      dateFormat: (y, m, d, wd) => wd + ', ' + d + ' ' + MONTHS.id[m - 1] + ' ' + y,
+      searchPlaceholder: 'Telusuri web…',
+      searchWith: (n) => 'Telusuri dengan ' + n + '…',
+      searchTitle: 'Telusuri',
+      engineBtnLabel: 'Ganti mesin pencari',
+      engineBtnTitle: (n) => 'Ganti mesin pencari (saat ini: ' + n + ')',
+      btnDelete: 'Hapus',
+      addEngine: 'Tambah mesin pencari khusus',
+      formTitle: 'Tambah mesin pencari khusus',
+      fieldName: 'Nama',
+      fieldUrl: 'URL pencarian (%s = kata kunci)',
+      fieldLetter: 'Huruf ikon',
+      fieldColor: 'Warna ikon',
+      btnCancel: 'Batal',
+      btnSave: 'Simpan',
+      hintExample: 'mis. Wikipedia',
+      engineNames: { bing: 'Bing', baidu: 'Baidu', google: 'Google', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo' }
+    },
+    hi: {
+      htmlLang: 'hi',
+      title: 'Jianye का ब्राउज़र होमपेज',
+      weekDays: ['रविवार','सोमवार','मंगलवार','बुधवार','गुरुवार','शुक्रवार','शनिवार'],
+      dateFormat: (y, m, d, wd) => wd + ', ' + d + ' ' + MONTHS.hi[m - 1] + ' ' + y,
+      searchPlaceholder: 'वेब पर खोजें…',
+      searchWith: (n) => n + ' से खोजें…',
+      searchTitle: 'खोजें',
+      engineBtnLabel: 'सर्च इंजन बदलें',
+      engineBtnTitle: (n) => 'सर्च इंजन बदलें (वर्तमान: ' + n + ')',
+      btnDelete: 'हटाएं',
+      addEngine: 'कस्टम सर्च इंजन जोड़ें',
+      formTitle: 'कस्टम सर्च इंजन जोड़ें',
+      fieldName: 'नाम',
+      fieldUrl: 'खोज URL (%s = कीवर्ड)',
+      fieldLetter: 'आइकन अक्षर',
+      fieldColor: 'आइकन रंग',
+      btnCancel: 'रद्द करें',
+      btnSave: 'सहेजें',
+      hintExample: 'उदा. Wikipedia',
+      engineNames: { bing: 'Bing', baidu: 'Baidu', google: 'Google', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo' }
+    },
+    sv: {
+      htmlLang: 'sv',
+      title: 'Jianyes webbläsarstartsida',
+      weekDays: ['söndag','måndag','tisdag','onsdag','torsdag','fredag','lördag'],
+      dateFormat: (y, m, d, wd) => wd + ' ' + d + ' ' + MONTHS.sv[m - 1] + ' ' + y,
+      searchPlaceholder: 'Sök på webben…',
+      searchWith: (n) => 'Sök med ' + n + '…',
+      searchTitle: 'Sök',
+      engineBtnLabel: 'Byt sökmotor',
+      engineBtnTitle: (n) => 'Byt sökmotor (nuvarande: ' + n + ')',
+      btnDelete: 'Ta bort',
+      addEngine: 'Lägg till anpassad sökmotor',
+      formTitle: 'Lägg till anpassad sökmotor',
+      fieldName: 'Namn',
+      fieldUrl: 'Sök-URL (%s = nyckelord)',
+      fieldLetter: 'Ikonbokstav',
+      fieldColor: 'Ikonfärg',
+      btnCancel: 'Avbryt',
+      btnSave: 'Spara',
+      hintExample: 't.ex. Wikipedia',
+      engineNames: { bing: 'Bing', baidu: 'Baidu', google: 'Google', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo' }
+    },
+    he: {
+      htmlLang: 'he',
+      dir: 'rtl',
+      title: 'דף הבית של Jianye',
+      weekDays: ['יום ראשון','יום שני','יום שלישי','יום רביעי','יום חמישי','יום שישי','שבת'],
+      dateFormat: (y, m, d, wd) => wd + ', ' + d + ' ב' + MONTHS.he[m - 1] + ' ' + y,
+      searchPlaceholder: 'חיפוש באינטרנט…',
+      searchWith: (n) => 'חיפוש עם ' + n + '…',
+      searchTitle: 'חיפוש',
+      engineBtnLabel: 'החלף מנוע חיפוש',
+      engineBtnTitle: (n) => 'החלף מנוע חיפוש (נוכחי: ' + n + ')',
+      btnDelete: 'מחק',
+      addEngine: 'הוסף מנוע חיפוש מותאם',
+      formTitle: 'הוסף מנוע חיפוש מותאם',
+      fieldName: 'שם',
+      fieldUrl: 'כתובת חיפוש (%s = מילת חיפוש)',
+      fieldLetter: 'אות סמל',
+      fieldColor: 'צבע סמל',
+      btnCancel: 'ביטול',
+      btnSave: 'שמירה',
+      hintExample: 'למשל ויקיפדיה',
+      engineNames: { bing: 'Bing', baidu: 'Baidu', google: 'Google', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo' }
+    }
+  };
+
+  function normalizeLocale() {
+    // 优先级：已保存偏好 > 浏览器语言列表 > 默认英文
+    let saved = '';
+    try { saved = localStorage.getItem('homepage.lang') || ''; } catch (err) {}
+    const list = [saved, navigator.language]
+      .concat(Array.isArray(navigator.languages) ? navigator.languages : [])
+      .filter(Boolean);
+    for (const raw of list) {
+      // 取主语言子标签（避免 "zhx" 之类被误判为 "zh"）
+      let l = String(raw).toLowerCase().split(/[-_]/)[0];
+      if (l === 'zh') return 'zh';
+      if (I18N[l]) return l;
+    }
+    return 'en'; // 未收录的语言回退英文
+  }
+
+  const LANG = normalizeLocale();
+  const T = I18N[LANG] || I18N.en;
+
   /* ---------- 时钟 ---------- */
   const clockEl = document.getElementById('clock');
   const dateEl = document.getElementById('date');
-  const weekDays = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
+  const weekDays = T.weekDays;
 
   function pad(n) { return String(n).padStart(2, '0'); }
+
+  // HTML 转义：所有来自外部（百度联想词、用户自定义引擎名）的文本都须经此处理，
+  // 否则 `<img onerror=...>` 之类会被注入 DOM 执行（XSS）
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+  }
 
   function tick() {
     const now = new Date();
     clockEl.textContent = pad(now.getHours()) + ':' + pad(now.getMinutes());
-    dateEl.textContent = now.getFullYear() + ' 年 ' + (now.getMonth() + 1) + ' 月 ' + now.getDate() + ' 日 · ' + weekDays[now.getDay()];
+    dateEl.textContent = T.dateFormat(now.getFullYear(), now.getMonth() + 1, now.getDate(), weekDays[now.getDay()]);
   }
   tick();
   setInterval(tick, 1000);
+
+  /* ---------- 应用语言到静态文案 ---------- */
+  document.documentElement.lang = T.htmlLang;
+  document.documentElement.dir = T.dir || 'ltr'; // 阿拉伯语/希伯来语为从右到左
+  document.title = T.title;
 
   /* ---------- 搜索 ---------- */
   const form = document.getElementById('search-form');
   const input = document.getElementById('search-input');
   const panel = document.getElementById('suggest-panel');
+  input.placeholder = T.searchPlaceholder;
+  document.getElementById('search-btn').setAttribute('title', T.searchTitle);
+
+  /* ---------- 搜索引擎切换（点击搜索框左侧图标） ---------- */
+  // name 从语言包取（T.engineNames），切换语言时自动跟随
+  const engines = [
+    { id: 'bing',   letter: 'B',  color: '#008373', url: 'https://www.bing.com/search?q=%s' },
+    { id: 'baidu',  letter: '百', color: '#2932E1', url: 'https://www.baidu.com/s?wd=%s' },
+    { id: 'google', letter: 'G',  color: '#4285F4', url: 'https://www.google.com/search?q=%s' },
+    { id: 'sogou',  letter: '搜', color: '#FB6022', url: 'https://www.sogou.com/web?query=%s' },
+    { id: 'so360',  letter: '3',  color: '#3DBB3D', url: 'https://www.so.com/s?q=%s' },
+    { id: 'ddg',    letter: 'D',  color: '#DE5833', url: 'https://duckduckgo.com/?q=%s' }
+  ];
+
+  function engineName(id) {
+    return (T.engineNames && T.engineNames[id]) || id;
+  }
+
+  /* ---------- 自定义搜索引擎（存 localStorage，与内置引擎合并） ---------- */
+  const CUSTOM_KEY = 'homepage.customEngines';
+  let customEngines = [];
+  try {
+    const raw = localStorage.getItem(CUSTOM_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    // 必须是数组，且每项含 id/name/url；同时做类型与长度收敛，防止脏数据破坏渲染
+    if (Array.isArray(parsed)) {
+      customEngines = parsed
+        .filter(e => e && typeof e === 'object' && e.id && e.name && e.url)
+        .map(e => ({
+          // id 保留原值（避免失效已保存的 currentEngine），仅限制合法字符
+          id: String(e.id).replace(/[^A-Za-z0-9_]/g, '').slice(0, 60),
+          name: String(e.name).slice(0, 40),
+          url: String(e.url).slice(0, 500),
+          letter: e.letter ? String(e.letter).slice(0, 2) : '',
+          color: /^#[0-9a-fA-F]{3,8}$/.test(e.color || '') ? e.color : '#5A6CF3'
+        }))
+        .filter(e => e.id) // 清洗后 id 可能为空，剔除
+        // 归一化后可能存在重复 id，去重
+        .filter((e, i, arr) => arr.findIndex(x => x.id === e.id) === i);
+    }
+  } catch (err) { customEngines = []; }
+
+  function saveCustom() {
+    try { localStorage.setItem(CUSTOM_KEY, JSON.stringify(customEngines)); } catch (err) {}
+  }
+
+  // 内置 + 自定义的完整列表
+  function allEngines() { return engines.concat(customEngines); }
+
+  function isCustom(id) { return customEngines.some(e => e.id === id); }
+
+  const ENGINE_KEY = 'homepage.engine';
+  let currentEngine = engines[0].id; // 默认必应
+  try {
+    const saved = localStorage.getItem(ENGINE_KEY);
+    if (saved && allEngines().some(e => e.id === saved)) currentEngine = saved;
+  } catch (err) { /* localStorage 不可用时忽略，用默认引擎 */ }
+
+  const engineBtn = document.getElementById('engine-btn');
+  const enginePanel = document.getElementById('engine-panel');
+
+  function currentEngineObj() {
+    return allEngines().find(e => e.id === currentEngine) || engines[0];
+  }
+
+  // 当前引擎显示名：自定义引擎用自己的名称，内置走语言包
+  function currentEngineLabel() {
+    const eng = currentEngineObj();
+    return isCustom(eng.id) ? eng.name : engineName(eng.id);
+  }
+
+  function badgeHTML(eng) {
+    // 内置引擎图标字母固定；自定义引擎可自定义字母（默认取名称首字）
+    const letter = eng.letter || (eng.name ? eng.name.trim().charAt(0).toUpperCase() : '?');
+    // 颜色做白名单校验，防止 style 注入
+    const safeColor = /^#[0-9a-fA-F]{3,8}$/.test(eng.color || '') ? eng.color : '#5A6CF3';
+    return '<span class="engine-badge" style="background:' + safeColor + '">' + esc(letter) + '</span>';
+  }
+
+  const MAG_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><line x1="16.5" y1="16.5" x2="21" y2="21"></line></svg>';
+
+  function renderEngineBtn() {
+    const eng = currentEngineObj();
+    // 图标固定为放大镜，当前引擎由占位文字和悬停提示说明
+    engineBtn.innerHTML = MAG_SVG;
+    engineBtn.title = T.engineBtnTitle(currentEngineLabel());
+    engineBtn.setAttribute('aria-label', T.engineBtnLabel);
+    input.placeholder = T.searchWith(currentEngineLabel());
+  }
+
+  function closeEnginePanel() {
+    enginePanel.classList.remove('show');
+  }
+
+  function renderEnginePanel() {
+    const items = allEngines().map(e => {
+      const custom = isCustom(e.id);
+      const label = custom ? e.name : engineName(e.id);
+      return '<div class="engine-item' + (e.id === currentEngine ? ' active' : '') + (custom ? ' custom' : '') + '" data-id="' + esc(e.id) + '">' +
+        badgeHTML(e) + '<span>' + esc(label) + '</span>' +
+        (custom ? '<span class="del" data-del="' + esc(e.id) + '" title="' + esc(T.btnDelete || '删除') + '">&times;</span>' : '') +
+        '<span class="check">✓</span></div>';
+    }).join('');
+    // 底部添加入口
+    const addLabel = T.addEngine || '添加自定义搜索引擎';
+    enginePanel.innerHTML = items +
+      '<div class="engine-add" id="engine-add"><span class="plus">+</span><span>' + esc(addLabel) + '</span></div>';
+    enginePanel.classList.add('show');
+  }
+
+  engineBtn.addEventListener('mousedown', (e) => e.preventDefault()); // 防止输入框失焦
+  engineBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (enginePanel.classList.contains('show')) closeEnginePanel();
+    else renderEnginePanel();
+  });
+
+  // 统一用一个指针入口，避免触摸设备上 pointerdown 与 mousedown 各触发一次（重复删除）
+  // 注意：标志在一次交互结束后复位，否则会永久吞掉后续 mousedown
+  let panelPrevPointerTs = 0;
+  enginePanel.addEventListener('pointerdown', (e) => {
+    panelPrevPointerTs = Date.now();
+    onPanelPress(e);
+  });
+  enginePanel.addEventListener('mousedown', (e) => {
+    // 与最近的 pointerdown 属同一次交互（现代浏览器会相继派发）→ 跳过，防重复
+    if (Date.now() - panelPrevPointerTs < 800) return;
+    onPanelPress(e);
+  });
+
+  // 触屏长按（删除按钮不易点时）也能删除
+  let longPressTimer = null;
+  let longPressFired = false;
+  enginePanel.addEventListener('touchstart', (e) => {
+    const item = e.target.closest('.engine-item.custom');
+    if (!item || e.target.closest('.del')) return;
+    longPressFired = false;
+    longPressTimer = setTimeout(() => {
+      longPressTimer = null;
+      longPressFired = true;   // 标记已长按删除，抑制随后的 click 切换
+      deleteEngine(item.dataset.id);
+    }, 600);
+  }, { passive: true });
+  ['touchend', 'touchmove', 'touchcancel'].forEach(ev =>
+    enginePanel.addEventListener(ev, () => { clearTimeout(longPressTimer); longPressTimer = null; }, { passive: true })
+  );
+
+  // 长按删除后，浏览器仍会补发 click —— 拦掉它，避免刚删除又去切换引擎
+  enginePanel.addEventListener('click', (e) => {
+    if (longPressFired) { e.preventDefault(); e.stopPropagation(); longPressFired = false; }
+  }, true);
+
+  function onPanelPress(e) {
+    e.preventDefault(); // 保持输入框焦点
+    // 删除自定义引擎
+    const del = e.target.closest('.del');
+    if (del) {
+      deleteEngine(del.dataset.del);
+      return;
+    }
+    // 打开添加表单
+    if (e.target.closest('#engine-add')) {
+      closeEnginePanel();
+      openEngineForm();
+      return;
+    }
+    const item = e.target.closest('.engine-item');
+    if (!item) return;
+    currentEngine = item.dataset.id;
+    try { localStorage.setItem(ENGINE_KEY, currentEngine); } catch (err) {}
+    renderEngineBtn();
+    closeEnginePanel();
+    input.focus();
+  }
+
+  // 删除某个自定义引擎（若正被使用则回退默认引擎）
+  function deleteEngine(id) {
+    customEngines = customEngines.filter(x => x.id !== id);
+    saveCustom();
+    if (currentEngine === id) {
+      currentEngine = engines[0].id;
+      try { localStorage.setItem(ENGINE_KEY, currentEngine); } catch (err) {}
+      renderEngineBtn();
+    }
+    renderEnginePanel();
+  }
+
+  /* ---------- 自定义引擎表单 ---------- */
+  const formMask = document.getElementById('engine-form-mask');
+  const efName = document.getElementById('ef-name');
+  const efUrl = document.getElementById('ef-url');
+  const efLetter = document.getElementById('ef-letter');
+  const efColor = document.getElementById('ef-color');
+  const efMsg = document.getElementById('ef-msg');
+
+  // 按当前语言填充表单文案（缺词条时回退英文）
+  (function applyFormI18N() {
+    const setText = (id, val) => { const el = document.getElementById(id); if (el && val) el.textContent = val; };
+    setText('engine-form-title', T.formTitle || 'Add custom search engine');
+    setText('ef-label-name', T.fieldName || 'Name');
+    setText('ef-label-url', T.fieldUrl || 'Search URL (%s = keyword)');
+    setText('ef-label-letter', T.fieldLetter || 'Icon letter');
+    setText('ef-label-color', T.fieldColor || 'Icon color');
+    setText('ef-cancel', T.btnCancel || 'Cancel');
+    setText('ef-save', T.btnSave || 'Save');
+    efName.placeholder = T.hintExample || '';
+  })();
+
+  function openEngineForm() {
+    efMsg.textContent = '';
+    efMsg.classList.remove('ok');
+    formMask.classList.add('show');
+    setTimeout(() => efName.focus(), 30);
+  }
+
+  function closeEngineForm() {
+    formMask.classList.remove('show');
+    document.getElementById('engine-form').reset();
+    efColor.value = '#5A6CF3';
+    efMsg.textContent = '';
+    efMsg.classList.remove('ok');
+  }
+
+  // 校验错误提示也跟随语言（缺失时用英文兜底）
+  const ERRS = {
+    zh: { name: '请填写名称', url: '网址需以 http:// 或 https:// 开头', ph: '网址里需要用 %s 表示关键词位置', dup: '已有同名引擎，请换个名称' },
+    en: { name: 'Please enter a name', url: 'URL must start with http:// or https://', ph: 'The URL must contain %s for the keyword', dup: 'An engine with this name already exists' }
+  };
+  const E = ERRS[LANG] || ERRS.en;
+
+  document.getElementById('engine-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const name = efName.value.trim();
+    const url = efUrl.value.trim();
+    if (!name) { efMsg.textContent = E.name; return; }
+    if (!/^https?:\/\//i.test(url)) { efMsg.textContent = E.url; return; }
+    if (url.indexOf('%s') < 0) { efMsg.textContent = E.ph; return; }
+    // 名称去重：比对各语言下的所有名称（含内置引擎的多种译名）+ 已有自定义名，
+    // 避免在中文界面下添加名为 "Bing" 的引擎而绕过检测
+    const lower = name.toLowerCase();
+    const dup = allEngines().some(x => {
+      if (isCustom(x.id)) return (x.name || '').toLowerCase() === lower;
+      // 内置引擎：检查它在所有语言包中的名字
+      if (x.id.toLowerCase() === lower) return true;
+      return Object.keys(I18N).some(lang => {
+        const n = I18N[lang].engineNames && I18N[lang].engineNames[x.id];
+        return n && n.toLowerCase() === lower;
+      });
+    });
+    if (dup) { efMsg.textContent = E.dup; return; }
+
+    const id = 'custom_' + Date.now().toString(36);
+    const eng = { id: id, name: name, url: url, letter: efLetter.value.trim() || name.charAt(0).toUpperCase(), color: efColor.value };
+    customEngines.push(eng);
+    saveCustom();
+    currentEngine = id; // 新增后直接启用
+    try { localStorage.setItem(ENGINE_KEY, currentEngine); } catch (err) {}
+    renderEngineBtn();
+    closeEngineForm();
+    input.focus();
+  });
+
+  document.getElementById('ef-cancel').addEventListener('click', closeEngineForm);
+  formMask.addEventListener('mousedown', (e) => { if (e.target === formMask) closeEngineForm(); });
+  // Esc 关闭表单（表单内任何位置生效）
+  formMask.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.stopPropagation(); closeEngineForm(); } });
+
+  renderEngineBtn();
 
   function search(q) {
-    if (q) window.location.href = 'https://www.bing.com/search?q=' + encodeURIComponent(q);
+    if (!q) return;
+    const eng = currentEngineObj();
+    // URL 中所有 %s 都替换为关键词（replaceAll 未兼容时用 split/join 兜底）
+    const kw = encodeURIComponent(q);
+    const tmpl = String(eng.url || '');
+    const target = tmpl.indexOf('%s') < 0 ? tmpl : tmpl.split('%s').join(kw);
+    window.location.href = target;
   }
 
   form.addEventListener('submit', (e) => {
@@ -246,13 +1262,20 @@
     if (!sugItems.length) { hideSuggest(); return; }
     const q = input.value.trim();
     panel.innerHTML = sugItems.map((s, i) => {
-      // 高亮匹配部分
-      let html = s;
+      // 先转义再插入高亮标签，避免联想词里的 HTML 被当作标签解析（XSS）
+      let html;
+      const safe = esc(s);
       if (q) {
         const idx = s.toLowerCase().indexOf(q.toLowerCase());
         if (idx >= 0) {
-          html = s.slice(0, idx) + '<b>' + s.slice(idx, idx + q.length) + '</b>' + s.slice(idx + q.length);
+          // 在转义后的文本上按相同位置切分（esc 不改变原有字符的相对顺序，
+          // 但会改变长度，故对三段分别转义后拼接更稳妥）
+          html = esc(s.slice(0, idx)) + '<b>' + esc(s.slice(idx, idx + q.length)) + '</b>' + esc(s.slice(idx + q.length));
+        } else {
+          html = safe;
         }
+      } else {
+        html = safe;
       }
       return '<div class="sug-item" data-i="' + i + '">' +
         '<svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><line x1="16.5" y1="16.5" x2="21" y2="21"></line></svg>' +
@@ -279,6 +1302,7 @@
     script.onerror = () => { clearTimeout(timer); delete window[cbName]; script.remove(); hideSuggest(); };
     window[cbName] = function (data) {
       if (seq !== jsonpSeq) return; // 已有更新的请求，丢弃旧响应
+      if (input.value.trim() !== q) return; // 输入框内容已变化（如已删空），丢弃过期响应
       // 兼容两种返回格式：{q:"..", p:false, s:[...]}（实测格式）和 [词, [...]]（旧格式）
       let arr = [];
       if (data && Array.isArray(data.s)) {
@@ -303,7 +1327,15 @@
 
   input.addEventListener('input', () => {
     const q = input.value.trim();
-    if (!q) { lastQuery = ''; hideSuggest(); return; }
+    if (!q) {
+      // 清空输入：除了隐藏面板，还要作废“迟到”的联想来源，
+      // 否则删空文字后，之前请求的结果回来会把面板重新弹出来（bug 修复）
+      lastQuery = '';
+      clearTimeout(sugTimer); // 取消还没发出的防抖请求
+      jsonpSeq++;             // 作废所有在途响应
+      hideSuggest();
+      return;
+    }
     if (q === lastQuery) { renderSuggest(); return; } // 同词重新聚焦/输入时直接恢复
     lastQuery = q;
     clearTimeout(sugTimer);
@@ -311,6 +1343,7 @@
   });
 
   input.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { hideSuggest(); closeEnginePanel(); return; } // Esc 关闭所有弹层
     if (!panel.classList.contains('show')) return;
     if (e.key === 'ArrowDown') {
       e.preventDefault();
@@ -318,8 +1351,6 @@
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       setActive((activeIdx - 1 + sugItems.length) % sugItems.length);
-    } else if (e.key === 'Escape') {
-      hideSuggest();
     } else if (e.key === 'Enter' && activeIdx >= 0) {
       e.preventDefault();
       search(sugItems[activeIdx]);
@@ -335,7 +1366,10 @@
   });
 
   document.addEventListener('click', (e) => {
-    if (!e.target.closest('.search-wrap')) hideSuggest();
+    if (!e.target.closest('.search-wrap')) {
+      hideSuggest();
+      closeEnginePanel();
+    }
   });
 </script>
 </body>
