@@ -487,22 +487,26 @@ footer a{color:var(--text-2);text-decoration:none;border-bottom:1px solid var(--
        本地打开  → 没有可分享的网址，只分享联系方式文本，不塞主页链接 */
   function shareCard(){
     var isWeb = /^https?:$/.test(location.protocol);
-    var text = NAME + ' · 开发者 / 设计爱好者\n'
+    var cardUrl = isWeb ? location.href : '';
+    /* 正文里不放链接：链接单独走 url 字段，否则分享面板会「正文一次 + 链接一次」重复显示 */
+    var info = NAME + ' · 开发者 / 设计爱好者\n'
              + '手机：' + prettyPhone() + '\n'
-             + '邮箱：' + EMAIL
-             + (isWeb ? '\n名片页：' + location.href : '');
-    var payload = { title: NAME + ' · 个人名片', text: text };
-    if (isWeb) payload.url = location.href;
+             + '邮箱：' + EMAIL;
+    /* 降级复制到剪贴板时没有独立的 url 字段，这时才把链接并进正文 */
+    var clipText = info + (cardUrl ? '\n名片页：' + cardUrl : '');
+
+    var payload = { title: NAME + ' · 个人名片', text: info };
+    if (cardUrl) payload.url = cardUrl;
 
     if (navigator.share){
       navigator.share(payload).catch(function(err){
         if (err && err.name === 'AbortError') return;   // 用户自己点了取消
-        copyText(text).then(function(){ toast('分享不可用，名片内容已复制'); })
+        copyText(clipText).then(function(){ toast('分享不可用，名片内容已复制'); })
           .catch(function(){ toast('分享不可用'); });
       });
       return;
     }
-    copyText(text).then(function(){
+    copyText(clipText).then(function(){
       toast(isWeb ? '名片页链接已复制，去粘贴分享吧' : '联系方式已复制（本地打开，无网址可分享）');
     }).catch(function(){
       toast('请手动复制：' + EMAIL);
