@@ -2,7 +2,12 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#0b1020">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="鉴业音乐">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>鉴业音乐 · Jianye Cloud</title>
 <link rel="icon" type="image/x-icon" href="icon.ico">
 <link rel="shortcut icon" type="image/x-icon" href="icon.ico">
@@ -111,43 +116,46 @@ html[data-theme="light"]{background:#f2f2f4}
   background-position:0 0,center;
 }
 
-/* ===================== 弹窗窗口（常驻打开，承载音乐 App） ===================== */
-.scrim{
-  position:fixed;inset:0;z-index:80;display:flex;
-  background:var(--scrim);
-  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-  align-items:center;justify-content:center;padding:28px 18px;
-}
+/* ===================== 全屏 App 外壳 ===================== */
+.scrim{position:fixed;inset:0;z-index:80;display:flex;background:transparent}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 .window{
-  width:100%;max-width:720px;max-height:86vh;
-  border-radius:26px;overflow:hidden;display:flex;flex-direction:column;
+  position:relative;z-index:1;
+  width:100%;height:100vh;height:100dvh;max-width:none;max-height:none;
+  border-radius:0;border:none;overflow:hidden;
+  display:flex;flex-direction:column;
   background:var(--card-bg-strong);
-  backdrop-filter:blur(40px) saturate(180%);
-  -webkit-backdrop-filter:blur(40px) saturate(180%);
-  border:1px solid var(--card-border);
-  box-shadow:0 40px 100px rgba(0,0,0,.5);
-  animation:winIn .32s cubic-bezier(.2,.8,.25,1);
+  backdrop-filter:blur(30px) saturate(170%);
+  -webkit-backdrop-filter:blur(30px) saturate(170%);
+  animation:fadeIn .34s ease;
 }
-@keyframes winIn{from{opacity:0;transform:translateY(18px) scale(.965)}to{opacity:1;transform:none}}
+/* 顶栏：品牌 + 当前播放 + 工具按钮 */
 .win-hd{
-  display:flex;align-items:center;gap:14px;padding:18px 22px;
-  border-bottom:1px solid var(--card-border);flex:none;
+  display:flex;align-items:center;gap:13px;flex:none;
+  padding:11px 20px;padding-top:calc(11px + env(safe-area-inset-top,0px));
+  border-bottom:1px solid var(--card-border);background:var(--card-inner-soft);
 }
-.win-hd h3{font-size:18px;font-weight:650}
-.win-hd p{font-size:12.5px;color:var(--text-2);margin-top:2px}
 .win-ic{width:38px;height:38px;border-radius:12px;flex:none;display:grid;place-items:center;
   background:linear-gradient(160deg,#ff6a8e,#f02e5e);box-shadow:0 4px 13px rgba(240,46,94,.34)}
 .win-ic svg{width:20px;height:20px;color:#fff}
-/* 头部右侧「返回主页」外链按钮 */
-.win-ext{margin-left:auto;display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 14px;
-  border-radius:999px;font-size:12.5px;font-weight:600;font-family:inherit;color:var(--text-2);
+.win-brand{min-width:0}
+.win-brand h3{font-size:16.5px;font-weight:670;letter-spacing:.2px}
+.win-brand p{font-size:12px;color:var(--text-2);margin-top:2px;max-width:46vw;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hd-tools{margin-left:auto;display:flex;align-items:center;gap:8px;flex:none}
+.hd-btn{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;flex:none;
+  color:var(--text-2);background:var(--chip);border:1px solid var(--card-border);transition:.2s}
+.hd-btn:hover{color:var(--text-1);background:var(--card-border-hover);border-color:var(--card-border-hover)}
+.hd-btn:active{transform:scale(.94)}
+.hd-btn.on{color:#ff6a8e;border-color:rgba(255,106,142,.5)}
+.hd-btn svg{width:16px;height:16px}
+/* 「返回主页」外链按钮 */
+.win-ext{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;
+  border-radius:11px;font-size:12.5px;font-weight:600;font-family:inherit;color:var(--text-2);
   background:var(--chip);border:1px solid var(--card-border);text-decoration:none;transition:.2s}
 .win-ext:hover{background:var(--card-border-hover);color:var(--text-1);border-color:var(--card-border-hover)}
 .win-ext svg{width:13px;height:13px;flex:none}
-.win-body{padding:22px 24px 26px;overflow-y:auto}
-.win-body::-webkit-scrollbar{width:8px}
-.win-body::-webkit-scrollbar-thumb{background:var(--track);border-radius:4px}
+.win-body{flex:1;min-height:0;display:flex;overflow:hidden}
 
 /* Toast */
 .toast{
@@ -160,16 +168,34 @@ html[data-theme="light"]{background:#f2f2f4}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .toast svg{width:16px;height:16px;color:#30d158}
 html[data-theme="clear"] .toast{background:rgba(10,18,44,.32);color:#fff}
+/* 浅色主题：--scrim-solid 是近白色，写死的白字会看不清 → 白玻璃底 + 深色文字（沿用浅色主题卡片的玻璃质感） */
+html[data-theme="light"] .toast{background:rgba(255,255,255,.88);color:var(--text-1);
+  border-color:rgba(255,255,255,.96);font-weight:600}
+html[data-theme="light"] .toast svg{color:#12a150}
 
-/* ===================== 鉴业音乐 · 播放器 ===================== */
-/* 宽屏：左右分栏 —— 左侧歌单列表，右侧播放卡片 + 歌词（各自滚动） */
-.window.music{max-width:1040px;height:min(760px,92vh)}
-.window.music .win-body{display:flex;overflow:hidden;padding:16px 18px}
-.mus-wrap{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:16px}
-.mus-lists{min-height:0;overflow-y:auto;padding:2px 8px 4px 2px}
-.mus-lists::-webkit-scrollbar{width:8px}
-.mus-lists::-webkit-scrollbar-thumb{background:var(--track);border-radius:4px}
-.mus-now{display:flex;flex-direction:column;gap:12px;min-height:0}
+/* ===================== 鉴业音乐 · 三栏全屏布局 ===================== */
+/* 左：导航栏｜中：歌单列表（独立滚动）｜右：正在播放 + 歌词 */
+/* min-width:0 必须加：否则长歌名（nowrap+ellipsis）的固有宽度会把弹性/网格子项撑破屏幕 */
+.mus-wrap{flex:1;min-width:0;min-height:0;display:grid;
+  grid-template-columns:236px minmax(0,1fr) 372px}
+.mus-side,.mus-lists,.mus-now{min-width:0}
+.mus-side{display:flex;flex-direction:column;gap:16px;min-height:0;
+  padding:16px 12px 14px;border-right:1px solid var(--card-border)}
+.side-foot{margin-top:auto;font-size:11.5px;color:var(--text-3);line-height:1.9;padding:0 6px}
+.side-foot kbd{font-family:inherit;font-size:10.5px;color:var(--text-2);
+  border:1px solid var(--card-border);border-radius:5px;padding:0 5px;margin:0 1px}
+.mus-lists{min-height:0;display:flex;padding:14px 20px 6px}
+.list-inner{flex:1;min-width:0;min-height:0;width:100%;max-width:1120px;margin:0 auto;
+  display:flex;flex-direction:column;gap:12px}
+.list-hd{flex:none;padding:2px 4px 0}
+.list-hd h4{font-size:20px;font-weight:680;letter-spacing:.2px}
+.list-hd p{font-size:12px;color:var(--text-3);margin-top:4px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#musPane{flex:1;min-width:0;min-height:0;overflow-y:auto;overflow-x:hidden;padding:2px 6px 8px 2px}
+#musPane::-webkit-scrollbar{width:8px}
+#musPane::-webkit-scrollbar-thumb{background:var(--track);border-radius:4px}
+.mus-now{display:flex;flex-direction:column;gap:14px;min-height:0;
+  padding:16px 18px 12px;border-left:1px solid var(--card-border)}
 
 .player{
   position:sticky;top:0;z-index:6;flex:none;margin:0;padding:15px 16px 13px;border-radius:20px;
@@ -248,32 +274,95 @@ html[data-theme="clear"] .toast{background:rgba(10,18,44,.32);color:#fff}
 .pl-back svg{width:19px;height:19px}
 .pl-btn.busy{animation:spin .8s linear infinite}
 
-/* 手机端：单列布局，播放页做成全屏浮层（列表和播放界面分开） */
+/* 左侧导航：竖排标签（基础样式，窄屏覆盖见下方媒体查询） */
+.mus-tabs{display:flex;flex-direction:column;gap:6px}
+.mus-tabs button{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:13px;
+  font-size:14px;color:var(--text-2);text-align:left;transition:.18s}
+.mus-tabs button svg{width:18px;height:18px;flex:none}
+.mus-tabs button .mt-tx{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mus-tabs button .mt-n{flex:none;font-style:normal;font-size:11.5px;font-weight:650;color:var(--text-3);
+  padding:1px 7px;border-radius:999px;background:var(--chip)}
+.mus-tabs button:hover{color:var(--text-1);background:var(--chip)}
+.mus-tabs button.on{color:#fff;font-weight:640;
+  background:linear-gradient(150deg,#ff6a8e,#f02e5e);
+  box-shadow:0 6px 18px rgba(240,46,94,.34)}
+.mus-tabs button.on .mt-n{color:#fff;background:rgba(255,255,255,.24)}
+
+/* ===================== 自适应：宽屏 / 笔记本 / 手机 ===================== */
+/* 桌面：右侧播放面板竖排，大封面 + 歌词占满剩余高度 */
+@media(min-width:760px){
+  .mus-now .player{position:static;flex:none;padding:0;background:none;border:none;
+    backdrop-filter:none;-webkit-backdrop-filter:none}
+  .mus-now .pl-back{display:none}
+  .mus-now .pl-now{flex-direction:column;text-align:center;gap:14px}
+  .mus-now .pl-cover{width:min(30vh,238px);height:min(30vh,238px);border-radius:26px;margin:0 auto}
+  .mus-now .pl-info{width:100%}
+  .mus-now .pl-info h5{font-size:19px;font-weight:670}
+  .mus-now .pl-info p{font-size:12.5px;margin-top:5px}
+  .mus-now .pl-ctrls{width:100%;justify-content:center;gap:12px;margin-top:2px;flex-wrap:wrap}
+  .mus-now .pl-btn{width:38px;height:38px}
+  .mus-now .pl-btn svg{width:20px;height:20px}
+  .mus-now .pl-play{width:56px;height:56px}
+  .mus-now .pl-play svg{width:24px;height:24px}
+  .mus-now .pl-bar-wrap{margin-top:16px}
+  .mus-now .pl-extra{flex-wrap:wrap;justify-content:center;row-gap:6px}
+  .mus-now .pl-vol{width:100%}
+  .mus-now .pl-line{flex:1 1 100%;text-align:center}
+}
+/* 窄一点：左侧导航收成图标条 */
+@media(max-width:1279px){
+  .mus-wrap{grid-template-columns:96px minmax(0,1fr) 340px}
+  .mus-tabs button{justify-content:center;gap:0;padding:13px 0}
+  .mus-tabs button .mt-tx,.mus-tabs button .mt-n{display:none}
+  .side-foot{display:none}
+}
+@media(max-width:1023px){
+  .mus-wrap{grid-template-columns:74px minmax(0,1fr) 288px}
+  .mus-lists{padding:12px 14px 6px}
+  .mus-now{padding:14px 13px 10px;gap:12px}
+  .list-hd h4{font-size:18px}
+  .pl-time{min-width:74px}
+  .mus-now .pl-ctrls{gap:8px}
+  .mus-now .pl-btn{width:34px;height:34px}
+  .mus-now .pl-play{width:48px;height:48px}
+}
+/* 手机：单列；播放器做成顶部紧凑条，点封面/歌名进入全屏播放页 */
 @media(max-width:759px){
-  .scrim{padding:12px 10px}
-  .window.music{height:94vh}
-  .window.music .win-body{display:block;overflow-y:auto;padding:14px 14px 20px}
-  .mus-wrap{display:flex;flex-direction:column;gap:12px}
-  .mus-now{order:-1}
+  .mus-wrap{display:flex;flex-direction:column}
+  .mus-now{order:-1;flex:none;flex-direction:column;gap:10px;padding:12px 14px;
+    border-left:none;border-bottom:1px solid var(--card-border)}
   .mus-now>.mus-lrc{display:none!important}
+  .mus-now .pl-extra{display:none}
   .pl-info{cursor:pointer}
   .mus-now .pl-mode,.mus-now .pl-lrcbtn{display:none}
   .mus-wrap.fs .pl-mode,.mus-wrap.fs .pl-lrcbtn{display:grid}
   .mus-now .pl-lrcbtn{display:none!important}
   .mus-wrap.fs .pl-dl{display:none}
-  .mus-tabs button em{display:none}
   .mus-now .pl-cover{width:46px;height:46px;border-radius:12px}
   .mus-now .pl-btn{width:32px;height:32px}
   .mus-now .pl-play{width:38px;height:38px}
   .mus-now .pl-now{gap:10px}
+  .list-hd{display:none}
+  .mus-side{order:1;flex-direction:row;gap:0;padding:10px 12px 0;border-right:none}
+  .mus-tabs{flex-direction:row;gap:4px;flex:1;padding:4px;border-radius:13px;background:var(--card-inner-soft)}
+  .mus-tabs button{flex:1;justify-content:center;gap:0;padding:9px 4px;font-size:12.5px;
+    border-radius:10px;text-align:center}
+  .mus-tabs button svg{display:none}
+  .mus-tabs button .mt-tx{display:inline}
+  .mus-tabs button .mt-n{display:none}
+  .mus-tabs button.on{box-shadow:none}
+  .side-foot{display:none}
+  .mus-lists{order:2;flex:1;min-height:0;padding:12px 14px 8px}
+  .list-inner{max-width:none}
   /* 全屏播放页：同一套 DOM，用 .fs 切换成沉浸式排版 */
   .window.music:has(.mus-wrap.fs) .win-hd{display:none}
   .window.music:has(.mus-wrap.fs) .win-body{flex:1;height:auto}
+  .mus-wrap.fs .mus-side{display:none}
   .mus-wrap.fs .mus-lists{display:none}
-  .mus-wrap.fs .mus-now{position:fixed;inset:0;z-index:95;border-radius:0;gap:8px;overflow:hidden;
+  .mus-wrap.fs .mus-now{position:fixed;inset:0;z-index:95;gap:8px;overflow:hidden;border:none;
     background:var(--card-bg-strong);
     backdrop-filter:blur(40px) saturate(180%);-webkit-backdrop-filter:blur(40px) saturate(180%);
-    padding:14px 20px calc(20px + env(safe-area-inset-bottom,0px))}
+    padding:calc(14px + env(safe-area-inset-top,0px)) 20px calc(20px + env(safe-area-inset-bottom,0px))}
   .mus-wrap.fs .player{position:static;background:none;border:none;
     backdrop-filter:none;-webkit-backdrop-filter:none;padding:0}
   .mus-wrap.fs .pl-back{display:grid;position:absolute;top:14px;left:14px;z-index:2}
@@ -292,27 +381,6 @@ html[data-theme="clear"] .toast{background:rgba(10,18,44,.32);color:#fff}
   .mus-wrap.fs .mus-lrc{display:block!important;flex:1;min-height:0;margin-top:6px}
   .mus-wrap.fs .mus-lrc p{font-size:15px;line-height:2.1}
   .mus-wrap.fs .mus-lrc p.on{font-size:17px}
-}
-@media(min-width:760px){
-  .pl-back{display:none!important}
-  .mus-now .pl-now{flex-wrap:wrap;row-gap:8px}
-  .mus-now .pl-ctrls{width:100%;justify-content:center;gap:10px}
-  .mus-now .pl-btn{width:32px;height:32px}
-  .mus-now .pl-play{width:42px;height:42px}
-}
-
-/* 标签页 */
-.mus-tabs{display:flex;gap:5px;margin-bottom:12px;padding:4px;border-radius:13px;background:var(--card-inner-soft)}
-.mus-tabs button{flex:1;padding:8px 4px;border-radius:10px;font-size:13px;color:var(--text-2);
-  transition:.18s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.mus-tabs button:hover{color:var(--text-1)}
-.mus-tabs button.on{background:linear-gradient(150deg,#ff6a8e,#f02e5e);color:#fff;font-weight:620;
-  box-shadow:0 3px 10px rgba(240,46,94,.32)}
-.mus-tabs button em{font-style:normal;opacity:.72;font-size:11.5px;margin-left:3px}
-@media (max-width:560px){
-  .mus-tabs{gap:3px}
-  .mus-tabs button{font-size:12px;padding:8px 2px}
-  .mus-tabs button em{font-size:10.5px;margin-left:2px}
 }
 
 /* 在线搜索框 */
@@ -418,8 +486,9 @@ html[data-theme="clear"] .toast{background:rgba(10,18,44,.32);color:#fff}
   .pl-vol{width:96px}
   .pl-line{display:none}
   .song-sub{display:none}
-  .mus-tabs button{font-size:12px}
-  .win-ext{width:34px;height:34px;padding:0;justify-content:center;border-radius:50%}
+  .win-hd{gap:10px;padding-left:14px;padding-right:14px}
+  .win-brand p{max-width:32vw}
+  .win-ext{width:36px;height:36px;padding:0;justify-content:center;border-radius:11px}
   .win-ext .win-ext-tx{display:none}
   .win-ext svg{width:16px;height:16px}
 }
@@ -502,17 +571,8 @@ html[data-theme="light"]{
   box-shadow:var(--lg-drop),var(--lg-inner);
 }
 .window{position:relative}
-/* 1px 环状「折射棱边」 */
-.window::before{
-  content:"";position:absolute;inset:0;box-sizing:border-box;
-  border-radius:inherit;padding:1.2px;
-  background:var(--lg-rim);
-  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
-  -webkit-mask-composite:xor;
-  mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
-  mask-composite:exclude;
-  pointer-events:none;z-index:5;
-}
+/* 全屏时不要那圈 1px 折射棱边（会贴着屏幕边缘画出一条亮线） */
+.window::before{display:none}
 /* 内层镜面：压在内容之下、面板背景之上 */
 .window::after{
   content:"";position:absolute;inset:0;
@@ -529,14 +589,22 @@ html[data-theme="dark"] .window::after{mix-blend-mode:screen}
 <div class="bg"><div class="bg-wp"></div></div>
 
 <div class="scrim open" id="scrim">
-  <div class="window music" id="win" role="dialog" aria-label="鉴业音乐">
+  <div class="window music" id="win" role="application" aria-label="鉴业音乐">
     <div class="win-hd">
       <span class="win-ic" id="winIc"></span>
-      <div><h3>鉴业音乐</h3><p id="musicSub">我的循环歌单</p></div>
-      <a class="win-ext" href="./index.html" title="返回个人网站主页">
-        <span class="win-ext-tx">主页</span>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6"/><path d="M20 4 11 13"/></svg>
-      </a>
+      <div class="win-brand"><h3>鉴业音乐</h3><p id="musicSub">我的循环歌单</p></div>
+      <div class="hd-tools">
+        <button class="hd-btn" id="hdTheme" type="button" title="切换主题：通透 / 深色 / 浅色" aria-label="切换主题">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.1"/><path d="M12 2.7v2.1M12 19.2v2.1M4.3 4.3l1.5 1.5M18.2 18.2l1.5 1.5M2.7 12h2.1M19.2 12h2.1M4.3 19.7l1.5-1.5M18.2 5.8l1.5-1.5"/></svg>
+        </button>
+        <button class="hd-btn" id="hdFs" type="button" title="进入 / 退出浏览器全屏" aria-label="全屏">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4H4v5"/><path d="M15 4h5v5"/><path d="M15 20h5v-5"/><path d="M9 20H4v-5"/></svg>
+        </button>
+        <a class="win-ext" href="./index.html" title="返回个人网站主页">
+          <span class="win-ext-tx">主页</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6"/><path d="M20 4 11 13"/></svg>
+        </a>
+      </div>
     </div>
     <div class="win-body" id="musBody"></div>
   </div>
@@ -563,6 +631,13 @@ function toast(msg,ok=true){
 }
 const ICONS={
   music:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V6l11-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/></svg>'
+};
+/* 左侧导航图标 */
+const NAV_ICONS={
+  kg:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.2 17A4.6 4.6 0 0 1 7 7.9a6.1 6.1 0 0 1 11.5 1.7A3.9 3.9 0 0 1 17.8 17z"/><path d="M12 20.2v.01"/></svg>',
+  local:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3.6 7.6a2 2 0 0 1 2-2h3.3l1.8 2.2h7.7a2 2 0 0 1 2 2v7.6a2 2 0 0 1-2 2H5.6a2 2 0 0 1-2-2z"/><path d="M9.4 13.6v2.6l3.4-1.3z"/></svg>',
+  online:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><circle cx="11" cy="11" r="6.6"/><path d="m16.2 16.2 4.3 4.3"/></svg>',
+  mine:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19.8S4.6 15.3 4.6 10.3A4.3 4.3 0 0 1 12 7.2a4.3 4.3 0 0 1 7.4 3.1c0 5-7.4 9.5-7.4 9.5z"/></svg>'
 };
 $('#winIc').innerHTML=ICONS.music;
 
@@ -1476,16 +1551,39 @@ function minePane(){
   return bar+'<div class="song-list">'+myList.map((t,i)=>trackRow(t,i,'mine')).join('')+'</div>'
     +'<p class="mus-hint">共 '+myList.length+' 首 · 保存在本机浏览器 · 可导出成文件带走</p>';
 }
+/* 左侧导航按钮：图标 + 名称 + 数量（窄屏只留图标） */
+function navBtn(id,label,count){
+  const n=(count==null||count==='')?'':'<b class="mt-n">'+count+'</b>';
+  return '<button type="button" data-mtab="'+id+'" class="mt'+(musTab===id?' on':'')+'" title="'+esc(label)+'">'
+    +NAV_ICONS[id]+'<span class="mt-tx">'+esc(label)+'</span>'+n+'</button>';
+}
+/* 列表区标题栏文案 */
+function paneTitle(){
+  if(musTab==='kg')return kgMeta
+    ? ['酷狗歌单','来自'+kgMeta.src+'「'+kgMeta.name+'」 · 共 '+kgMeta.count+' 首']
+    : ['酷狗歌单','还没有读到歌单，联网打开会自动同步'];
+  if(musTab==='local')return ['本地歌单','扫描站点「音乐」文件夹 · 共 '+songs.length+' 首'];
+  if(musTab==='online')return ['在线搜索','网易云音源 · 输入歌名 / 歌手 / 专辑'];
+  return ['我的歌单','保存在本机浏览器 · 共 '+myList.length+' 首'];
+}
 function musShell(){
+  const t=paneTitle();
+  const pane=musTab==='local'?localPane():musTab==='online'?onlinePane():musTab==='kg'?kgPane():minePane();
   return '<div class="mus-wrap'+(gFsOpen?' fs':'')+'" id="musWrap">'
+    +'<aside class="mus-side">'
+      +'<nav class="mus-tabs">'
+        +navBtn('kg','酷狗歌单',kgSongs.length)
+        +navBtn('local','本地歌单',songs.length)
+        +navBtn('online','在线搜索','')
+        +navBtn('mine','我的歌单',myList.length)
+      +'</nav>'
+      +'<div class="side-foot">按 <kbd>/</kbd> 或 <kbd>Ctrl</kbd>+<kbd>K</kbd> 搜索<br>本地歌曲放进「音乐」文件夹，刷新即更新</div>'
+    +'</aside>'
     +'<section class="mus-lists">'
-      +'<div class="mus-tabs">'
-        +'<button data-mtab="kg" class="'+(musTab==='kg'?'on':'')+'">酷狗歌单<em>'+kgSongs.length+'</em></button>'
-        +'<button data-mtab="local" class="'+(musTab==='local'?'on':'')+'">本地歌单<em>'+songs.length+'</em></button>'
-        +'<button data-mtab="online" class="'+(musTab==='online'?'on':'')+'">在线搜索</button>'
-        +'<button data-mtab="mine" class="'+(musTab==='mine'?'on':'')+'">我的歌单<em>'+myList.length+'</em></button>'
+      +'<div class="list-inner">'
+        +'<header class="list-hd"><h4>'+esc(t[0])+'</h4><p>'+esc(t[1])+'</p></header>'
+        +'<div id="musPane">'+pane+'</div>'
       +'</div>'
-      +'<div id="musPane">'+(musTab==='local'?localPane():musTab==='online'?onlinePane():musTab==='kg'?kgPane():minePane())+'</div>'
     +'</section>'
     +'<aside class="mus-now">'
       +playerHtml()
@@ -1496,11 +1594,14 @@ function musShell(){
 function renderMusShell(keepScroll){
   if(currentApp!=='music')return;
   const body=$('#musBody'); if(!body)return;
-  const col=body.querySelector('.mus-lists');
+  const col=body.querySelector('#musPane');
   const stBody=body.scrollTop, stCol=col?col.scrollTop:0;
   body.innerHTML=musShell();
   musBind();
-  if(keepScroll){ body.scrollTop=stBody; const c2=body.querySelector('.mus-lists'); if(c2)c2.scrollTop=stCol; }
+  if(keepScroll){
+    body.scrollTop=stBody;
+    const c2=body.querySelector('#musPane'); if(c2)c2.scrollTop=stCol;
+  }
 }
 
 /* 在线搜索：点封面图标时按需补全前 8 条结果，避免浪费接口配额 */
@@ -1744,6 +1845,43 @@ async function loadMusic(){
   restoreMusicState();   // 本地文件扫完了，如果上次放的是本地歌，这时才能重建队列
   renderMusShell(true);
 }
+
+/* ---------------- 顶栏：切换主题 / 浏览器全屏 ----------------
+   主题与主站共用一份 localStorage（jy-settings / jy-theme-chosen），切了主站也跟着变。 */
+const THEME_ORDER=['clear','dark','light'];
+const THEME_NAME={clear:'通透',dark:'深色',light:'浅色'};
+(function bindHdTools(){
+  const tb=$('#hdTheme');
+  if(tb)tb.onclick=()=>{
+    const cur=document.documentElement.dataset.theme||'clear';
+    const next=THEME_ORDER[(THEME_ORDER.indexOf(cur)+1)%THEME_ORDER.length];
+    document.documentElement.dataset.theme=next;
+    try{
+      const s=JSON.parse(localStorage.getItem('jy-settings')||'{}');
+      s.theme=next;
+      localStorage.setItem('jy-settings',JSON.stringify(s));
+      localStorage.setItem('jy-theme-chosen','1');
+    }catch(e){}
+    toast('主题：'+THEME_NAME[next]+'（与主站同步）');
+  };
+  const fb=$('#hdFs');
+  if(fb){
+    fb.onclick=()=>{
+      if(document.fullscreenElement){
+        if(document.exitFullscreen)document.exitFullscreen().catch(()=>{});
+        return;
+      }
+      const el=document.documentElement;
+      const req=el.requestFullscreen||el.webkitRequestFullscreen;
+      if(!req){ toast('当前浏览器不支持全屏，可以按 F11'); return; }
+      try{ const p=req.call(el); if(p&&p.catch)p.catch(()=>toast('浏览器不允许自动全屏，按 F11 试试')); }
+      catch(e){ toast('浏览器不允许自动全屏，按 F11 试试'); }
+    };
+    const sync=()=>fb.classList.toggle('on',!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange',sync);
+    document.addEventListener('webkitfullscreenchange',sync);
+  }
+})();
 
 /* ---------------- 启动 ---------------- */
 renderMusShell(false);
