@@ -2276,12 +2276,11 @@ let wpStatus = 'loading';
 let wpChosen = '';      // 当前选中的背景文件名，'' = 还没选（开关打开也不会铺图）
 
 const PROJECTS = [
-  {t:'一键系统重装',d:'让系统重装变得像点一下按钮那样简单的工具站。',tags:['系统工具','Windows'],u:'https://jianyeos.mysxl.cn/',ic:'drive',c1:'#5b8cff',c2:'#3a4fd6'},
-  {t:'Jianye File Encryptor',d:'本地文件加密工具，保护你的重要文件安全。',tags:['文件加密','安全工具'],u:'https://jye.mysxl.cn/',ic:'fav',c1:'#ffc24d',c2:'#ff8a1a'},
-  {t:'Jianye PE',d:'自维护的 PE 系统，装机维护的好帮手。',tags:['PE 系统','装机维护'],u:'https://jianyepe.mysxl.cn/',ic:'settings',c1:'#8e7bff',c2:'#4a36c4'},
-  {t:'鉴业浏览器主页插件',d:'发布在 Edge 扩展商店的浏览器主页插件。',tags:['浏览器扩展','Edge'],u:'https://microsoftedge.microsoft.com/addons/detail/dgejdcchpcbiojhbiebfbpikeejipfbd',ic:'skills',c1:'#4cc8ff',c2:'#1f6fe0'},
-  {t:'极简浏览器主页',d:'「鉴业主页」——摒弃弹窗与冗余推荐，打开即是搜索框的极简浏览器主页。',tags:['浏览器扩展','极简'],u:'https://microsoftedge.microsoft.com/addons/detail/hlaliccifhdnccgkmbjijpjanfngkdpg',ic:'home',c1:'#34d399',c2:'#0d9488'},
-  {t:'Jianye AI 智能助手',d:'接入大模型的智能对话助手。',tags:['AI','智能助手'],u:'https://jianye-ai.mysxl.cn/',ic:'games',c1:'#ff6a8e',c2:'#c01e52'},
+  {t:'一键系统重装',d:'让系统重装变得像点一下按钮那样简单的工具站。',tags:['系统工具','Windows'],u:'https://jianye.pages.dev/os',ic:'drive',c1:'#5b8cff',c2:'#3a4fd6'},
+  {t:'Jianye File Encryptor',d:'本地文件加密工具，保护你的重要文件安全。',tags:['文件加密','安全工具'],u:'https://jianye.pages.dev/jye',ic:'fav',c1:'#ffc24d',c2:'#ff8a1a'},
+  {t:'Jianye PE',d:'自维护的 PE 系统，装机维护的好帮手。',tags:['PE 系统','装机维护'],u:'https://jianye.pages.dev/pe',ic:'settings',c1:'#8e7bff',c2:'#4a36c4'},
+  {t:'鉴业浏览器主页',d:'「鉴业主页」——摒弃弹窗与冗余推荐，打开即是搜索框的极简浏览器主页。',tags:['浏览器主页','极简'],u:'https://jianye.pages.dev/homepage-sharepage',ic:'home',c1:'#34d399',c2:'#0d9488'},
+  {t:'Jianye AI 智能助手',d:'接入大模型的智能对话助手。',tags:['AI','智能助手'],u:'https://jianye.pages.dev/ai',ic:'games',c1:'#ff6a8e',c2:'#c01e52'},
   {t:'鉴业文件传送',d:'手机与电脑之间点对点直传文件，不经过服务器，支持跨平台多语言。',tags:['文件传送','P2P 直连'],u:'https://jianye.pages.dev/drop',ic:'drop',c1:'#40c8e0',c2:'#1f6fe0'}
 ];
 
@@ -6507,7 +6506,7 @@ $('#popover').addEventListener('click',e=>{
   if(a==='mail')location.href='mailto:'+EMAIL;
   if(a==='copy')copyEmail();
   if(a==='feedback')window.open('https://my.feishu.cn/share/base/form/shrcnZomfA2kKrY311TeM2OaRpe','_blank','noopener'); // 飞书反馈表单
-  if(a==='search')window.open('https://jianye.pages.dev/homepage','_blank','noopener');
+  if(a==='search')window.open('https://jianye.pages.dev/homepage-sharepage','_blank','noopener');
   if(a==='drop')window.open('https://jianye.pages.dev/drop','_blank','noopener'); // 文件传送独立版
   if(a==='top')window.scrollTo({top:0,behavior:'smooth'});
   closePopover();
