@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>鉴业一键重装 - 系统重装，点几下就好</title>
+<link rel="icon" type="image/x-icon" href="icon.ico">
+<link rel="shortcut icon" href="icon.ico">
+<style>
+  :root{
+    --blue:#1e8fff;
+    --blue-deep:#0b6cd4;
+    --bg:#f4f8fd;
+    --ink:#1c2b3a;
+    --muted:#64748b;
+    --card:#ffffff;
+    --radius:16px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif;
+    color:var(--ink);
+    background:var(--bg);
+    line-height:1.7;
+  }
+  img{max-width:100%;display:block;}
+  a{text-decoration:none;color:inherit;}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 24px;}
+
+  /* ===== 顶部导航 ===== */
+  header{
+    position:sticky;top:0;z-index:99;
+    background:rgba(255,255,255,.92);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid #e6eef7;
+  }
+  .nav{
+    display:flex;align-items:center;justify-content:space-between;
+    height:64px;
+  }
+  .logo{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:800;}
+  .logo .mark{
+    width:34px;height:34px;border-radius:9px;overflow:hidden;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 2px 8px rgba(30,143,255,.3);
+  }
+  .logo .mark img{width:100%;height:100%;object-fit:cover;}
+  .nav-links{display:flex;gap:28px;color:var(--muted);font-size:15px;}
+  .nav-links a:hover{color:var(--blue);}
+  .btn{
+    display:inline-flex;align-items:center;gap:8px;
+    background:linear-gradient(135deg,var(--blue),var(--blue-deep));
+    color:#fff;font-weight:700;font-size:16px;
+    padding:11px 26px;border-radius:999px;border:none;cursor:pointer;
+    box-shadow:0 6px 18px rgba(30,143,255,.35);
+    transition:transform .2s,box-shadow .2s;
+  }
+  .btn:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(30,143,255,.45);}
+  .btn.small{padding:8px 20px;font-size:14px;}
+
+  /* ===== Hero ===== */
+  .hero{
+    background:
+      radial-gradient(900px 400px at 85% -10%, rgba(93,177,255,.35), transparent),
+      radial-gradient(700px 380px at -10% 20%, rgba(30,143,255,.18), transparent),
+      linear-gradient(180deg,#eaf4ff 0%, var(--bg) 100%);
+    padding:72px 0 56px;
+  }
+  .hero-grid{display:grid;grid-template-columns:1.05fr 1fr;gap:48px;align-items:center;}
+  .hero h1{font-size:40px;line-height:1.3;letter-spacing:1px;}
+  .hero h1 .hl{color:var(--blue);}
+  .hero p.sub{margin:18px 0 30px;color:var(--muted);font-size:17px;max-width:460px;}
+  .hero-tags{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:32px;}
+  .tag{
+    background:#fff;border:1px solid #d8e8fa;color:var(--blue-deep);
+    padding:6px 14px;border-radius:999px;font-size:13px;font-weight:600;
+  }
+  .hero-shot{
+    border-radius:var(--radius);overflow:hidden;
+    box-shadow:0 24px 60px rgba(11,80,160,.22);
+    border:1px solid #dbe8f6;background:#fff;
+  }
+
+  /* ===== 痛点 ===== */
+  section{padding:72px 0;}
+  .sec-head{text-align:center;margin-bottom:44px;}
+  .sec-head h2{font-size:30px;}
+  .sec-head p{color:var(--muted);margin-top:10px;}
+  .pain-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;}
+  .pain{
+    background:var(--card);border-radius:var(--radius);padding:30px 26px;
+    border:1px solid #e6eef7;box-shadow:0 4px 16px rgba(28,60,100,.05);
+  }
+  .pain .emoji{font-size:34px;}
+  .pain h3{margin:14px 0 8px;font-size:18px;}
+  .pain p{color:var(--muted);font-size:14.5px;}
+
+  /* ===== 四大功能 ===== */
+  .features{background:linear-gradient(180deg,#fff,#f0f7ff);}
+  .feat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:22px;}
+  .feat{
+    background:#fff;border-radius:var(--radius);padding:30px 24px;text-align:center;
+    border:1px solid #e6eef7;transition:transform .25s,box-shadow .25s;
+  }
+  .feat:hover{transform:translateY(-6px);box-shadow:0 14px 32px rgba(30,143,255,.16);}
+  .feat .icon{
+    width:60px;height:60px;margin:0 auto 16px;border-radius:16px;
+    display:flex;align-items:center;justify-content:center;font-size:28px;
+    background:linear-gradient(135deg,#e8f3ff,#d2e9ff);color:var(--blue-deep);
+  }
+  .feat h3{font-size:17px;margin-bottom:8px;}
+  .feat p{color:var(--muted);font-size:13.5px;}
+
+  /* ===== 三步走 ===== */
+  .steps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;counter-reset:step;}
+  .step{
+    background:var(--card);border-radius:var(--radius);padding:34px 28px;
+    border:1px solid #e6eef7;position:relative;
+  }
+  .step::before{
+    counter-increment:step;content:"0" counter(step);
+    font-size:44px;font-weight:800;color:#dbe9fb;
+    position:absolute;top:18px;right:24px;line-height:1;
+  }
+  .step h3{font-size:18px;margin-bottom:10px;color:var(--blue-deep);}
+  .step p{color:var(--muted);font-size:14.5px;}
+
+  /* ===== 界面展示 ===== */
+  .showcase .shot{
+    border-radius:var(--radius);overflow:hidden;border:1px solid #dbe8f6;
+    box-shadow:0 20px 50px rgba(11,80,160,.18);background:#fff;
+  }
+
+  /* ===== 下载 CTA ===== */
+  .cta{
+    background:linear-gradient(135deg,#1173e0,#1e8fff 55%,#5db1ff);
+    color:#fff;text-align:center;border-radius:24px;
+    padding:64px 32px;position:relative;overflow:hidden;
+  }
+  .cta::before{
+    content:"";position:absolute;inset:0;
+    background:radial-gradient(500px 200px at 20% 0%, rgba(255,255,255,.25), transparent);
+  }
+  .cta h2{font-size:32px;margin-bottom:12px;position:relative;}
+  .cta p{opacity:.92;margin-bottom:30px;position:relative;}
+  .btn-white{
+    background:#fff;color:var(--blue-deep);
+    box-shadow:0 8px 22px rgba(0,40,90,.25);
+    font-size:17px;padding:14px 42px;position:relative;
+  }
+  .btn-white:hover{box-shadow:0 12px 30px rgba(0,40,90,.35);}
+  .cta .tip{font-size:13px;opacity:.85;margin-top:16px;position:relative;}
+
+  /* ===== FAQ ===== */
+  .faq{max-width:760px;margin:0 auto;}
+  details{
+    background:#fff;border:1px solid #e6eef7;border-radius:12px;
+    padding:18px 22px;margin-bottom:14px;
+  }
+  summary{font-weight:700;cursor:pointer;font-size:15.5px;}
+  details p{margin-top:10px;color:var(--muted);font-size:14.5px;}
+
+  footer{
+    background:#0e2239;color:#9db6cf;text-align:center;
+    padding:28px 0;font-size:13.5px;margin-top:40px;
+  }
+
+  @media (max-width:860px){
+    .hero-grid{grid-template-columns:1fr;}
+    .hero h1{font-size:30px;}
+    .pain-grid,.feat-grid,.steps-grid{grid-template-columns:1fr;}
+    .nav-links{display:none;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <div class="logo"><span class="mark"><img src="icon.ico" alt="鉴业一键重装图标"></span>鉴业一键重装</div>
+    <nav class="nav-links">
+      <a href="#pain">解决难题</a>
+      <a href="#features">核心功能</a>
+      <a href="#steps">使用步骤</a>
+      <a href="#faq">常见问题</a>
+    </nav>
+    <a class="btn small" href="#download">立即下载</a>
+  </div>
+</header>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <h1>系统重装太难？<br>把<span class="hl">"技术活"</span>变成<span class="hl">"点几下"</span></h1>
+      <p class="sub">「鉴业一键重装」—— 把系统重装、备份、维护全做成"傻瓜操作"，哪怕是电脑小白，也能轻松搞定系统问题！</p>
+      <div class="hero-tags">
+        <span class="tag">✔ 全自动安装</span>
+        <span class="tag">✔ UEFI / TPM 智能检测</span>
+        <span class="tag">✔ 备份 WiFi 密码到新系统</span>
+        <span class="tag">✔ WinPE 一键急救</span>
+      </div>
+      <a class="btn" href="#download">⬇ 免费下载体验</a>
+    </div>
+    <div class="hero-shot">
+      <img src="jianye-tool.png" alt="鉴业一键重装软件界面">
+    </div>
+  </div>
+</section>
+
+<!-- 痛点 -->
+<section id="pain">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>你是不是也遇到过这些电脑难题？</h2>
+      <p>别再忍了，一次重装，满血复活</p>
+    </div>
+    <div class="pain-grid">
+      <div class="pain">
+        <div class="emoji">🐢</div>
+        <h3>系统越用越卡</h3>
+        <p>开机要等 5 分钟，打开个网页转圈半天。垃圾越堆越多，怎么清理都无济于事。</p>
+      </div>
+      <div class="pain">
+        <div class="emoji">📢</div>
+        <h3>弹窗广告关不完</h3>
+        <p>误装全家桶软件，桌面弹窗一个接一个，卸了又装、装了又弹，烦不胜烦。</p>
+      </div>
+      <div class="pain">
+        <div class="emoji">😵</div>
+        <h3>被术语劝退</h3>
+        <p>想重装系统，却被"BIOS 设置""分区格式""引导模式"这些术语吓得不敢动手。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 核心功能 -->
+<section id="features" class="features">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>四大核心功能，一台工具全搞定</h2>
+      <p>与软件界面一一对应，点哪里、会什么，一目了然</p>
+    </div>
+    <div class="feat-grid">
+      <div class="feat">
+        <div class="icon">🪟</div>
+        <h3>系统安装</h3>
+        <p>自主选择镜像与分区，自动识别 GPT / 主分区 / NVMe，格式化、引导、驱动一键配齐。</p>
+      </div>
+      <div class="feat">
+        <div class="icon">🗄️</div>
+        <h3>系统备份</h3>
+        <p>重装前把重要资料和系统状态完整备份，随时回滚，再也不怕数据丢失。</p>
+      </div>
+      <div class="feat">
+        <div class="icon">☁️</div>
+        <h3>一键重装</h3>
+        <p>选好系统点"开始安装"，全自动完成后续流程，自动重启进入全新系统。</p>
+      </div>
+      <div class="feat">
+        <div class="icon">🛠️</div>
+        <h3>更多工具</h3>
+        <p>内置 WinPE 急救系统、硬件信息查看等实用维护工具，日常问题信手拈来。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 三步走 -->
+<section id="steps">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>小白也能三步完成重装</h2>
+      <p>全程无需理解任何专业术语</p>
+    </div>
+    <div class="steps-grid">
+      <div class="step">
+        <h3>下载并打开工具</h3>
+        <p>获取「鉴业一键重装」，双击打开即可使用，界面简洁，所有状态一目了然。</p>
+      </div>
+      <div class="step">
+        <h3>选镜像、选分区</h3>
+        <p>一键搜索系统镜像，工具自动识别硬盘分区并给出推荐选项，无脑点确认就行。</p>
+      </div>
+      <div class="step">
+        <h3>点击"开始安装"</h3>
+        <p>剩下的事交给它：自动安装、自动重启、自动进新系统，泡杯茶回来就是全新的电脑。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 界面展示 -->
+<section class="showcase features">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>真实软件界面，简单到不像重装工具</h2>
+      <p>启动模式、安全启动、硬件信息全部自动检测并标明</p>
+    </div>
+    <div class="shot">
+      <img src="jianye-tool.png" alt="鉴业一键重装 - 系统安装界面">
+    </div>
+  </div>
+</section>
+
+<!-- 下载 CTA -->
+<section id="download">
+  <div class="wrap">
+    <div class="cta">
+      <h2>现在下载，5 分钟还你一台全新电脑</h2>
+      <p>支持 Windows 主流系统 · 免费下载 · 操作简单零门槛</p>
+      <!-- 下载链接：将下方 href 替换为实际的工具下载地址即可 -->
+      <a class="btn btn-white" href="#" id="downloadBtn">⬇ 立即获取鉴业一键重装</a>
+      <p class="tip">温馨提示：重装前请先使用"系统备份"功能保存重要资料</p>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq">
+  <div class="wrap">
+    <div class="sec-head"><h2>常见问题</h2></div>
+    <div class="faq">
+      <details>
+        <summary>我完全是电脑小白，真的能用吗？</summary>
+        <p>可以。工具把格式化、引导分区、驱动备份等专业操作全部自动化，你只需要选好系统、点"开始安装"，其余流程全自动完成。</p>
+      </details>
+      <details>
+        <summary>重装后我的资料会丢失吗？</summary>
+        <p>建议重装前使用"系统备份"功能备份重要文件。工具还支持备份本机驱动和 WiFi 密码并自动导入新系统，减少重装后的麻烦。</p>
+      </details>
+      <details>
+        <summary>我的电脑支持 UEFI 吗？</summary>
+        <p>工具启动后会自动检测并显示启动模式（UEFI / Legacy）、TPM 模块与安全启动状态，无需你自己进 BIOS 查看。</p>
+      </details>
+      <details>
+        <summary>系统坏了进不去桌面怎么办？</summary>
+        <p>工具支持"安装 WinPE 一键急救系统"，即使系统无法启动，也可以通过 WinPE 环境进行重装和救援。</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">© 2026 鉴业一键重装 · 让每个人都能轻松搞定系统问题</div>
+</footer>
+
+<script>
+  // 下载按钮：点击跳转飞书表单获取鉴业一键重装工具
+  document.getElementById('downloadBtn').addEventListener('click', function(e){
+    e.preventDefault();
+    window.open("https://my.feishu.cn/share/base/form/shrcnh4jpfD0EH2R1yZhnml1dUc", "_blank");
+  });
+</script>
+
+</body>
+</html>
