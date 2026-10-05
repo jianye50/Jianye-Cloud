@@ -165,6 +165,11 @@ html[data-theme="light"] .panel{box-shadow:var(--shadow),inset 0 1px 0 rgba(255,
 .mail-row .tx{flex:1;min-width:0}
 .mail-row .tx b{display:block;font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mail-row .tx span{font-size:11.5px;color:var(--text-3)}
+/* 可点击的行（拨号 / 发信）：整行都能点，悬停有反馈 */
+a.tx{color:inherit;text-decoration:none;cursor:pointer}
+a.tx b,a.tx span{transition:color .22s ease}
+a.tx:hover b,a.tx:active b{color:var(--accent)}
+a.tx:hover span{color:var(--text-2)}
 .mini{
   flex:none;height:34px;padding:0 13px;border-radius:11px;font:inherit;font-size:12.5px;font-weight:600;
   background:var(--inner-hover);border:1px solid var(--border);color:var(--text-1);cursor:pointer;transition:.22s ease;
@@ -281,7 +286,7 @@ footer a{color:var(--text-2);text-decoration:none;border-bottom:1px solid var(--
       <span class="ic" style="background:linear-gradient(145deg,#34d399,#0d9488)">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.4 3.2h3l1.5 4-2 1.3a12.4 12.4 0 0 0 5.6 5.6l1.3-2 4 1.5v3a2 2 0 0 1-2.2 2A16.6 16.6 0 0 1 3.4 5.4a2 2 0 0 1 2-2.2z"/></svg>
       </span>
-      <a class="tx" href="tel:13348181728" style="color:inherit;text-decoration:none">
+      <a class="tx" href="tel:13348181728">
         <b>133 4818 1728</b>
         <span>手机 · 点击即可拨打</span>
       </a>
@@ -291,10 +296,10 @@ footer a{color:var(--text-2);text-decoration:none;border-bottom:1px solid var(--
       <span class="ic">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2.5" y="4.5" width="19" height="15" rx="3"/><path d="m3.5 6.5 8.5 6.5 8.5-6.5"/></svg>
       </span>
-      <span class="tx">
+      <a class="tx" href="mailto:aimjianye@outlook.com">
         <b>aimjianye@outlook.com</b>
-        <span>合作 · 交流 · 只是想打个招呼，都欢迎</span>
-      </span>
+        <span>邮箱 · 点击即可发信</span>
+      </a>
       <button class="mini" data-copy="aimjianye@outlook.com">复制</button>
     </div>
   </section>
