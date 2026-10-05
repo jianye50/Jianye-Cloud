@@ -444,6 +444,10 @@ footer a{color:var(--text-2);text-decoration:none;border-bottom:1px solid var(--
     var d = String(num).replace(/\D/g, '');
     return d.charAt(0) === '1' ? '+86' + d : '+' + d;
   }
+  /* 手机号 → 133 4818 1728（给人看的形式） */
+  function prettyPhone(){
+    return String(PHONE).replace(/^(\d{3})(\d{4})(\d{4})$/, '$1 $2 $3');
+  }
 
   /* ---------- 保存名片（vCard 3.0） ----------
      规范要求：CRLF(\r\n) 换行、最后一行 END:VCARD 后也要有换行、文件不能带 UTF-8 BOM。
@@ -477,20 +481,34 @@ footer a{color:var(--text-2);text-decoration:none;border-bottom:1px solid var(--
     toast('已导出 jianye.vcf，双击或导入通讯录即可');
   });
 
-  /* ---------- 分享 ---------- */
-  $('#shareBtn').addEventListener('click', function(){
-    var data = {
-      title: NAME + ' · 个人名片',
-      text: '开发者 · 设计爱好者 · 生活记录者',
-      url: SITE
-    };
+  /* ---------- 分享名片 ----------
+     分享的应该是「当前这张名片页」，而不是个人主页：
+       线上打开  → 分享当前页地址（location.href）
+       本地打开  → 没有可分享的网址，只分享联系方式文本，不塞主页链接 */
+  function shareCard(){
+    var isWeb = /^https?:$/.test(location.protocol);
+    var text = NAME + ' · 开发者 / 设计爱好者\n'
+             + '手机：' + prettyPhone() + '\n'
+             + '邮箱：' + EMAIL
+             + (isWeb ? '\n名片页：' + location.href : '');
+    var payload = { title: NAME + ' · 个人名片', text: text };
+    if (isWeb) payload.url = location.href;
+
     if (navigator.share){
-      navigator.share(data).catch(function(){});
+      navigator.share(payload).catch(function(err){
+        if (err && err.name === 'AbortError') return;   // 用户自己点了取消
+        copyText(text).then(function(){ toast('分享不可用，名片内容已复制'); })
+          .catch(function(){ toast('分享不可用'); });
+      });
       return;
     }
-    copyText(location.href).then(function(){ toast('链接已复制，去分享吧'); })
-      .catch(function(){ toast('请手动复制地址栏链接'); });
-  });
+    copyText(text).then(function(){
+      toast(isWeb ? '名片页链接已复制，去粘贴分享吧' : '联系方式已复制（本地打开，无网址可分享）');
+    }).catch(function(){
+      toast('请手动复制：' + EMAIL);
+    });
+  }
+  $('#shareBtn').addEventListener('click', shareCard);
 })();
 </script>
 </body>
