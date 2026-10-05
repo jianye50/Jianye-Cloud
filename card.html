@@ -440,31 +440,36 @@ footer a{color:var(--text-2);text-decoration:none;border-bottom:1px solid var(--
     return d.charAt(0) === '1' ? '+86' + d : '+' + d;
   }
 
-  /* ---------- 保存名片（vCard） ---------- */
-  $('#vcardBtn').addEventListener('click', function(){
+  /* ---------- 保存名片（vCard 3.0） ----------
+     规范要求：CRLF(\r\n) 换行、最后一行 END:VCARD 后也要有换行、文件不能带 UTF-8 BOM。
+     之前带 BOM 会让 Windows 联系人 / Outlook 判定「不是有效的 vCard 文件」。 */
+  function buildVCard(){
     var lines = [
       'BEGIN:VCARD',
       'VERSION:3.0',
       'N:' + NAME + ';;;;',
       'FN:' + NAME,
-      'ORG:Jianye Studio',
       'TITLE:开发者 / 设计爱好者',
       'TEL;TYPE=CELL:' + toIntl(PHONE),
       'EMAIL;TYPE=INTERNET:' + EMAIL,
       'URL:' + SITE,
-      'NOTE:开发者 · 设计爱好者 · 生活记录者',
+      'NOTE:开发者 / 设计爱好者 / 生活记录者',
       'END:VCARD'
     ];
-    var blob = new Blob(['\ufeff' + lines.join('\r\n')], { type: 'text/vcard;charset=utf-8' });
+    return lines.join('\r\n') + '\r\n';
+  }
+  $('#vcardBtn').addEventListener('click', function(){
+    var text = buildVCard();
+    var blob = new Blob([text], { type: 'text/vcard;charset=utf-8' });
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
     a.href = url;
-    a.download = NAME + '.vcf';
+    a.download = 'jianye.vcf';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     setTimeout(function(){ URL.revokeObjectURL(url); }, 1500);
-    toast('已导出名片文件，打开即可存入通讯录');
+    toast('已导出 jianye.vcf，双击或导入通讯录即可');
   });
 
   /* ---------- 分享 ---------- */
