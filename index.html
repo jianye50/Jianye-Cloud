@@ -1946,6 +1946,18 @@ html[data-theme="clear"] .switch:not(.on){background:rgba(255,255,255,.16)}
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="12" height="12" rx="2.5"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
     复制邮箱地址
   </button>
+  <button class="pop-item" data-action="feedback">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.2 7.7L3 21l1.9-5.4A8.5 8.5 0 1 1 21 11.5z"/><path d="M8 10.5h8M8 13.5h5" stroke-linecap="round"/></svg>
+    意见反馈
+  </button>
+  <button class="pop-item" data-action="search">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    搜索
+  </button>
+  <button class="pop-item" data-action="drop">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 3.5 10 14"/><path d="M20.5 3.5 14 21l-4-7-7-4z"/></svg>
+    文件传送
+  </button>
   <button class="pop-item" data-action="top">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
     回到顶部
@@ -6494,6 +6506,9 @@ $('#popover').addEventListener('click',e=>{
   const a=b.dataset.action;
   if(a==='mail')location.href='mailto:'+EMAIL;
   if(a==='copy')copyEmail();
+  if(a==='feedback')window.open('https://my.feishu.cn/share/base/form/shrcnZomfA2kKrY311TeM2OaRpe','_blank','noopener'); // 飞书反馈表单
+  if(a==='search')window.open('https://jianye.pages.dev/homepage','_blank','noopener');
+  if(a==='drop')window.open('https://jianye.pages.dev/drop','_blank','noopener'); // 文件传送独立版
   if(a==='top')window.scrollTo({top:0,behavior:'smooth'});
   closePopover();
 });
