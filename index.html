@@ -427,7 +427,7 @@ body[data-wp="off"] .bg-wp{opacity:0}
   display:grid;place-items:center;color:var(--text-2);transition:.2s}
 .win-close:hover{background:var(--chip);color:var(--text-1)}
 .win-close svg{width:16px;height:16px}
-/* 窗口头部的「独立版」外链按钮（文件传送窗口用） */
+/* 窗口头部的「独立版」外链按钮（文件传送 / 音乐等窗口用） */
 .win-ext{margin-left:auto;display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 14px;
   border-radius:999px;font-size:12.5px;font-weight:600;font-family:inherit;color:var(--text-2);
   background:var(--chip);border:1px solid var(--card-border);text-decoration:none;transition:.2s}
@@ -440,8 +440,8 @@ body[data-wp="off"] .bg-wp{opacity:0}
   .win-ext .win-ext-tx{display:none}
   .win-ext svg{width:16px;height:16px}
   .win-ext+.win-close{margin-left:8px}
-  .window.drop .win-ext,.window.drop .win-close{flex:none}
-  .window.drop .win-hd > div{min-width:0}
+  .window.drop .win-ext,.window.drop .win-close,.window.music .win-ext,.window.music .win-close{flex:none}
+  .window.drop .win-hd > div,.window.music .win-hd > div{min-width:0}
 }
 .win-body{padding:22px 24px 26px;overflow-y:auto}
 .win-body::-webkit-scrollbar{width:8px}
@@ -4298,6 +4298,7 @@ function openApp(id){
       <span class="app-ic ${m[1]}">${ICONS[m[2]]}</span>
       <div><h3 id="winTitle">${m[0]}</h3><p>${m[3]}</p></div>
       ${id==='drop'?`<a class="win-ext" href="https://jianye.pages.dev/drop" target="_blank" rel="noopener" title="打开独立版文件传送（新标签页）"><span class="win-ext-tx">独立版</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6"/><path d="M20 4 11 13"/><path d="M19 14v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h5"/></svg></a>`:''}
+      ${id==='music'?`<a class="win-ext" href="https://jianye.pages.dev/music" target="_blank" rel="noopener" title="打开独立版音乐（新标签页）"><span class="win-ext-tx">独立版</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6"/><path d="M20 4 11 13"/><path d="M19 14v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h5"/></svg></a>`:''}
       <button class="win-close" id="winClose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
     </div>
     <div class="win-body">${T[id]()}</div>`;
