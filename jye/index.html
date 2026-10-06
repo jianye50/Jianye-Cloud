@@ -7,6 +7,8 @@
 <meta name="description" content="Jianye File Encryptor：拖拽即可一键把文件加密成 .jye 格式，密码守护隐私，操作简单零门槛，轻松给文件加上专属安全锁。">
 <link rel="icon" type="image/x-icon" href="icon.ico">
 <link rel="shortcut icon" href="icon.ico">
+<!-- 微软商店官方徽章组件 -->
+<script type="module" src="https://get.microsoft.com/badge/ms-store-badge.bundled.js"></script>
 <style>
   :root{
     --blue:#1e8fff;
@@ -86,6 +88,13 @@
   }
   .hero-actions{display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
   .hero-actions .meta{font-size:13px;color:var(--muted);}
+
+  /* ===== 微软商店徽章 ===== */
+  ms-store-badge{display:inline-block;max-width:100%;vertical-align:middle;}
+  ms-store-badge::part(img){max-width:100%;}
+  .hero-actions ms-store-badge{margin:-6px 0;}
+  /* 关键：.cta::before 是绝对定位遮罩层，徽章必须提升层级，否则点不到 */
+  .cta ms-store-badge{position:relative;z-index:2;margin:4px 0 0;}
 
   /* ===== 仿真软件界面 ===== */
   .app{
@@ -284,8 +293,15 @@
         <span class="tag">✔ 解密还原如初</span>
       </div>
       <div class="hero-actions">
-        <a class="btn" href="#download">⬇ 免费下载体验</a>
-        <span class="meta">Windows 10 / 11 · 微软商店上架</span>
+        <ms-store-badge
+          productid="9n9n5g14m7j2"
+          window-mode="full"
+          theme="auto"
+          size="large"
+          language="zh-cn"
+          animation="on">
+        </ms-store-badge>
+        <span class="meta">Windows 10 / 11 · 微软商店官方上架</span>
       </div>
     </div>
 
@@ -458,7 +474,14 @@
     <div class="cta">
       <h2>现在下载，把文件安全掌握在自己手里</h2>
       <p>微软商店官方上架 · 免费获取 · 拖一下就能加密</p>
-      <a class="btn btn-white" href="#" id="downloadBtn">⬇ 前往微软商店获取</a>
+      <ms-store-badge
+        productid="9n9n5g14m7j2"
+        window-mode="full"
+        theme="auto"
+        size="large"
+        language="zh-cn"
+        animation="on">
+      </ms-store-badge>
       <p class="tip">温馨提示：密码一旦遗忘无法找回，请务必妥善保管你的专属密码</p>
     </div>
   </div>
@@ -501,12 +524,41 @@
 </footer>
 
 <script>
-  // ===== 下载按钮：跳转微软商店 =====
-  var STORE_URL = "https://apps.microsoft.com/store/detail/9N9N5G14M7J2?cid=DevShareMCLPCS";
-  document.getElementById('downloadBtn').addEventListener('click', function(e){
-    e.preventDefault();
-    window.open(STORE_URL, "_blank", "noopener");
-  });
+  // ===== 下载入口：微软商店官方徽章（ms-store-badge）=====
+  // full 模式：Windows 上通过 ms-windows-store://pdp 唤起商店详情页，其他系统打开商店网页版。
+  // 在被嵌入的受限 iframe（如工作台预览面板）里，协议唤起会被浏览器静默拦截，
+  // 表现为"点了没反应"，所以在 iframe 环境下改为直接打开商店网页版，保证点击一定有效。
+  (function(){
+    var STORE_WEB = "https://apps.microsoft.com/detail/9N9N5G14M7J2";
+    var badges = document.querySelectorAll('ms-store-badge');
+
+    function openWebStore(e){
+      e.preventDefault();
+      e.stopPropagation();                 // 阻止徽章自身的协议唤起，避免重复动作
+      var w = window.open(STORE_WEB, "_blank", "noopener");
+      if (!w) location.href = STORE_WEB;   // 弹窗被拦截时的兜底
+    }
+
+    // 仅在 iframe 环境接管；线上正常访问时仍使用官方原生逻辑（Windows 上直接拉起商店/下载安装包）
+    if (window.self !== window.top){
+      badges.forEach(function(el){ el.addEventListener('click', openWebStore, true); });
+    }
+
+    // 兜底：组件脚本（get.microsoft.com CDN）加载失败时，退化为站内同款按钮，避免下载入口消失
+    setTimeout(function(){
+      if (window.customElements && customElements.get('ms-store-badge')) return;
+      document.querySelectorAll('ms-store-badge').forEach(function(el){
+        if (!el.isConnected) return;
+        var a = document.createElement('a');
+        a.className = 'btn';
+        a.href = STORE_WEB;
+        a.target = '_blank';
+        a.rel = 'noopener';
+        a.textContent = '⬇ 前往微软商店获取';
+        el.replaceWith(a);
+      });
+    }, 3000);
+  })();
 
   // ===== 仿真界面：点击"开始加密"播放一段加密动效 =====
   (function(){
