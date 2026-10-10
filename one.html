@@ -416,6 +416,7 @@ html[data-theme="light"] .nav-sep{background:rgba(20,30,60,.16);box-shadow:1px 0
   padding:44px 42px;margin-bottom:26px;
 }
 .avatar{
+  position:relative;overflow:hidden;
   width:84px;height:84px;border-radius:50%;
   display:grid;place-items:center;
   font-size:32px;font-weight:800;color:#fff;
@@ -423,18 +424,30 @@ html[data-theme="light"] .nav-sep{background:rgba(20,30,60,.16);box-shadow:1px 0
   box-shadow:0 12px 30px rgba(26,108,255,.35);
   margin-bottom:22px;
 }
+.avatar img{
+  position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;display:block;
+}
+.about-card .tagline{font-size:14.5px;color:var(--text-3);margin:-8px 0 16px;letter-spacing:.02em}
+.chips{display:flex;flex-wrap:wrap;gap:9px;margin:18px 0 6px}
+.chips span{
+  font-size:13px;color:var(--text-2);
+  border:1px solid var(--card-border);border-radius:999px;
+  padding:5px 13px;background:var(--bg-2);
+}
+.socials{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:14px}
+.socials a{
+  display:flex;align-items:center;gap:8px;
+  padding:11px 14px;border-radius:12px;
+  border:1px solid var(--card-border);background:var(--bg-2);
+  font-size:13.5px;color:var(--text-2);font-weight:600;
+  transition:transform .2s,box-shadow .2s,color .2s;
+}
+.socials a:hover{transform:translateY(-2px);box-shadow:var(--shadow);color:var(--text-1)}
+.socials a .dot{width:8px;height:8px;border-radius:50%;flex:none}
+.mail-line{margin-top:18px}
 .about-card h2{font-size:26px;font-weight:780;margin-bottom:14px;letter-spacing:-.01em}
 .about-card p{color:var(--text-2);line-height:1.9;font-size:15.5px;margin-bottom:12px}
-.tl{margin-top:30px;border-left:2px solid var(--card-border);padding-left:26px;display:flex;flex-direction:column;gap:24px}
-.tl-item{position:relative}
-.tl-item::before{
-  content:"";position:absolute;left:-33px;top:6px;
-  width:12px;height:12px;border-radius:50%;
-  background:var(--accent);box-shadow:0 0 0 4px var(--accent-soft);
-}
-.tl-item .d{font-size:12.5px;font-weight:700;color:var(--accent);letter-spacing:.06em}
-.tl-item .t{font-size:16.5px;font-weight:700;margin:4px 0 4px}
-.tl-item .p{font-size:14px;color:var(--text-2);line-height:1.75}
 .proj-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:18px;margin-top:26px}
 .proj{
   display:block;padding:22px;border-radius:16px;
@@ -452,6 +465,93 @@ html[data-theme="light"] .nav-sep{background:rgba(20,30,60,.16);box-shadow:1px 0
   display:inline-flex;align-items:center;gap:6px;
   color:var(--accent);font-weight:650;font-size:14px;
 }
+
+/* ===================== 左下角迷你音乐播放器 ===================== */
+.mus-pill{
+  position:fixed;left:18px;bottom:18px;z-index:150;
+  display:flex;align-items:center;gap:10px;
+  background:var(--card);border:1px solid var(--card-border);
+  border-radius:999px;padding:8px 14px 8px 8px;
+  box-shadow:var(--shadow);cursor:pointer;max-width:min(300px,calc(100vw - 36px));
+  transition:transform .2s,box-shadow .2s;
+}
+.mus-pill:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg,var(--shadow))}
+.mus-disc{
+  width:36px;height:36px;border-radius:50%;flex:none;position:relative;overflow:hidden;
+  display:grid;place-items:center;color:#fff;font-size:15px;
+  background:linear-gradient(135deg,var(--accent),#7a3bff);
+}
+.mus-disc img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.mus-disc .note{position:relative;z-index:1}
+.mus-disc.spin .note{animation:spin 5s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.mus-pill .tx{flex:1;min-width:0}
+.mus-pill .tx b{display:block;font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mus-pill .tx small{display:block;font-size:11px;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mus-pill .pp{
+  width:32px;height:32px;border-radius:50%;border:none;flex:none;
+  display:grid;place-items:center;background:var(--accent);color:#fff;cursor:pointer;
+}
+.mus-pill .pp svg{width:14px;height:14px}
+.mus-panel{
+  position:fixed;left:18px;bottom:74px;z-index:150;
+  width:342px;max-width:calc(100vw - 36px);
+  background:var(--card);border:1px solid var(--card-border);
+  border-radius:var(--radius);box-shadow:var(--shadow-lg,var(--shadow));
+  display:none;flex-direction:column;overflow:hidden;
+}
+.mus-panel.open{display:flex;animation:fadeUp .25s ease both}
+.mus-head{padding:16px 16px 0}
+.mus-now{font-size:15px;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mus-artist{font-size:12.5px;color:var(--text-3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mus-prog{display:flex;align-items:center;gap:8px;padding:12px 16px 0;font-size:11px;color:var(--text-3)}
+.mus-prog input,.mus-vol input{flex:1;accent-color:var(--accent);height:4px;cursor:pointer}
+.mus-ctrls{display:flex;align-items:center;justify-content:center;gap:12px;padding:10px 0 4px}
+.mus-ctrls button{
+  width:34px;height:34px;border-radius:50%;border:none;background:transparent;
+  color:var(--text-2);display:grid;place-items:center;cursor:pointer;
+}
+.mus-ctrls button:hover{color:var(--text-1);background:var(--bg-2)}
+.mus-ctrls svg{width:16px;height:16px}
+.mus-ctrls .big{width:42px;height:42px;background:var(--accent);color:#fff}
+.mus-ctrls .big svg{width:18px;height:18px}
+.mus-ctrls .mode.on{color:var(--accent)}
+.mus-vol{display:flex;align-items:center;gap:8px;padding:0 16px 10px;color:var(--text-3);font-size:12px}
+.mus-tabs{display:flex;border-top:1px solid var(--card-border)}
+.mus-tabs button{
+  flex:1;padding:10px 4px;border:none;background:transparent;color:var(--text-3);
+  font-size:12.5px;font-weight:650;cursor:pointer;border-bottom:2px solid transparent;
+}
+.mus-tabs button.on{color:var(--accent);border-bottom-color:var(--accent)}
+.mus-tabs em{font-style:normal;font-size:10.5px;opacity:.75;margin-left:2px}
+.mus-list{max-height:296px;overflow-y:auto;padding:6px 8px 10px}
+.mus-row{
+  display:flex;align-items:center;gap:9px;width:100%;text-align:left;
+  padding:8px 9px;border:none;background:transparent;border-radius:10px;
+  cursor:pointer;color:var(--text-2);
+}
+.mus-row:hover{background:var(--bg-2)}
+.mus-row.on{color:var(--accent);background:var(--accent-soft)}
+.mus-row .num{font-size:11px;color:var(--text-3);width:22px;text-align:right;flex:none}
+.mus-row .nm{flex:1;min-width:0}
+.mus-row .nm b{display:block;font-size:13px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mus-row .nm small{display:block;font-size:11px;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mus-search{display:flex;gap:8px;padding:10px 10px 2px}
+.mus-search input{
+  flex:1;background:var(--bg-2);border:1px solid var(--card-border);border-radius:10px;
+  padding:8px 12px;color:var(--text-1);font-size:13px;outline:none;
+}
+.mus-search input:focus{border-color:var(--accent)}
+.mus-search button{
+  border:none;border-radius:10px;background:var(--accent);color:#fff;
+  padding:0 14px;cursor:pointer;font-size:12.5px;font-weight:650;
+}
+.mus-more{
+  display:block;width:calc(100% - 16px);margin:8px;
+  border:1px dashed var(--card-border);background:transparent;
+  border-radius:10px;padding:8px;color:var(--text-3);font-size:12px;cursor:pointer;
+}
+.mus-empty{padding:26px 16px;text-align:center;color:var(--text-3);font-size:12.5px;line-height:1.8}
 
 /* ===================== 页脚 ===================== */
 footer{
@@ -477,6 +577,7 @@ footer .heart{color:#ff5d7a}
   </a>
   <a class="nav-link" data-nav="home" href="#/">Home</a>
   <a class="nav-link" data-nav="gallery" href="#/gallery">图库</a>
+  <a class="nav-link" data-nav="projects" href="#/projects">项目</a>
   <a class="nav-link" data-nav="about" href="#/about">About</a>
   <span class="nav-sep"></span>
   <button class="nav-icon" id="langBtn" title="Switch language">EN</button>
@@ -503,22 +604,62 @@ footer .heart{color:#ff5d7a}
   <span class="lb-count" id="lbCount"></span>
 </div>
 
+<!-- ============ 左下角迷你音乐播放器 ============ -->
+<div class="mus-panel" id="musPanel"></div>
+<div class="mus-pill" id="musPill" role="button" tabindex="0">
+  <span class="mus-disc" id="musDisc"><span class="note">♪</span></span>
+  <span class="tx"><b id="musName"></b><small id="musSub"></small></span>
+  <button class="pp" id="musPP" aria-label="播放/暂停"></button>
+</div>
+<audio id="musAudio" preload="metadata"></audio>
+<script src="../kugou-playlist.js"></script>
+
 <script>
 /* =====================================================================
  *  鉴业の小站（Jianye）
  *  单文件实现：hash 路由 / 明暗主题 / 中英切换 / 图库
  * ===================================================================== */
 
-/* ---------- 数据：时间线 / 项目 ---------- */
-const TIMELINE=[
-  {d:"2026",t:"持续建造中",p:"专注全栈开发与交互设计，维护个人项目与这本「数字备忘录」。"},
-  {d:"2024 — 2025",t:"深入前端与工程化",p:"系统学习现代前端框架，开始独立完成从设计到部署的完整项目。"},
-  {d:"2023",t:"写下第一行网页",p:"用 HTML 和 CSS 做出了第一个页面，从此掉进了创造数字世界的兔子洞。"}
-];
+/* ---------- 数据：项目 ---------- */
 const PROJECTS=[
-  {t:"Jianye File Encryptor",d:"本地文件加密工具，保护你的重要文件安全。",u:"https://jianye.pages.dev/jye",ic:"🔐",c:"linear-gradient(135deg,#ffc24d,#ff8a1a)"},
-  {t:"Jianye PE",d:"自维护的 PE 系统，装机维护的好帮手。",u:"https://jianye.pages.dev/pe",ic:"🧰",c:"linear-gradient(135deg,#8e7bff,#4a36c4)"},
-  {t:"Jianye AI 智能助手",d:"接入大模型的智能对话助手。",u:"https://jianye.pages.dev/ai",ic:"🤖",c:"linear-gradient(135deg,#ff6a8e,#c01e52)"}
+  {zh:"一键系统重装",en:"One-Click OS Reinstall",
+   dzh:"让系统重装变得像点一下按钮那样简单的工具站。",den:"A tool site that makes reinstalling your system as easy as one click.",
+   u:"https://jianye.pages.dev/os",ic:"💽",c:"linear-gradient(135deg,#5b8cff,#3a4fd6)"},
+  {zh:"Jianye File Encryptor",en:"Jianye File Encryptor",
+   dzh:"本地文件加密工具，保护你的重要文件安全。",den:"A local file encryption tool that keeps your important files safe.",
+   u:"https://jianye.pages.dev/jye",ic:"🔐",c:"linear-gradient(135deg,#ffc24d,#ff8a1a)"},
+  {zh:"Jianye PE",en:"Jianye PE",
+   dzh:"自维护的 PE 系统，装机维护的好帮手。",den:"A self-maintained PE system — a handy companion for PC setup and repair.",
+   u:"https://jianye.pages.dev/pe",ic:"🧰",c:"linear-gradient(135deg,#8e7bff,#4a36c4)"},
+  {zh:"鉴业浏览器主页",en:"Jianye Browser Homepage",
+   dzh:"摒弃弹窗与冗余推荐，打开即是搜索框的极简浏览器主页。",den:"A minimal browser homepage — no popups or clutter, just a search box the moment you open a tab.",
+   u:"https://jianye.pages.dev/homepage-sharepage",ic:"🏠",c:"linear-gradient(135deg,#34d399,#0d9488)"},
+  {zh:"Jianye AI 智能助手",en:"Jianye AI Assistant",
+   dzh:"接入大模型的智能对话助手。",den:"A smart chat assistant powered by large language models.",
+   u:"https://jianye.pages.dev/ai",ic:"🤖",c:"linear-gradient(135deg,#ff6a8e,#c01e52)"},
+  {zh:"鉴业文件传送",en:"Jianye File Drop",
+   dzh:"手机与电脑之间点对点直传文件，不经过服务器，支持跨平台多语言。",den:"Peer-to-peer file transfer between phone and computer — no server in between, cross-platform ready.",
+   u:"https://jianye.pages.dev/drop",ic:"📮",c:"linear-gradient(135deg,#40c8e0,#1f6fe0)"}
+];
+/* ---------- 个人信息 ---------- */
+const EMAIL="aimjianye@outlook.com";
+const AVATAR="../%E5%A4%B4%E5%83%8F.png";   /* 站点根目录的「头像.png」，本页在子目录里 */
+const CHIPS=[
+  {i:"📍",zh:"中国",en:"China"},
+  {i:"💻",zh:"全栈开发",en:"Full-stack Dev"},
+  {i:"🎨",zh:"交互设计",en:"Interaction Design"},
+  {i:"📷",zh:"摄影",en:"Photography"},
+  {i:"🎮",zh:"游戏",en:"Gaming"},
+  {i:"🎸",zh:"音乐",en:"Music"}
+];
+const SOCIALS=[
+  {zh:"GitHub",en:"GitHub",u:"https://github.com/jianye50",c:"#8b949e"},
+  {zh:"哔哩哔哩",en:"Bilibili",u:"https://b23.tv/pel3LeM",c:"#ff7aa2"},
+  {zh:"抖音",en:"Douyin",u:"https://v.douyin.com/oW7O6rh_geg/",c:"#3a3f52"},
+  {zh:"微博",en:"Weibo",u:"https://weibo.com/u/7953312650",c:"#ff7a1a"},
+  {zh:"知乎",en:"Zhihu",u:"https://www.zhihu.com/people/5-84-88-98",c:"#3a4fd6"},
+  {zh:"Steam",en:"Steam",u:"https://steamcommunity.com/id/aimjianye/",c:"#2a475e"},
+  {zh:"意见反馈",en:"Feedback",u:"https://my.feishu.cn/share/base/form/shrcnZomfA2kKrY311TeM2OaRpe",c:"#4d8dff"}
 ];
 
 /* ---------- 图库：照片来自站点根目录下的「图片」文件夹 ----------
@@ -541,9 +682,23 @@ let photosStatus="loading"; // loading | ready | error
 const I18N={
   zh:{
     brand:"鉴业の小站",
-    nav:{home:"首页",gallery:"图库",about:"关于"},
+    nav:{home:"首页",gallery:"图库",projects:"项目",about:"关于"},
     hero:{badge:"个人空间",sub:"造物、记录，<br>与喜欢的光影和想法。",read:"浏览图库",aboutBtn:"关于我"},
-    home:{gallery:"图库",more:"查看全部照片"},
+    home:{gallery:"图库",more:"查看全部照片",projects:"项目",moreProj:"查看全部项目"},
+    mus:{
+      app:"鉴业音乐",idle:"音乐",idleSub:"点击展开播放器",
+      tabs:{kg:"酷狗歌单",local:"本地",find:"搜歌"},
+      searchPh:"搜首歌…",go:"搜索",findPh:"搜索网易云曲库…",
+      kgEmpty:"没读到酷狗歌单快照<br>（kugou-playlist.js）",
+      localLoading:"正在扫描「音乐」文件夹…",
+      localEmpty:"「音乐」文件夹里还没有歌曲，把歌放进去刷新即可。",
+      localErr:"读不到「音乐」文件夹，用本地服务器打开试试。",
+      findIdle:"输入关键词，搜索网易云曲库",
+      findNone:"没有找到匹配的歌曲",
+      findErr:"搜索失败，接口可能限流，稍后再试",
+      artist:"网易云在线",allPlay:"全部播放",more:"加载更多（还有 {n} 首）",
+      blocked:"浏览器阻止了自动播放，再点一次"
+    },
     gallery:{
       title:"图库",
       sub:n=>`共 ${n} 张照片 · 点击可放大`,
@@ -553,17 +708,37 @@ const I18N={
     },
     about:{
       title:"关于",hello:"你好，我是鉴业。",
-      bio1:"全栈开发者 & 交互设计爱好者。我喜欢造工具、写代码，把脑子里一闪而过的想法做成可以用的东西。",
-      bio2:"这个站点是我的「数字备忘录」——记录技术、手艺，和慢慢沉淀下来的想法。",
-      timeline:"时间线",projects:"我的项目",projTip:"点击卡片可访问 →"
+      tagline:"开发者 · 设计爱好者 · 生活记录者",
+      bio1:"喜欢写代码，也喜欢把东西做得好看又好用；白天在屏幕前构建数字世界，其余时间用照片、音乐和游戏给生活调色。",
+      bio2:"这个站点是我的数字空间——把项目、相册和喜欢的光影想法收进同一个地方，欢迎随便逛逛。",
+      contact:"想聊项目、交流技术，或者只是打个招呼：",
+      socials:"找到我"
+    },
+    projects:{
+      title:"项目",
+      sub:"我做过的一些东西，点击卡片可访问 →"
     },
     footer:"© 2026 Jianye · 用心血手写"
   },
   en:{
     brand:"Jianye's Corner",
-    nav:{home:"Home",gallery:"Gallery",about:"About"},
+    nav:{home:"Home",gallery:"Gallery",projects:"Projects",about:"About"},
     hero:{badge:"PERSONAL SPACE",sub:"Making things, keeping notes,<br>and the light I like.",read:"Browse Gallery",aboutBtn:"About Me"},
-    home:{gallery:"Gallery",more:"View all photos"},
+    home:{gallery:"Gallery",more:"View all photos",projects:"Projects",moreProj:"View all projects"},
+    mus:{
+      app:"Jianye Music",idle:"Music",idleSub:"Tap to open player",
+      tabs:{kg:"Kugou List",local:"Local",find:"Search"},
+      searchPh:"Find a song…",go:"Go",findPh:"Search the NetEase library…",
+      kgEmpty:"Kugou playlist snapshot not found<br>(kugou-playlist.js)",
+      localLoading:"Scanning the “音乐” folder…",
+      localEmpty:"No songs in the “音乐” folder yet — drop some in and refresh.",
+      localErr:"Can't read the “音乐” folder — try serving the site locally.",
+      findIdle:"Type keywords to search the NetEase library",
+      findNone:"No matching songs",
+      findErr:"Search failed — the API may be rate-limited, try later",
+      artist:"NetEase online",allPlay:"Play all",more:"Load more ({n} left)",
+      blocked:"Autoplay was blocked — tap again"
+    },
     gallery:{
       title:"Gallery",
       sub:n=>`${n} photo${n===1?"":"s"} · click to enlarge`,
@@ -573,9 +748,15 @@ const I18N={
     },
     about:{
       title:"About",hello:"Hi, I'm Jianye.",
-      bio1:"Full-stack developer & interaction design enthusiast. I love building tools and turning passing ideas into things that actually work.",
-      bio2:"This site is my digital memo — notes on technology, craft, and ideas settling slowly over time.",
-      timeline:"Timeline",projects:"Projects",projTip:"Click a card to visit →"
+      tagline:"Developer · Design lover · Life recorder",
+      bio1:"I love writing code and making things that look good and work well — building digital worlds by day, coloring life with photos, music and games the rest of the time.",
+      bio2:"This site is my digital space — projects, photos and ideas I like, all in one place. Feel free to look around.",
+      contact:"For projects, tech chats, or just saying hi:",
+      socials:"Find me"
+    },
+    projects:{
+      title:"Projects",
+      sub:"Things I've built — click a card to visit →"
     },
     footer:"© 2026 Jianye · Handcrafted"
   }
@@ -605,13 +786,17 @@ function setTheme(v){
 function setLang(v){
   lang=v;
   document.documentElement.lang=v==="zh"?"zh-CN":"en";
+  document.title=T().brand;
   localStorage.setItem("jy-lang",v);
   $("#langBtn").textContent=v==="zh"?"EN":"中";
   $("#navBrand").textContent=T().brand;
-  ["home","gallery","about"].forEach(k=>{
+  ["home","gallery","projects","about"].forEach(k=>{
     const el=document.querySelector(`[data-nav="${k}"]`);
     if(el)el.textContent=T().nav[k];
   });
+  /* 音乐面板开着的话，用新语言重建 */
+  if(typeof mOpen!=="undefined"&&mOpen){buildMusPanel();renderMusTab();}
+  syncMusUI&&syncMusUI();
   route(); // 重新渲染当前视图
 }
 
@@ -640,14 +825,14 @@ async function listDirFiles(dir,regex){
   }catch(e){}
   return null;
 }
-async function listFromGitHub(dir){
+async function listFromGitHub(dir,re=IMG_RE,ct="image"){
   try{
     const r=await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${encodeURIComponent(dir)}?ref=${GH_BRANCH}`,
       {headers:{Accept:"application/vnd.github+json"}});
     if(!r.ok)return null;
     const arr=await r.json();
     if(!Array.isArray(arr))return null;
-    const files=arr.filter(x=>x.type==="file"&&IMG_RE.test(x.name));
+    const files=arr.filter(x=>x.type==="file"&&re.test(x.name));
     if(!files.length)return null;
     /* 站点可能部署在域名根路径，也可能在子目录（如 /one/）。
        GitHub API 给的是仓库根目录相对路径，直链拼法要靠探针验证：
@@ -660,7 +845,7 @@ async function listFromGitHub(dir){
       let ok=false;
       try{
         const probe=await fetch(new URL(encodeURIComponent(files[0].name),base).href,{method:"HEAD"});
-        ok=probe.ok&&(probe.headers.get("content-type")||"").toLowerCase().startsWith("image");
+        ok=probe.ok&&(probe.headers.get("content-type")||"").toLowerCase().startsWith(ct);
       }catch(e){}
       if(ok)return files.map(x=>new URL(encodeURIComponent(x.name),base).href);
     }
@@ -800,6 +985,21 @@ function renderHome(){
           <a class="link-more" href="#/gallery">${esc(t.home.more)} →</a>
         </div>
       </section>
+
+      <section class="section" id="homeProjects">
+        <div class="section-label">${esc(t.home.projects)}</div>
+        <div class="proj-grid">
+          ${PROJECTS.map(p=>`
+          <a class="proj" href="${esc(p.u)}" target="_blank" rel="noopener">
+            <div class="ic" style="background:${p.c}">${p.ic}</div>
+            <h4>${esc(lang==="zh"?p.zh:p.en)}</h4>
+            <p>${esc(lang==="zh"?p.dzh:p.den)}</p>
+          </a>`).join("")}
+        </div>
+        <div class="section-more">
+          <a class="link-more" href="#/projects">${esc(t.home.moreProj)} →</a>
+        </div>
+      </section>
     </div>
   </section>`;
   paintPhotoGrids();
@@ -831,32 +1031,42 @@ function renderAbout(){
         <h1>${esc(t.about.title)}</h1>
       </div>
       <div class="about-card">
-        <div class="avatar">J</div>
+        <div class="avatar">J<img src="${AVATAR}" alt="鉴业的头像" onerror="this.remove()"></div>
         <h2>${esc(t.about.hello)}</h2>
+        <p class="tagline">${esc(t.about.tagline)}</p>
         <p>${esc(t.about.bio1)}</p>
         <p>${esc(t.about.bio2)}</p>
-        <p><a class="read-more" href="https://github.com/jianye50" target="_blank" rel="noopener">GitHub @jianye50 →</a></p>
-        <div class="section-label" style="margin-top:38px">${esc(t.about.timeline)}</div>
-        <div class="tl">
-          ${TIMELINE.map(i=>`
-          <div class="tl-item">
-            <div class="d">${esc(i.d)}</div>
-            <div class="t">${esc(i.t)}</div>
-            <div class="p">${esc(i.p)}</div>
-          </div>`).join("")}
-        </div>
-      </div>
-      <div class="about-card">
-        <div class="section-label" style="margin-bottom:6px">${esc(t.about.projects)}</div>
-        <p style="margin-top:10px;font-size:13.5px;color:var(--text-3)">${esc(t.about.projTip)}</p>
-        <div class="proj-grid">
-          ${PROJECTS.map(p=>`
-          <a class="proj" href="${esc(p.u)}" target="_blank" rel="noopener">
-            <div class="ic" style="background:${p.c}">${p.ic}</div>
-            <h4>${esc(p.t)}</h4>
-            <p>${esc(p.d)}</p>
+        <div class="chips">${CHIPS.map(c=>`<span>${c.i} ${esc(lang==="zh"?c.zh:c.en)}</span>`).join("")}</div>
+        <p class="mail-line">${esc(t.about.contact)}<br>
+          <a class="read-more" href="mailto:${EMAIL}">${EMAIL}</a></p>
+        <div class="section-label" style="margin-top:30px">${esc(t.about.socials)}</div>
+        <div class="socials">
+          ${SOCIALS.map(s=>`
+          <a href="${esc(s.u)}" target="_blank" rel="noopener">
+            <span class="dot" style="background:${s.c}"></span>${esc(lang==="zh"?s.zh:s.en)}
           </a>`).join("")}
         </div>
+      </div>
+    </div>
+  </section>`;
+}
+
+function renderProjects(){
+  const t=T();
+  app.innerHTML=`
+  <section class="view">
+    <div class="wrap">
+      <div class="page-head">
+        <h1>${esc(t.projects.title)}</h1>
+        <p class="sub">${esc(t.projects.sub)}</p>
+      </div>
+      <div class="proj-grid">
+        ${PROJECTS.map(p=>`
+        <a class="proj" href="${esc(p.u)}" target="_blank" rel="noopener">
+          <div class="ic" style="background:${p.c}">${p.ic}</div>
+          <h4>${esc(lang==="zh"?p.zh:p.en)}</h4>
+          <p>${esc(lang==="zh"?p.dzh:p.den)}</p>
+        </a>`).join("")}
       </div>
     </div>
   </section>`;
@@ -868,6 +1078,7 @@ function route(){
   const parts=hash.split("/").filter(Boolean);
   let active="home";
   if(parts[0]==="gallery"){active="gallery";renderGallery()}
+  else if(parts[0]==="projects"){active="projects";renderProjects()}
   else if(parts[0]==="about"){active="about";renderAbout()}
   else renderHome();
   document.querySelectorAll(".nav-link").forEach(el=>
@@ -885,8 +1096,10 @@ $("#lbNext").addEventListener("click",e=>{e.stopPropagation();stepLb(1)});
 $("#lightbox").addEventListener("click",e=>{if(e.target.id==="lightbox")closeLb()});
 document.addEventListener("click",e=>{
   const tile=e.target.closest(".ph-tile");
-  if(tile&&tile.dataset.idx!==undefined&&!tile.classList.contains("ph-skel"))
-    openLb(Number(tile.dataset.idx));
+  if(!tile||tile.dataset.idx===undefined||tile.classList.contains("ph-skel"))return;
+  /* 带「+N」角标的瓷砖 → 跳转图库页，而不是开灯箱 */
+  if(tile.querySelector(".ph-more")){location.hash="#/gallery";return;}
+  openLb(Number(tile.dataset.idx));
 });
 document.addEventListener("keydown",e=>{
   if($("#lightbox").classList.contains("open")){
@@ -896,20 +1109,370 @@ document.addEventListener("keydown",e=>{
     return;
   }
   const tile=document.activeElement;
-  if(tile&&tile.classList&&tile.classList.contains("ph-tile")&&(e.key==="Enter"||e.key===" "))
-    e.preventDefault(),openLb(Number(tile.dataset.idx));
+  if(tile&&tile.classList&&tile.classList.contains("ph-tile")&&(e.key==="Enter"||e.key===" ")){
+    e.preventDefault();
+    if(tile.querySelector(".ph-more")){location.hash="#/gallery";return;}
+    openLb(Number(tile.dataset.idx));
+  }
+});
+
+/* =====================================================================
+ *  迷你音乐播放器（左下角）：酷狗歌单 / 本地「音乐」文件夹 / 在线搜歌
+ *  在线音源：GD 音乐台（music-api.gdstudio.xyz）· 网易云源
+ * ===================================================================== */
+const MUS_DIR="音乐/",AUDIO_RE=/\.(mp3|m4a|flac|wav|ogg|opus|aac|wma)$/i;
+const GD_API="https://music-api.gdstudio.xyz/api.php",GD_SRC="netease";
+const gdCache=new Map();let gdChain=Promise.resolve(),gdLastAt=0;
+function gdFetch(qs){
+  const run=async()=>{
+    const wait=160-(Date.now()-gdLastAt);
+    if(wait>0)await new Promise(r=>setTimeout(r,wait));
+    gdLastAt=Date.now();
+    const res=await fetch(GD_API+"?"+qs);
+    if(!res.ok)throw new Error("HTTP "+res.status);
+    const j=await res.json();
+    if(j&&j.detail)throw new Error(j.detail);
+    return j;
+  };
+  gdChain=gdChain.then(run,run);
+  return gdChain;
+}
+async function gdSearch(kw,page){
+  const key="q|"+kw+"|"+(page||1);
+  if(gdCache.has(key))return gdCache.get(key);
+  const j=await gdFetch("types=search&source="+GD_SRC+"&name="+encodeURIComponent(kw)+"&count=20&pages="+(page||1));
+  const list=Array.isArray(j)?j:[];
+  gdCache.set(key,list);
+  return list;
+}
+async function gdUrl(id,br){
+  const j=await gdFetch("types=url&source="+GD_SRC+"&id="+encodeURIComponent(id)+"&br="+(br||320));
+  return (j&&j.url)||"";
+}
+async function gdPic(picId){
+  const key="p|"+picId;
+  if(gdCache.has(key))return gdCache.get(key);
+  const j=await gdFetch("types=pic&source="+GD_SRC+"&id="+encodeURIComponent(picId)+"&size=200");
+  const url=(j&&j.url)||"";
+  gdCache.set(key,url);
+  return url;
+}
+function normOnline(x){
+  return {online:true,id:"nc:"+x.id,ncId:String(x.id),
+    name:x.name||"(未知曲目)",
+    artist:Array.isArray(x.artist)?x.artist.join(" / "):(x.artist||""),
+    album:x.album||"",picId:x.pic_id||"",cover:"",src:""};
+}
+function normLocal(src){
+  const file=decodeURIComponent(src.split("/").pop().split("?")[0]);
+  return {online:false,id:"lf:"+src,name:file.replace(/\.[^.]+$/,""),
+    artist:"「音乐」文件夹",album:"",src:src,cover:""};
+}
+/* 酷狗歌单快照（kugou-playlist.js 提供 window.KUGOU_PLAYLIST） */
+let kgMeta=null,kgSongs=[],kgQ="",kgLimit=80;
+function loadKg(){
+  const d=window.KUGOU_PLAYLIST;
+  if(!d||!Array.isArray(d.songs))return;
+  kgMeta={name:d.name||"我的酷狗歌单",src:d.src||"酷狗音乐",count:d.count||d.songs.length,updated:d.updated||""};
+  kgSongs=d.songs.map(line=>{
+    const i=String(line).lastIndexOf("|");
+    return {online:true,kg:true,id:"kg:"+line,
+      name:i<0?String(line):String(line).slice(0,i),
+      artist:i<0?"":String(line).slice(i+1),cover:"",src:""};
+  });
+}
+/* 「歌名|歌手」→ 网易云曲目（搜一次，结果写回队列对象） */
+async function kgResolve(t){
+  if(!t)return false;
+  if(t.ncId)return true;
+  if(t.kgFail&&Date.now()-t.kgFail<10*60*1000)return false;
+  try{
+    const hit=await gdSearch((t.name+" "+(t.artist||"")).trim(),1);
+    if(!hit||!hit.length)throw new Error("no match");
+    const o=normOnline(hit[0]);
+    t.ncId=o.ncId;t.picId=o.picId;t.album=o.album||"";
+    if(!t.artist)t.artist=o.artist;
+    t.kgFail=0;
+    return true;
+  }catch(e){ t.kgFail=Date.now(); return false; }
+}
+/* ---------- 播放状态 ---------- */
+let musSongs=[],musStatus="loading";   // 本地歌单
+let onlineRes=[],musTab="kg";
+let mQueue=[],mCur=-1,mMode=0,mQueueKind="";
+let mLoadedId="",mFail=0,mOpen=false,mSeekPending=-1,mSaveAt=0;
+const mAudio=$("#musAudio");
+mAudio.volume=.85;
+const fmtT=t=>{if(!isFinite(t)||t<0)return"--:--";t=Math.floor(t);return Math.floor(t/60)+":"+String(t%60).padStart(2,"0")};
+const curTrack=()=>(mCur>=0&&mCur<mQueue.length)?mQueue[mCur]:null;
+const SVG_PLAY='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.5.87l11-6.5a1 1 0 0 0 0-1.74l-11-6.5A1 1 0 0 0 8 5.5z"/></svg>';
+const SVG_PAUSE='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 5h3.4v14H7zM13.6 5H17v14h-3.4z"/></svg>';
+const SVG_PREV='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h2.2v14H6zM19 5.9v12.2a1 1 0 0 1-1.6.8L9 13.2v-2.4l8.4-5.7a1 1 0 0 1 1.6.8z"/></svg>';
+const SVG_NEXT='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M15.8 5H18v14h-2.2zM5 5.9v12.2a1 1 0 0 0 1.6.8l8.4-5.7v-2.4L6.6 5.1a1 1 0 0 0-1.6.8z"/></svg>';
+const MUS_MODE_ICON=[
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2.5l3.5 3.5L17 9.5"/><path d="M3.5 11.5v-1a4 4 0 0 1 4-4h13"/><path d="M7 21.5 3.5 18 7 14.5"/><path d="M20.5 12.5v1a4 4 0 0 1-4 4h-13"/></svg>',
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2.5l3.5 3.5L17 9.5"/><path d="M3.5 11.5v-1a4 4 0 0 1 4-4h13"/><path d="M7 21.5 3.5 18 7 14.5"/><path d="M20.5 12.5v1a4 4 0 0 1-4 4h-13"/><text x="12" y="15.4" font-size="8.5" font-family="sans-serif" font-weight="700" fill="currentColor" stroke="none" text-anchor="middle">1</text></svg>',
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3.5h5v5"/><path d="M21 3.5 3.5 21"/><path d="M21 15.5v5h-5"/><path d="m14.5 14.5 6.5 6"/><path d="M3.5 3.5 9 9"/></svg>'
+];
+/* ---------- 状态记忆（本地存储） ---------- */
+function saveMusState(){
+  try{localStorage.setItem("jy-music",JSON.stringify({k:mQueueKind,i:mCur,t:mAudio.currentTime||0,m:mMode}));}catch(e){}
+}
+function restoreMusState(){
+  try{
+    const s=JSON.parse(localStorage.getItem("jy-music")||"null");
+    if(!s)return;
+    if(Number.isInteger(s.m)&&s.m>=0&&s.m<=2)mMode=s.m;
+    if(typeof s.k==="string"&&s.k){
+      const pool=s.k==="local"?musSongs:s.k==="kg"?kgSongs:null;
+      if(pool&&pool.length&&s.i>=0&&s.i<pool.length){
+        mQueue=pool.slice();mCur=s.i;mQueueKind=s.k;
+        mSeekPending=isFinite(s.t)?s.t:-1;
+      }
+    }
+  }catch(e){}
+}
+/* ---------- 播放核心 ---------- */
+async function loadAndPlay(i,autoplay){
+  if(i<0||i>=mQueue.length)return;
+  mCur=i;
+  const t=mQueue[i];
+  if(!t)return;
+  syncMusUI();
+  const fail=msg=>{
+    mFail++;
+    if(mFail>=4){mFail=0;syncMusUI();return;}
+    skip(1);
+  };
+  const URL_TTL=5*60*1000;
+  if(t.online&&!t.ncId){
+    const ok=await kgResolve(t);
+    if(!ok){fail();return;}
+  }
+  if(t.online&&(!t.src||!t.srcAt||Date.now()-t.srcAt>URL_TTL)){
+    try{
+      const url=await gdUrl(t.ncId,320);
+      if(!url)throw new Error("empty");
+      t.src=url;t.srcAt=Date.now();
+    }catch(e){fail();return;}
+  }
+  if(!t.src){fail();return;}
+  mFail=0;
+  if(t.online&&t.picId&&!t.cover){
+    gdPic(t.picId).then(u=>{if(u){t.cover=u;syncMusUI();}}).catch(()=>{});
+  }
+  mLoadedId=t.id;
+  mAudio.src=t.src;
+  if(autoplay!==false){
+    mAudio.play().then(()=>{ if(mSeekPending>=0&&isFinite(mSeekPending)){mAudio.currentTime=mSeekPending;mSeekPending=-1;} })
+      .catch(()=>{ const sub=$("#musSub"); if(sub)sub.textContent=T().mus.blocked; });
+  }
+  saveMusState();
+  syncMusUI();
+}
+function skip(step){
+  if(!mQueue.length)return;
+  if(mMode===2&&mQueue.length>1){
+    let n;do{n=(Math.random()*mQueue.length)|0}while(n===mCur);
+    return loadAndPlay(n,true);
+  }
+  return loadAndPlay((mCur+step+mQueue.length)%mQueue.length,true);
+}
+function togglePlay(){
+  if(!mQueue.length||mCur<0){
+    const pool=musTab==="local"?musSongs:kgSongs;
+    if(pool.length){mQueue=pool.slice();mQueueKind=musTab==="local"?"local":"kg";loadAndPlay(0,true);}
+    return;
+  }
+  const t=curTrack();
+  if(t&&mLoadedId!==t.id){loadAndPlay(mCur,true);return;}
+  if(mAudio.paused)mAudio.play().catch(()=>{});else mAudio.pause();
+  syncMusUI();
+}
+function playListAt(kind,idx){
+  const pool=kind==="local"?musSongs:kind==="kg"?kgSongs:onlineRes;
+  if(!pool.length)return;
+  mQueue=pool.slice();mQueueKind=kind;
+  loadAndPlay(idx,true);
+}
+/* ---------- 扫描本地「音乐」文件夹 ---------- */
+async function loadMusLocal(){
+  let urls=await listDirFiles(MUS_DIR,AUDIO_RE);
+  if(!urls&&location.protocol!=="file:")urls=await listFromGitHub(MUS_DIR,AUDIO_RE,"audio");
+  if(urls){
+    musSongs=urls.map(normLocal).sort((a,b)=>a.name.localeCompare(b.name,"zh-Hans-CN",{numeric:true}));
+    musStatus="ready";
+  }else{musStatus="error";musSongs=[];}
+  restoreMusState();
+  renderMusTab();
+  syncMusUI();
+}
+/* ---------- 界面 ---------- */
+function syncPill(){
+  const t=curTrack(),M=T().mus;
+  $("#musName").textContent=t?(lang==="zh"?t.name:t.name):M.idle;
+  $("#musSub").textContent=t?(t.artist||M.artist):M.idleSub;
+  $("#musPP").innerHTML=mAudio.paused?SVG_PLAY:SVG_PAUSE;
+  const disc=$("#musDisc");
+  disc.classList.toggle("spin",!mAudio.paused);
+  disc.querySelector("img")?.remove();
+  if(t&&t.cover){const img=new Image();img.src=t.cover;img.alt="";disc.appendChild(img);}
+}
+function buildMusPanel(){
+  const M=T().mus;
+  $("#musPanel").innerHTML=`
+  <div class="mus-head"><div class="mus-now" id="mNow">—</div><div class="mus-artist" id="mArtist"></div></div>
+  <div class="mus-prog"><span id="mT0">0:00</span><input type="range" id="mSeek" min="0" max="1000" value="0"><span id="mT1">0:00</span></div>
+  <div class="mus-ctrls">
+    <button id="mMode" class="mode" title="播放模式">${MUS_MODE_ICON[mMode]}</button>
+    <button id="mPrev">${SVG_PREV}</button>
+    <button id="mPP2" class="big">${SVG_PLAY}</button>
+    <button id="mNext">${SVG_NEXT}</button>
+  </div>
+  <div class="mus-vol">🔊<input type="range" id="mVol" min="0" max="100" value="${Math.round(mAudio.volume*100)}"></div>
+  <div class="mus-tabs">
+    <button data-mtab="kg"></button><button data-mtab="local"></button><button data-mtab="find"></button>
+  </div>
+  <div class="mus-list" id="mList"></div>`;
+  syncTabLabels();
+  $("#mMode").onclick=()=>{mMode=(mMode+1)%3;$("#mMode").innerHTML=MUS_MODE_ICON[mMode];saveMusState();};
+  $("#mPrev").onclick=()=>{if(mAudio.currentTime>4){mAudio.currentTime=0;return;}skip(-1);};
+  $("#mNext").onclick=()=>skip(1);
+  $("#mPP2").onclick=togglePlay;
+  $("#mVol").oninput=e=>{mAudio.volume=e.target.value/100;};
+  $("#mSeek").oninput=e=>{
+    if(isFinite(mAudio.duration)&&mAudio.duration>0)mAudio.currentTime=e.target.value/1000*mAudio.duration;
+  };
+  document.querySelectorAll("#musPanel [data-mtab]").forEach(b=>b.onclick=()=>{musTab=b.dataset.mtab;kgLimit=80;renderMusTab();syncMusUI();});
+}
+function syncTabLabels(){
+  const M=T().mus;
+  const tabs={kg:`${M.tabs.kg}<em>${kgSongs.length||""}</em>`,local:`${M.tabs.local}<em>${musSongs.length||""}</em>`,find:M.tabs.find};
+  document.querySelectorAll("#musPanel [data-mtab]").forEach(b=>b.innerHTML=tabs[b.dataset.mtab]||"");
+}
+function renderMusTab(){
+  const body=$("#mList");if(!body)return;
+  const M=T().mus;
+  if(musTab==="kg"){
+    if(!kgMeta){body.innerHTML=`<div class="mus-empty">${M.kgEmpty}</div>`;return;}
+    const q=kgQ.trim().toLowerCase();
+    const view=q?kgSongs.filter(s=>(s.name+" "+s.artist).toLowerCase().includes(q)):kgSongs;
+    const shown=view.slice(0,kgLimit);
+    body.innerHTML=`
+      <div class="mus-search"><input id="mKgQ" placeholder="${M.searchPh}" value="${esc(kgQ)}" autocomplete="off"><button id="mKgGo">${M.go}</button></div>
+      ${shown.length?shown.map((s,i)=>rowHtml(s,i,"kg")).join(""):`<div class="mus-empty">${M.findNone}</div>`}
+      ${view.length>kgLimit?`<button class="mus-more" id="mKgMore">${M.more.replace("{n}",view.length-kgLimit)}</button>`:""}`;
+    const inp=$("#mKgQ");
+    inp.oninput=e=>{kgQ=e.target.value;kgLimit=80;
+      const pos=e.target.selectionStart;renderMusTab();
+      const ni=$("#mKgQ");if(ni){ni.focus();ni.setSelectionRange(pos,pos);}};
+    inp.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();}};
+    $("#mKgGo").onclick=()=>renderMusTab();
+    const more=$("#mKgMore");if(more)more.onclick=()=>{kgLimit+=80;renderMusTab();};
+  }else if(musTab==="local"){
+    if(musStatus==="loading"){body.innerHTML=`<div class="mus-empty">${M.localLoading}</div>`;}
+    else if(musStatus==="error"){body.innerHTML=`<div class="mus-empty">${M.localErr}</div>`;}
+    else if(!musSongs.length){body.innerHTML=`<div class="mus-empty">${M.localEmpty}</div>`;}
+    else body.innerHTML=musSongs.map((s,i)=>rowHtml(s,i,"local")).join("");
+  }else{
+    body.innerHTML=`
+      <div class="mus-search"><input id="mFq" placeholder="${M.findPh}" autocomplete="off"><button id="mFgo">${M.go}</button></div>
+      <div id="mFres"><div class="mus-empty">${M.findIdle}</div></div>`;
+    const inp=$("#mFq");
+    const go=async()=>{
+      const kw=inp.value.trim();
+      if(!kw)return;
+      $("#mFres").innerHTML=`<div class="mus-empty">${M.localLoading}</div>`;
+      try{
+        const list=await gdSearch(kw,1);
+        onlineRes=list.map(normOnline);
+        $("#mFres").innerHTML=onlineRes.length
+          ?onlineRes.map((s,i)=>rowHtml(s,i,"find")).join("")
+          :`<div class="mus-empty">${M.findNone}</div>`;
+      }catch(e){$("#mFres").innerHTML=`<div class="mus-empty">${M.findErr}</div>`;}
+    };
+    inp.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();go();}};
+    $("#mFgo").onclick=go;
+  }
+}
+function rowHtml(s,i,kind){
+  const cur=curTrack();
+  const on=cur&&cur.id===s.id&&mQueueKind===kind;
+  return `<button class="mus-row${on?" on":""}" data-mplay="${kind}:${i}">
+    <span class="num">${i+1}</span>
+    <span class="nm"><b>${esc(s.name)}</b><small>${esc(s.artist||T().mus.artist)}</small></span>
+  </button>`;
+}
+function syncMusUI(){
+  if(!$("#mNow")){syncPill();return;}   // 面板还没构建过，只刷新药丸
+  const t=curTrack();
+  $("#mNow").textContent=t?t.name:"—";
+  $("#mArtist").textContent=t?(t.artist||T().mus.artist):"";
+  const paused=mAudio.paused;
+  $("#mPP2").innerHTML=paused?SVG_PLAY:SVG_PAUSE;
+  $("#musPP").innerHTML=paused?SVG_PLAY:SVG_PAUSE;
+  $("#mMode").classList.toggle("on",mMode>0);
+  syncTabLabels();
+  document.querySelectorAll("#musPanel .mus-row").forEach(r=>{
+    const[k,i]=r.dataset.mplay.split(":");
+    const pool=k==="local"?musSongs:k==="kg"?kgSongs:onlineRes;
+    const s=pool&&pool[+i];
+    r.classList.toggle("on",!!(t&&s&&t.id===s.id));
+  });
+  syncPill();
+}
+/* ---------- 事件 ---------- */
+$("#musPill").addEventListener("click",e=>{
+  if(e.target.closest("#musPP")){togglePlay();return;}
+  mOpen=!mOpen;
+  const p=$("#musPanel");
+  p.classList.toggle("open",mOpen);
+  if(mOpen){if(!p.innerHTML)buildMusPanel();renderMusTab();syncMusUI();}
+});
+$("#musAudio").addEventListener("play",syncMusUI);
+$("#musAudio").addEventListener("pause",syncMusUI);
+$("#musAudio").addEventListener("loadedmetadata",()=>{
+  const t=curTrack();
+  if(t&&mSeekPending>=0&&isFinite(mAudio.duration)){mAudio.currentTime=Math.min(mSeekPending,mAudio.duration-1);mSeekPending=-1;}
+});
+$("#musAudio").addEventListener("timeupdate",()=>{
+  const panel=$("#musPanel");
+  if(mOpen&&isFinite(mAudio.duration)&&mAudio.duration>0){
+    const sk=$("#mSeek");
+    if(sk&&document.activeElement!==sk)sk.value=Math.round(mAudio.currentTime/mAudio.duration*1000);
+  }
+  const now=Date.now();
+  if(now-mSaveAt>5000){mSaveAt=now;saveMusState();}
+});
+$("#musAudio").addEventListener("ended",()=>{
+  if(mMode===1){mAudio.currentTime=0;mAudio.play().catch(()=>{});}
+  else skip(1);
+  saveMusState();
+});
+document.addEventListener("click",e=>{
+  const row=e.target.closest("[data-mplay]");
+  if(row){
+    const[k,i]=row.dataset.mplay.split(":");
+    playListAt(k,+i);
+  }
 });
 
 /* ---------- 启动 ---------- */
 setTheme(theme);
 document.documentElement.lang=lang==="zh"?"zh-CN":"en";
+document.title=T().brand;
+$("#navBrand").textContent=T().brand;
 $("#langBtn").textContent=lang==="zh"?"EN":"中";
-["home","gallery","about"].forEach(k=>{
+["home","gallery","projects","about"].forEach(k=>{
   const el=document.querySelector(`[data-nav="${k}"]`);
   if(el)el.textContent=T().nav[k];
 });
 route();
 loadPhotos();
+loadKg();
+buildMusPanel();
+syncMusUI();
+loadMusLocal();
 </script>
 </body>
 </html>
