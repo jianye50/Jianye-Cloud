@@ -647,10 +647,25 @@ async function listFromGitHub(dir){
     if(!r.ok)return null;
     const arr=await r.json();
     if(!Array.isArray(arr))return null;
-    const base=new URL(dir,location.href);
-    const urls=arr.filter(x=>x.type==="file"&&IMG_RE.test(x.name))
-      .map(x=>new URL(encodeURIComponent(x.name),base).href);
-    return urls.length?urls:null;
+    const files=arr.filter(x=>x.type==="file"&&IMG_RE.test(x.name));
+    if(!files.length)return null;
+    /* 站点可能部署在域名根路径，也可能在子目录（如 /one/）。
+       GitHub API 给的是仓库根目录相对路径，直链拼法要靠探针验证：
+       先试页面相对路径，再试域名根路径，都不行就用 GitHub raw 直链。 */
+    const bases=[
+      new URL(dir,location.href),
+      new URL("/"+encodeURIComponent(dir)+"/",location.origin)
+    ];
+    for(const base of bases){
+      let ok=false;
+      try{
+        const probe=await fetch(new URL(encodeURIComponent(files[0].name),base).href,{method:"HEAD"});
+        ok=probe.ok&&(probe.headers.get("content-type")||"").toLowerCase().startsWith("image");
+      }catch(e){}
+      if(ok)return files.map(x=>new URL(encodeURIComponent(x.name),base).href);
+    }
+    const raw=files.map(x=>x.download_url).filter(Boolean);
+    return raw.length?raw:null;
   }catch(e){ return null; }
 }
 function nameOf(src){
