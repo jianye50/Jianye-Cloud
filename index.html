@@ -21,6 +21,27 @@
 <meta name="twitter:card" content="summary_large_image">
 <!-- 首屏大图所在的图床，提前建连 -->
 <link rel="preconnect" href="https://images.unsplash.com" crossorigin>
+<!-- 语言：首次访问先按系统语言定好（中文→中文，其它语言→英文），
+     免得英文用户先看到一闪而过的中文标题 / 语言标记。手动切换过的以本地保存为准。 -->
+<script>
+(function(){
+  var s=null; try{ s=localStorage.getItem("jy-lang"); }catch(e){}
+  if(s!=="zh"&&s!=="en"){
+    var list=[], i;
+    try{ list=(navigator.languages&&navigator.languages.length)?navigator.languages:[navigator.language||""]; }
+    catch(e){ list=[""]; }
+    s="en";                                   /* 默认英文：非中文一律英文 */
+    for(i=0;i<list.length;i++){
+      var l=String(list[i]||"").replace(/_/g,"-").toLowerCase();
+      if(l.indexOf("zh")===0){ s="zh"; break; }   /* zh / zh-CN / zh-TW / zh-HK… 都算中文 */
+      if(l.indexOf("en")===0){ s="en"; break; }
+    }
+  }
+  window.__JY_LANG=s;
+  document.documentElement.lang=(s==="zh")?"zh-CN":"en";
+  if(s!=="zh") document.title="Jianye's Corner";
+})();
+</script>
 <style>
 /* ===================== 主题变量 =====================
    站点固定深色（<html data-theme="dark">），不再有浅色皮肤，
@@ -677,7 +698,28 @@ const I18N={
 };
 
 /* ---------- 全局状态 ---------- */
-let lang=localStorage.getItem("jy-lang")||"zh";
+/* 语言：首次访问跟随操作系统/浏览器语言 —— 中文（zh、zh-CN、zh-TW、zh-HK…）显示中文，
+   其它语言一律显示英文；用户在导航栏手动切换过以后，以本地保存的选择为准。 */
+function detectLang(){
+  try{
+    const saved=localStorage.getItem("jy-lang");
+    if(saved==="zh"||saved==="en")return saved;
+  }catch(e){}
+  let list=[];
+  try{
+    list=(navigator.languages&&navigator.languages.length)?navigator.languages:[navigator.language||""];
+  }catch(e){ list=[""]; }
+  for(const raw of list){
+    const l=String(raw||"").replace(/_/g,"-").toLowerCase();
+    if(/^zh\b/.test(l)||l==="zh")return "zh";   /* 各种中文（含繁体、港澳台）都用中文 */
+    if(/^en\b/.test(l)||l==="en")return "en";
+  }
+  return "en";                                   /* 其余语言统一英文 */
+}
+let lang=(function(){
+  try{ const pre=window.__JY_LANG; if(pre==="zh"||pre==="en")return pre; }catch(e){}
+  return detectLang();
+})();
 /* 站点固定深色：<html data-theme="dark"> 直接写在标签上，
    不再有浅色皮肤，也没有主题切换按钮（那个位置现在放音乐入口）。 */
 
