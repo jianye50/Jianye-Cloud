@@ -6,38 +6,32 @@
 <meta name="color-scheme" content="dark">
 <title>鉴业の小站</title>
 <meta name="description" content="鉴业の小站 —— 造物、记录，与喜欢的光影。">
+<!-- 站点图标：站点根目录的 icon.ico（本页在子目录里也能取到） -->
+<link rel="icon" href="../icon.ico" sizes="any">
+<link rel="apple-touch-icon" href="../icon.ico">
+<!-- 移动端地址栏配色（站点固定深色） -->
+<meta name="theme-color" content="#0b0d12">
+<!-- 分享卡片预览 -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="鉴业の小站">
+<meta property="og:title" content="鉴业の小站">
+<meta property="og:description" content="造物、记录，与喜欢的光影和想法。">
+<meta property="og:url" content="https://jianye.pages.dev/">
+<meta property="og:image" content="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&q=75&auto=format">
+<meta name="twitter:card" content="summary_large_image">
+<!-- 首屏大图所在的图床，提前建连 -->
+<link rel="preconnect" href="https://images.unsplash.com" crossorigin>
 <style>
-/* ===================== 主题变量 ===================== */
+/* ===================== 主题变量 =====================
+   站点固定深色（<html data-theme="dark">），不再有浅色皮肤，
+   所以这里只保留深色一套变量。 */
 :root{
   --font:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text",
          "PingFang SC","HarmonyOS Sans SC","Microsoft YaHei","Segoe UI",sans-serif;
   --maxw:1080px;
-  --nav-h:64px;
-  --accent:#1a6cff;
-  --accent-2:#0a4fd6;
-  --accent-soft:rgba(26,108,255,.10);
-  --accent-fg:#fff;
   --radius:20px;
-}
-html[data-theme="light"]{
-  --bg:#f6f7fb;
-  --bg-2:#eef1f7;
-  --text-1:#16181d;
-  --text-2:rgba(22,24,29,.66);
-  --text-3:rgba(22,24,29,.42);
-  --card:#ffffff;
-  --card-border:rgba(0,0,0,.06);
-  --nav-bg:rgba(252,252,254,.72);
-  --nav-border:rgba(0,0,0,.07);
-  --chip:rgba(0,0,0,.055);
-  --shadow:0 10px 34px rgba(23,32,63,.09);
-  --shadow-lg:0 24px 60px rgba(23,32,63,.14);
-  --hero-fallback:linear-gradient(160deg,#2c3e5d 0%,#6b7fa6 45%,#d9a06b 100%);
-  --quote-bg:rgba(26,108,255,.07);
-  --img-placeholder:linear-gradient(135deg,#c8d4e6,#8fa3c4);
-  color-scheme:light;
-}
-html[data-theme="dark"]{
+  --accent:#4d8dff;
+  --accent-soft:rgba(77,141,255,.14);
   --bg:#0b0d12;
   --bg-2:#10131a;
   --text-1:#f4f5f7;
@@ -45,17 +39,11 @@ html[data-theme="dark"]{
   --text-3:rgba(244,245,247,.42);
   --card:#151923;
   --card-border:rgba(255,255,255,.08);
-  --nav-bg:rgba(13,16,23,.72);
-  --nav-border:rgba(255,255,255,.09);
   --chip:rgba(255,255,255,.08);
   --shadow:0 10px 34px rgba(0,0,0,.45);
   --shadow-lg:0 24px 60px rgba(0,0,0,.55);
   --hero-fallback:linear-gradient(160deg,#10141d 0%,#1d2637 55%,#3a2e22 100%);
-  --quote-bg:rgba(77,141,255,.10);
   --img-placeholder:linear-gradient(135deg,#232c3e,#39455e);
-  --accent:#4d8dff;
-  --accent-2:#6ea4ff;
-  --accent-soft:rgba(77,141,255,.14);
   color-scheme:dark;
 }
 *{margin:0;padding:0;box-sizing:border-box}
@@ -67,7 +55,6 @@ body{
   min-height:100vh;
   -webkit-font-smoothing:antialiased;
   overflow-x:hidden;
-  transition:background .35s ease,color .35s ease;
 }
 button{font-family:inherit;color:inherit;border:none;background:none;cursor:pointer}
 a{color:inherit;text-decoration:none}
@@ -125,23 +112,6 @@ img{display:block;max-width:100%}
   box-shadow:inset 0 -10px 14px -12px rgba(0,0,0,.35);
 }
 .nav>*{position:relative;z-index:1}
-html[data-theme="light"] .nav{
-  background:linear-gradient(
-    120deg,
-    rgba(255,255,255,.42) 0%,
-    rgba(255,255,255,.18) 38%,
-    rgba(255,255,255,.34) 62%,
-    rgba(255,255,255,.14) 100%);
-  backdrop-filter:blur(22px) saturate(180%) brightness(1.04);
-  -webkit-backdrop-filter:blur(22px) saturate(180%) brightness(1.04);
-  box-shadow:
-    inset 0 0 0 1px rgba(255,255,255,.45),
-    inset 0 1.5px .5px -1px rgba(255,255,255,.9),
-    inset 0 -1px .5px -1px rgba(255,255,255,.5),
-    inset 0 12px 18px -12px rgba(255,255,255,.55),
-    0 2px 6px rgba(23,32,63,.08),
-    0 14px 38px rgba(23,32,63,.16);
-}
 .nav:hover{
   box-shadow:
     inset 0 0 0 1px rgba(255,255,255,.30),
@@ -168,7 +138,6 @@ html[data-theme="light"] .nav{
 .nav-link:hover{color:var(--text-1);background:var(--chip)}
 .nav-link.active{color:var(--accent);font-weight:600}
 .nav-sep{width:1px;height:20px;background:rgba(255,255,255,.22);margin:0 8px;box-shadow:1px 0 0 rgba(0,0,0,.10)}
-html[data-theme="light"] .nav-sep{background:rgba(20,30,60,.16);box-shadow:1px 0 0 rgba(255,255,255,.35)}
 .nav-icon{
   width:34px;height:34px;border-radius:50%;
   display:grid;place-items:center;
@@ -266,9 +235,9 @@ html[data-theme="light"] .nav-sep{background:rgba(20,30,60,.16);box-shadow:1px 0
 .btn:active{transform:scale(.97)}
 .btn-primary{
   background:var(--accent);color:#fff;
-  box-shadow:0 10px 26px rgba(26,108,255,.4);
+  box-shadow:0 10px 26px rgba(77,141,255,.4);
 }
-.btn-primary:hover{box-shadow:0 14px 32px rgba(26,108,255,.5)}
+.btn-primary:hover{box-shadow:0 14px 32px rgba(77,141,255,.55)}
 .btn-ghost{
   background:rgba(255,255,255,.14);
   border:1px solid rgba(255,255,255,.24);
@@ -278,7 +247,7 @@ html[data-theme="light"] .nav-sep{background:rgba(20,30,60,.16);box-shadow:1px 0
 .mouse{
   position:absolute;left:50%;bottom:34px;transform:translateX(-50%);
   width:26px;height:42px;border:2px solid rgba(255,255,255,.55);
-  border-radius:999px;z-index:2;
+  border-radius:999px;z-index:2;cursor:pointer;
 }
 .mouse::before{
   content:"";position:absolute;left:50%;top:8px;
@@ -387,6 +356,8 @@ html[data-theme="light"] .nav-sep{background:rgba(20,30,60,.16);box-shadow:1px 0
   align-items:center;justify-content:center;
 }
 .lightbox.open{display:flex;animation:fadeIn .22s ease}
+/* 灯箱打开时锁住背景滚动 */
+body.lb-lock{overflow:hidden}
 .lightbox img{
   max-width:88vw;max-height:80vh;border-radius:16px;
   box-shadow:0 40px 100px rgba(0,0,0,.6);
@@ -435,7 +406,7 @@ html[data-theme="light"] .nav-sep{background:rgba(20,30,60,.16);box-shadow:1px 0
   display:grid;place-items:center;
   font-size:32px;font-weight:800;color:#fff;
   background:linear-gradient(135deg,var(--accent),#7a3bff);
-  box-shadow:0 12px 30px rgba(26,108,255,.35);
+  box-shadow:0 12px 30px rgba(77,141,255,.35);
   margin-bottom:22px;
 }
 .avatar img{
@@ -507,24 +478,25 @@ footer .heart{color:#ff5d7a}
   <a class="nav-link" data-nav="projects" href="#/projects">项目</a>
   <a class="nav-link" data-nav="about" href="#/about">About</a>
   <span class="nav-sep"></span>
-  <button class="nav-icon" id="langBtn" title="Switch language">EN</button>
+  <button class="nav-icon" id="langBtn" title="切换到英文" aria-label="切换到英文">EN</button>
   <a class="nav-icon" id="cloudBtn" href="https://jianye.pages.dev/cloud" target="_blank" rel="noopener" aria-label="云空间" title="云空间">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.35 10.04A7.49 7.49 0 0 0 12 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 0 0 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg>
   </a>
   <!-- 音乐入口：点一下展开歌单面板（进度环画在按钮外圈） -->
-  <button class="nav-icon mp-nav-btn" id="musicBtn" title="音乐（点击展开歌单）" aria-label="音乐">
+  <button class="nav-icon mp-nav-btn" id="musicBtn" title="音乐（点击展开歌单）" aria-label="音乐"
+          aria-haspopup="true" aria-expanded="false" aria-controls="mpWrap">
     <svg class="mp-nav-ring" viewBox="0 0 34 34" aria-hidden="true">
       <circle class="mp-nav-ring-bg" cx="17" cy="17" r="15"/>
       <circle class="mp-nav-ring-fg" id="mpRing" cx="17" cy="17" r="15"/>
     </svg>
-    <span class="mp-nav-note" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55A4 4 0 1 0 14 17V7h4V3h-6z"/></svg></span>
+    <span class="mp-nav-note" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg></span>
   </button>
 </nav>
 
 <main id="app"></main>
 
 <!-- ============ 灯箱 ============ -->
-<div class="lightbox" id="lightbox">
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-labelledby="lbCount">
   <button class="lb-btn lb-close" id="lbClose" aria-label="关闭">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
   </button>
@@ -579,10 +551,10 @@ const CHIPS=[
 const SOCIALS=[
   {zh:"GitHub",en:"GitHub",u:"https://github.com/jianye50",c:"#8b949e"},
   {zh:"哔哩哔哩",en:"Bilibili",u:"https://b23.tv/pel3LeM",c:"#ff7aa2"},
-  {zh:"抖音",en:"Douyin",u:"https://v.douyin.com/oW7O6rh_geg/",c:"#3a3f52"},
+  {zh:"抖音",en:"Douyin",u:"https://v.douyin.com/oW7O6rh_geg/",c:"#25f4ee"},
   {zh:"微博",en:"Weibo",u:"https://weibo.com/u/7953312650",c:"#ff7a1a"},
-  {zh:"知乎",en:"Zhihu",u:"https://www.zhihu.com/people/5-84-88-98",c:"#3a4fd6"},
-  {zh:"Steam",en:"Steam",u:"https://steamcommunity.com/id/aimjianye/",c:"#2a475e"},
+  {zh:"知乎",en:"Zhihu",u:"https://www.zhihu.com/people/5-84-88-98",c:"#0084ff"},
+  {zh:"Steam",en:"Steam",u:"https://steamcommunity.com/id/aimjianye/",c:"#66c0f4"},
   {zh:"意见反馈",en:"Feedback",u:"https://my.feishu.cn/share/base/form/shrcnZomfA2kKrY311TeM2OaRpe",c:"#4d8dff"}
 ];
 
@@ -607,6 +579,7 @@ const I18N={
   zh:{
     brand:"鉴业の小站",
     nav:{home:"首页",gallery:"图库",projects:"项目",about:"关于"},
+    langTip:"切换到英文",
     cloud:"云空间",
     hero:{badge:"个人空间",sub:"造物、记录，<br>与喜欢的光影和想法。",read:"浏览图库",aboutBtn:"关于我"},
     home:{gallery:"图库",more:"查看全部照片",projects:"项目",moreProj:"查看全部项目"},
@@ -634,6 +607,7 @@ const I18N={
   en:{
     brand:"Jianye's Corner",
     nav:{home:"Home",gallery:"Gallery",projects:"Projects",about:"About"},
+    langTip:"Switch to Chinese",
     cloud:"Cloud Space",
     hero:{badge:"PERSONAL SPACE",sub:"Making things, keeping notes,<br>and the light I like.",read:"Browse Gallery",aboutBtn:"About Me"},
     home:{gallery:"Gallery",more:"View all photos",projects:"Projects",moreProj:"View all projects"},
@@ -677,6 +651,8 @@ function setLang(v){
   document.title=T().brand;
   localStorage.setItem("jy-lang",v);
   $("#langBtn").textContent=v==="zh"?"EN":"中";
+  $("#langBtn").title=T().langTip||"Switch language";
+  $("#langBtn").setAttribute("aria-label",$("#langBtn").title);
   $("#navBrand").textContent=T().brand;
   ["home","gallery","projects","about"].forEach(k=>{
     const el=document.querySelector(`[data-nav="${k}"]`);
@@ -781,7 +757,7 @@ function photoImgTag(p){
   const err=p.fb
     ? `this.dataset.s?(this.style.display='none'):(this.dataset.s=1,this.src=this.dataset.alt)`
     : `this.style.display='none'`;
-  return `<img src="${esc(p.src)}" alt="${esc(p.name)}" loading="lazy"
+  return `<img src="${esc(p.src)}" alt="${esc(p.name)}" loading="lazy" decoding="async"
     ${p.fb?`data-alt="${esc(PHOTO_DIRS[0]+encodeURIComponent(p.fb))}"`:""}
     onerror="${err}">`;
 }
@@ -815,7 +791,7 @@ function paintPhotoGrids(){
 }
 
 /* ---------- 灯箱 ---------- */
-let lbIndex=0;
+let lbIndex=0, lbFocus=null;
 function setLbImg(p){
   const img=$("#lbImg");
   img.onerror=null;
@@ -833,7 +809,10 @@ function openLb(i){
   if(!photos.length)return;
   lbIndex=(i+photos.length)%photos.length;
   showLb();
+  lbFocus=document.activeElement;                 /* 关掉灯箱后把焦点还给刚才那张图 */
   $("#lightbox").classList.add("open");
+  document.body.classList.add("lb-lock");         /* 锁住背景滚动 */
+  try{ $("#lbClose").focus(); }catch(e){}
 }
 function showLb(){
   const p=photos[lbIndex];
@@ -842,7 +821,12 @@ function showLb(){
   $("#lbImg").alt=p.name;
   $("#lbCount").textContent=`${lbIndex+1} / ${photos.length} · ${p.name}`;
 }
-function closeLb(){ $("#lightbox").classList.remove("open"); }
+function closeLb(){
+  $("#lightbox").classList.remove("open");
+  document.body.classList.remove("lb-lock");
+  if(lbFocus&&typeof lbFocus.focus==="function"){ try{ lbFocus.focus(); }catch(e){} }
+  lbFocus=null;
+}
 function stepLb(d){ openLb(lbIndex+d); }
 
 /* ---------- 视图渲染 ---------- */
@@ -851,8 +835,8 @@ function renderHome(){
   app.innerHTML=`
   <section class="view">
     <header class="hero">
-      <img class="hero-img" src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=2000&q=80"
-           alt="" onerror="this.remove()">
+      <img class="hero-img" src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=2000&q=78&auto=format"
+           alt="" fetchpriority="high" decoding="async" onerror="this.remove()">
       <div class="wrap hero-inner">
         <span class="hero-badge"><span class="pulse"></span>${esc(t.hero.badge)}</span>
         <h1>${esc(t.brand)}</h1>
@@ -862,7 +846,8 @@ function renderHome(){
           <a class="btn btn-ghost" href="#/about">${esc(t.hero.aboutBtn)}</a>
         </div>
       </div>
-      <span class="mouse" onclick="document.getElementById('galleryPreview').scrollIntoView({behavior:'smooth'})"></span>
+      <!-- 向下滚动的小提示：点一下滚到图库预览（同一个动作首屏按钮里也有，这里只是装饰） -->
+      <span class="mouse" data-scroll-to="galleryPreview" aria-hidden="true"></span>
     </header>
 
     <div class="wrap">
@@ -971,7 +956,13 @@ function route(){
   else renderHome();
   document.querySelectorAll(".nav-link").forEach(el=>
     el.classList.toggle("active",el.dataset.nav===active));
-  window.scrollTo({top:0,behavior:"instant"in window?"instant":"auto"});
+  /* 切页回到顶部：html 上挂着 scroll-behavior:smooth，
+     这里先临时关掉再滚，免得每次切页都慢慢「滑」上去 */
+  const root=document.documentElement,
+        prevSmooth=root.style.scrollBehavior;
+  root.style.scrollBehavior="auto";
+  window.scrollTo(0,0);
+  root.style.scrollBehavior=prevSmooth;
 }
 window.addEventListener("hashchange",route);
 
@@ -982,6 +973,13 @@ $("#lbPrev").addEventListener("click",e=>{e.stopPropagation();stepLb(-1)});
 $("#lbNext").addEventListener("click",e=>{e.stopPropagation();stepLb(1)});
 $("#lightbox").addEventListener("click",e=>{if(e.target.id==="lightbox")closeLb()});
 document.addEventListener("click",e=>{
+  /* 首屏那个滚动提示：点一下平滑滚到图库预览 */
+  const sc=e.target.closest("[data-scroll-to]");
+  if(sc){
+    const target=document.getElementById(sc.dataset.scrollTo);
+    if(target)target.scrollIntoView({behavior:"smooth",block:"start"});
+    return;
+  }
   const tile=e.target.closest(".ph-tile");
   if(!tile||tile.dataset.idx===undefined||tile.classList.contains("ph-skel"))return;
   /* 带「+N」角标的瓷砖 → 跳转图库页，而不是开灯箱 */
@@ -1246,7 +1244,7 @@ input[type=range].mp-range::-moz-range-thumb{
  *  鉴业音乐 · 导航栏迷你播放器（功能对齐原站音乐组件）
  *  ---------------------------------------------------------------
  *  三个分类：
- *    ① 酷狗歌单 —— 云端 /api/kg 实时读取「我喜欢的音乐」（3148 首），
+ *    ① 酷狗歌单 —— 云端 /api/kg 实时读取「我喜欢的音乐」，
  *       读不到时退回同目录的 kugou-playlist.js 内置快照；
  *    ② 本地音乐 —— 自动扫描站点根目录「音乐」文件夹（GitHub API 兜底）；
  *    ③ 在线搜歌 —— GD 音乐台「网易云」源搜索。
@@ -1377,7 +1375,7 @@ input[type=range].mp-range::-moz-range-thumb{
   let tab="kg", shown=LIMIT_STEP, filterKw="";   /* filterKw：酷狗/本地歌单内的筛选词 */
   let q=[], cur=-1, kind="kg";        /* q = 当前播放队列，kind = 队列来自哪个分类 */
   let mode=0, loadedId="", seeking=false, failCount=0, errCount=0;
-  let restored=false, snapLoaded=false, lastKw="";
+  let restored=false, lastKw="";
   const resume={pos:null,id:""};        /* 待恢复的播放进度：只有重新挂上同一首歌时才生效 */
   /* 播放意图状态机：
      wantPlay —— 用户「想不想放」，是唯一权威（不再依赖 audio.paused 猜测）；
@@ -1471,13 +1469,13 @@ input[type=range].mp-range::-moz-range-thumb{
       let done=false;
       const finish=v=>{ if(done)return; done=true; res(v); };
       setTimeout(()=>finish(!!window.KUGOU_PLAYLIST),3000);   /* 兜底：脚本卡住也不阻塞「上次播放」的恢复 */
-      if(window.KUGOU_PLAYLIST&&applyKg(window.KUGOU_PLAYLIST,false)){ snapLoaded=true; return finish(true); }
+      if(window.KUGOU_PLAYLIST&&applyKg(window.KUGOU_PLAYLIST,false))return finish(true);
       let i=0;
       const next=()=>{
         if(i>=SNAP_FILES.length)return finish(false);
         const s=document.createElement("script");
         s.src=SNAP_FILES[i++];
-        s.onload=()=>{ if(window.KUGOU_PLAYLIST&&applyKg(window.KUGOU_PLAYLIST,false)){ snapLoaded=true; finish(true); } else next(); };
+        s.onload=()=>{ if(window.KUGOU_PLAYLIST&&applyKg(window.KUGOU_PLAYLIST,false)){ finish(true); } else next(); };
         s.onerror=next;
         document.head.appendChild(s);
       };
@@ -2077,6 +2075,7 @@ input[type=range].mp-range::-moz-range-thumb{
 
   function setPanel(open){
     wrap.classList.toggle("open",open);
+    musicBtn.setAttribute("aria-expanded",open?"true":"false");   /* 无障碍：读屏知道面板开着还是关着 */
     if(open){
       syncPanelWidth();                            /* 先对齐导航栏宽度，再展开 */
       if(toastEl)toastEl.classList.remove("on");   /* 面板和气泡在同一块地方，先收起来 */
@@ -2241,10 +2240,7 @@ input[type=range].mp-range::-moz-range-thumb{
   }
 
   /* =====================================================================
-   *  启动：读快照 + 扫本地 → 恢复上次进度 → 云端同步最新歌单
-   * ===================================================================== */
-  /* =====================================================================
-   *  启动：读快照 + 扫本地 → 恢复上次进度 → 云端同步最新歌单
+   *  启动：本地扫描与歌单同步并行 → 恢复上次进度
    * ===================================================================== */
   /* ---------------- 语言切换：把播放器上的文案整体刷新一遍 ---------------- */
   function mpApplyLang(){
@@ -2264,7 +2260,8 @@ input[type=range].mp-range::-moz-range-thumb{
     if(!curTrack())subEl.textContent=t.pillSub;
     paintMeta(); paintSub(); renderList();
     syncPanelWidth();   /* 中英文切换后导航栏宽度会变，面板跟着重新对齐 */
-  }  /* 站点右上角 EN / 中 切换时同步：优先接管 setLang，另用 <html lang> 监听兜底 */
+  }
+  /* 站点右上角 EN / 中 切换时同步：优先接管 setLang，另用 <html lang> 监听兜底 */
   try{
     if(typeof setLang==="function"){
       const _setLang=setLang;
@@ -2277,19 +2274,28 @@ input[type=range].mp-range::-moz-range-thumb{
   }catch(e){}
 
   var scanDone=false, kgDone=false;
+  const CLOUD_WAIT=2000;   /* 云端歌单最多等 2 秒，超时就先用内置快照顶上 */
   (async function boot(){
     setTabUI();              /* 初始分类高亮 + 搜索栏（三个分类都显示） */
     mpApplyLang();           /* 按当前语言把面板文案铺一遍 */
     earlyPaint();            /* 先把上次播放的那首显示出来，歌单慢慢读 */
-    await Promise.all([
-      loadSnap().then(()=>{ kgDone=true; }),
-      scanLocal().then(()=>{ scanDone=true; })
-    ]);
+    /* 本地音乐扫描与「酷狗歌单」同时开工 */
+    const localP=scanLocal().then(()=>{ scanDone=true; });
+    /* 歌单优先问云端 /api/kg：内容最新，而且通了就不必再下载 107KB 的内置快照。
+       云端不通（离线 / 没部署 Functions）或 2 秒没回来 → 退回内置快照兜底。
+       两个来源谁后到谁生效：快照先到、云端后到 → 云端覆盖快照（内容更新）；
+       云端先到则根本不会加载快照。 */
+    let tid=null;
+    const timeout=new Promise(r=>{ tid=setTimeout(()=>r("timeout"),CLOUD_WAIT); });
+    const first=await Promise.race([refreshCloud(false).then(()=>cloudState),timeout]);
+    clearTimeout(tid);
+    if(first!=="ok")await loadSnap();
+    kgDone=true;
+    await localP;
     if(!kgPool.length&&!kgMeta)paintMeta();
     restoreState();
     if(tab==="kg")renderList();
     paintSub();
-    refreshCloud(false);
   })();
 })();
 </script>
