@@ -249,18 +249,27 @@ img{display:block;max-width:100%}
    · 触屏（手机/平板）→ 向下滑动箭头（触屏用户没有滚轮，但同样需要知道可以往下翻） */
 .scroll-hint{
   position:absolute;left:50%;bottom:34px;transform:translateX(-50%);
-  z-index:2;cursor:pointer;display:none;place-items:center;
-  color:rgba(255,255,255,.8);text-align:center;
+  z-index:5;cursor:pointer;display:none;place-items:center;
+  color:#fff;text-align:center;
+  /* 提示整体加一点投影，压过首屏的明暗渐变，任何背景上都清晰 */
+  filter:drop-shadow(0 2px 8px rgba(0,0,0,.5));
 }
 .sh-mouse{
   display:none;position:relative;
-  width:26px;height:42px;border:2px solid rgba(255,255,255,.55);
+  width:26px;height:42px;
+  border:2px solid rgba(255,255,255,.95);
   border-radius:999px;
+  /* 玻璃质感填充：不透明白色衬底，深浅背景上都看得清 */
+  background:rgba(255,255,255,.14);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.18),
+    inset 0 8px 12px -6px rgba(255,255,255,.35);
 }
 .sh-mouse::before{
   content:"";position:absolute;left:50%;top:8px;
-  width:4px;height:8px;margin-left:-2px;border-radius:99px;
-  background:rgba(255,255,255,.8);
+  width:4px;height:9px;margin-left:-2px;border-radius:99px;
+  background:#fff;
+  box-shadow:0 0 8px rgba(255,255,255,.9);
   animation:wheel 1.8s ease-in-out infinite;
 }
 .sh-arrow{
@@ -270,7 +279,7 @@ img{display:block;max-width:100%}
 }
 .sh-label{
   display:none;margin-top:2px;font-size:11.5px;letter-spacing:.08em;
-  color:rgba(255,255,255,.72);text-shadow:0 2px 8px rgba(0,0,0,.45);
+  color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.55);
 }
 /* 电脑：能悬停 + 精确指针 */
 @media (hover:hover) and (pointer:fine){
@@ -390,12 +399,13 @@ img{display:block;max-width:100%}
 /* 灯箱打开时锁住背景滚动 */
 body.lb-lock{overflow:hidden}
 .lightbox img{
+  position:relative;z-index:1;   /* 图片带 fill 动画会自建层叠上下文，必须显式压到按钮之下 */
   max-width:88vw;max-height:80vh;border-radius:16px;
   box-shadow:0 40px 100px rgba(0,0,0,.6);
   animation:fadeUp .3s cubic-bezier(.2,.7,.2,1) both;
 }
 .lb-btn{
-  position:absolute;width:48px;height:48px;border-radius:50%;
+  position:absolute;z-index:2;width:48px;height:48px;border-radius:50%;
   background:rgba(255,255,255,.1);
   display:grid;place-items:center;color:#fff;
   transition:background .2s,transform .2s;
@@ -408,6 +418,7 @@ body.lb-lock{overflow:hidden}
 .lb-close{right:22px;top:22px}
 .lb-count{
   position:absolute;left:50%;bottom:26px;transform:translateX(-50%);
+  z-index:2;
   font-size:13px;color:rgba(255,255,255,.78);
   background:rgba(255,255,255,.1);padding:6px 14px;border-radius:999px;
   max-width:80vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
