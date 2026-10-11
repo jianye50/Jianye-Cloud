@@ -244,21 +244,52 @@ img{display:block;max-width:100%}
   color:#fff;backdrop-filter:blur(8px);
 }
 .btn-ghost:hover{background:rgba(255,255,255,.22)}
-.mouse{
+/* 向下浏览提示：同一位置、同一点击区，按设备类型换形态
+   · 电脑（有鼠标）→ 鼠标滚轮图形
+   · 触屏（手机/平板）→ 向下滑动箭头（触屏用户没有滚轮，但同样需要知道可以往下翻） */
+.scroll-hint{
   position:absolute;left:50%;bottom:34px;transform:translateX(-50%);
-  width:26px;height:42px;border:2px solid rgba(255,255,255,.55);
-  border-radius:999px;z-index:2;cursor:pointer;
+  z-index:2;cursor:pointer;display:none;place-items:center;
+  color:rgba(255,255,255,.8);text-align:center;
 }
-.mouse::before{
+.sh-mouse{
+  display:none;position:relative;
+  width:26px;height:42px;border:2px solid rgba(255,255,255,.55);
+  border-radius:999px;
+}
+.sh-mouse::before{
   content:"";position:absolute;left:50%;top:8px;
   width:4px;height:8px;margin-left:-2px;border-radius:99px;
   background:rgba(255,255,255,.8);
   animation:wheel 1.8s ease-in-out infinite;
 }
+.sh-arrow{
+  display:none;width:30px;height:30px;
+  filter:drop-shadow(0 2px 6px rgba(0,0,0,.4));
+  animation:shBob 1.8s ease-in-out infinite;
+}
+.sh-label{
+  display:none;margin-top:2px;font-size:11.5px;letter-spacing:.08em;
+  color:rgba(255,255,255,.72);text-shadow:0 2px 8px rgba(0,0,0,.45);
+}
+/* 电脑：能悬停 + 精确指针 */
+@media (hover:hover) and (pointer:fine){
+  .scroll-hint{display:grid}
+  .sh-mouse{display:block}
+}
+/* 触屏：无悬停 或 粗指针 */
+@media (hover:none),(pointer:coarse){
+  .scroll-hint{display:grid}
+  .sh-arrow,.sh-label{display:block}
+}
 @keyframes wheel{
   0%{transform:translateY(0);opacity:1}
   60%{transform:translateY(12px);opacity:0}
   100%{transform:translateY(0);opacity:0}
+}
+@keyframes shBob{
+  0%,100%{transform:translateY(-3px);opacity:.65}
+  50%{transform:translateY(5px);opacity:1}
 }
 
 /* ===================== 区块标题 ===================== */
@@ -581,7 +612,7 @@ const I18N={
     nav:{home:"首页",gallery:"图库",projects:"项目",about:"关于"},
     langTip:"切换到英文",
     cloud:"云空间",
-    hero:{badge:"个人空间",sub:"造物、记录，<br>与喜欢的光影和想法。",read:"浏览图库",aboutBtn:"关于我"},
+    hero:{badge:"个人空间",sub:"造物、记录，<br>与喜欢的光影和想法。",read:"浏览图库",aboutBtn:"关于我",hint:"向下浏览"},
     home:{gallery:"图库",more:"查看全部照片",projects:"项目",moreProj:"查看全部项目"},
     gallery:{
       title:"图库",
@@ -609,7 +640,7 @@ const I18N={
     nav:{home:"Home",gallery:"Gallery",projects:"Projects",about:"About"},
     langTip:"Switch to Chinese",
     cloud:"Cloud Space",
-    hero:{badge:"PERSONAL SPACE",sub:"Making things, keeping notes,<br>and the light I like.",read:"Browse Gallery",aboutBtn:"About Me"},
+    hero:{badge:"PERSONAL SPACE",sub:"Making things, keeping notes,<br>and the light I like.",read:"Browse Gallery",aboutBtn:"About Me",hint:"Scroll down"},
     home:{gallery:"Gallery",more:"View all photos",projects:"Projects",moreProj:"View all projects"},
     gallery:{
       title:"Gallery",
@@ -846,8 +877,15 @@ function renderHome(){
           <a class="btn btn-ghost" href="#/about">${esc(t.hero.aboutBtn)}</a>
         </div>
       </div>
-      <!-- 向下滚动的小提示：点一下滚到图库预览（同一个动作首屏按钮里也有，这里只是装饰） -->
-      <span class="mouse" data-scroll-to="galleryPreview" aria-hidden="true"></span>
+      <!-- 向下浏览提示：点一下滚到图库预览。电脑显示鼠标滚轮，触屏显示下滑箭头 + 文字 -->
+      <span class="scroll-hint" data-scroll-to="galleryPreview" aria-hidden="true">
+        <span class="sh-mouse"></span>
+        <svg class="sh-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M6 9l6 6 6-6"/>
+        </svg>
+        <span class="sh-label">${esc(t.hero.hint||"")}</span>
+      </span>
     </header>
 
     <div class="wrap">
