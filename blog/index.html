@@ -333,8 +333,8 @@ img{display:block;max-width:100%}
     <div class="err-banner" id="gateErr"></div>
     <div class="gate">
       <h1>博客编辑器</h1>
-      <p>选择仓库根目录下的 <b style="color:var(--accent)">blog</b> 文件夹（推荐，可自动更新文章目录），<br>
-         或直接选择某一个文章子文件夹单独编辑。授权后即可读写该文件夹内的全部文件。</p>
+      <p>选择仓库里的 <b style="color:var(--accent)">blog</b> 文件夹（推荐），<br>
+         或直接选择某一个文章文件夹单独编辑。授权后即可读写该文件夹内的全部文件。</p>
       <div class="gate-actions">
         <button class="btn btn-primary" id="pickRootBtn">📂 选择 blog 总文件夹</button>
         <button class="btn" id="pickOneBtn">📁 选择单个文章文件夹</button>
@@ -342,7 +342,8 @@ img{display:block;max-width:100%}
       <div class="gate-note">
         需要使用 Chrome / Edge 浏览器打开本页。<br>
         文章格式：<code>blog/文章文件夹/index.md</code>（Markdown + 头部元信息），封面、背景等图片放在同一文件夹里；<br>
-        保存时会自动更新 <code>blog/index.json</code>，主页博客列表即可看到新文章。
+        也可以直接把 Markdown 放在 <code>blog/名字.md</code>，图片统一放 <code>blog</code> 根目录。<br>
+        保存即生效——主页直接扫描 blog 文件夹里的文件夹与文件，<b>不需要任何目录文件</b>。
       </div>
     </div>
   </div>
@@ -358,7 +359,7 @@ img{display:block;max-width:100%}
       </div>
       <span class="sp"></span>
       <input class="search" id="searchBox" placeholder="搜索标题 / 标签 / 摘要">
-      <button class="btn" id="rebuildBtn" title="扫描全部文章文件夹，重新生成 index.json">🔄 重建目录</button>
+      <button class="btn" id="refreshBtn" title="重新扫描 blog 文件夹，看看现在有哪些文章与文件">🔄 重新扫描</button>
       <button class="btn btn-primary" id="newArtBtn">＋ 新建文章</button>
     </div>
     <div class="art-grid" id="artGrid"></div>
@@ -462,6 +463,7 @@ img{display:block;max-width:100%}
     <h4 id="mTitle"></h4>
     <p id="mText"></p>
     <input id="mInput" style="display:none">
+    <select id="mSel" style="display:none"></select>
     <div class="row">
       <button class="btn" id="mCancel">取消</button>
       <button class="btn btn-primary" id="mOk">确定</button>
@@ -473,9 +475,9 @@ img{display:block;max-width:100%}
 /* =====================================================================
  *  博客编辑器（blog/editor.html）
  *  通过 File System Access API 获取文件夹读写权限：
- *    · 选择 blog 总文件夹 → 列出 / 新建 / 重命名 / 删除文章（子文件夹）
- *    · 进入某文章文件夹 → 编辑 index.md、上传图片、设置封面/背景
- *    · 保存时自动改写 blog/index.json，主页博客列表即时生效
+ *    · 选择 blog 总文件夹 → 直接扫描出全部文章：子文件夹（index.md）与单个 .md 文件
+ *    · 新建 / 重命名 / 删除文章，进入文章编辑正文、上传图片、设置封面/背景
+ *    · 只写文章自己的文件，主页扫描 blog 目录即可看到，不需要任何目录清单
  *  文章文件格式与 new/index.html 的解析逻辑严格对应：
  *    --- front matter（title/desc/tags/date/minutes/cover/background）---
  *    Markdown 正文
@@ -487,8 +489,10 @@ const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"
 
 /* ---------- 全局状态 ---------- */
 let rootHandle=null;      /* blog 总文件夹句柄（可能为空：只选了单个文章夹） */
-let artHandle=null;       /* 当前文章文件夹句柄 */
-let artSlug="";           /* 当前文章文件夹名 */
+let artHandle=null;       /* 当前文章文件夹句柄（artKind==="dir" 时使用） */
+let artSlug="";           /* 当前文章的名字（文件夹名 或 去掉 .md 的文件名） */
+let artKind="dir";        /* dir = 子文件夹文章；file = 直接放在 blog 里的单个 .md */
+let artFile="";           /* artKind==="file" 时的 .md 文件名 */
 let meta={};              /* 元信息 */
 let mdText="";            /* 正文（不含 front matter） */
 let dirty=false;
@@ -504,7 +508,8 @@ function toast(msg,cls){
 }
 function show(id){$$(".screen").forEach(s=>s.classList.remove("on"));$(id).classList.add("on");window.scrollTo(0,0);}
 function setCrumb(){
-  const path=rootHandle?`${rootHandle.name}/${artHandle?artSlug:""}`:(artHandle?artHandle.name:"");
+  const cur=artKind==="file"?artFile:artSlug;
+  const path=rootHandle?`${rootHandle.name}/${artHandle?cur:""}`:(artHandle?artHandle.name:"");
   $("#crumb").innerHTML=artHandle?`当前文章：<b>${esc(path)}</b>`:(rootHandle?`已打开：<b>${esc(rootHandle.name)}</b>`:"未选择文件夹");
 }
 function setDirty(v){
@@ -529,6 +534,11 @@ async function writeBlob(dirHandle,name,blob){
   const fh=await dirHandle.getFileHandle(name,{create:true});
   const w=await fh.createWritable();await w.write(blob);await w.close();
 }
+/* 当前文章的正文文件名 与 图片所在文件夹
+   子文件夹文章：index.md 与图片都放在 artHandle 里
+   单文件文章：  正文是 blog/名字.md，图片放在 blog 总文件夹里 */
+function mdName(){ return artKind==="file"?artFile:"index.md"; }
+function artDir(){ return artKind==="file"?rootHandle:artHandle; }
 const IMG_RE=/\.(jpe?g|png|gif|webp|bmp|avif)$/i;
 function fmtSize(n){
   if(n<1024)return n+" B";
@@ -543,6 +553,7 @@ let modalCb=null;
 function ask({title,text,input,value}){
   return new Promise(res=>{
     $("#mTitle").textContent=title;$("#mText").textContent=text||"";
+    $("#mSel").style.display="none";
     const inp=$("#mInput");
     if(input){inp.style.display="block";inp.value=value||"";setTimeout(()=>{inp.focus();inp.select();},50);}
     else inp.style.display="none";
@@ -558,6 +569,26 @@ document.addEventListener("keydown",e=>{
   if(e.key==="Escape")modalCb&&modalCb(null);
   else if(e.key==="Enter"){e.preventDefault();$("#mOk").click();}
 });
+/* 新建文章弹窗：名字 + 存放方式（文件夹 / 单文件） */
+function askNewArticle(defName){
+  return new Promise(res=>{
+    $("#mTitle").textContent="新建文章";
+    $("#mText").textContent="名字会出现在文章链接里（建议英文 / 数字 / 短横线）：";
+    const inp=$("#mInput"),sel=$("#mSel");
+    sel.innerHTML=
+      '<option value="dir">📁 文件夹文章（blog/名字/index.md，图片放同一夹，推荐）</option>'+
+      '<option value="file">📄 单文件文章（blog/名字.md，图片放 blog 根目录）</option>';
+    sel.style.display="block";
+    inp.style.display="block";inp.value=defName;
+    $("#mask").classList.add("on");
+    setTimeout(()=>{inp.focus();inp.select();},50);
+    modalCb=ok=>{
+      const name=$("#mInput").value.trim(),kind=$("#mSel").value;
+      sel.style.display="none";closeModal();
+      res(ok?{name:name,kind:kind}:null);
+    };
+  });
+}
 
 /* ---------- 选择文件夹入口 ---------- */
 async function pickDir(){ return await window.showDirectoryPicker({mode:"readwrite",id:"jy-blog"}); }
@@ -571,7 +602,7 @@ async function pickRoot(){
     if(!await ensurePerm(h,"readwrite"))return;
     rootHandle=h;
     /* 若选中的其实是个文章文件夹（含 index.md），直接进入编辑 */
-    try{await h.getFileHandle("index.md");rootHandle=null;await openArticle(h,h.name);return;}catch(e){}
+    try{await h.getFileHandle("index.md");rootHandle=null;await openArticle(h,h.name,false,"dir");return;}catch(e){}
     await showList();
   }catch(e){ if(e&&e.name!=="AbortError")gateErr("打开文件夹失败："+e.message); }
 }
@@ -579,7 +610,7 @@ async function pickOne(){
   try{
     const h=await pickDir();
     if(!await ensurePerm(h,"readwrite"))return;
-    await openArticle(h,h.name);
+    await openArticle(h,h.name,false,"dir");
   }catch(e){ if(e&&e.name!=="AbortError")gateErr("打开文件夹失败："+e.message); }
 }
 $("#pickRootBtn").addEventListener("click",pickRoot);
@@ -593,12 +624,21 @@ $("#backBtn").addEventListener("click",async()=>{
   if(rootHandle)await showList();
   else{artHandle=null;setCrumb();show("#scr-gate");$("#backBtn").style.display="none";}
 });
-$("#viewSiteBtn").addEventListener("click",()=>{
+$("#viewSiteBtn").addEventListener("click",async()=>{
   if(location.protocol==="file:"){
     toast("请用本地服务器打开站点（在网站根目录运行 python -m http.server）","err");
     return;
   }
-  const url=new URL("../index.html",location.href);
+  /* 部署后主页是 /index.html；本地开发时新版主页在 /new/index.html —— 自动挑带博客代码的那个 */
+  let entry="../index.html";
+  for(const c of ["../index.html","../new/index.html"]){
+    try{
+      const r=await fetch(c,{cache:"no-store"});
+      if(!r.ok)continue;
+      if(/BLOG_WEB_DIRS|loadBlog/.test(await r.text())){entry=c;break;}
+    }catch(e){}
+  }
+  const url=new URL(entry,location.href);
   url.hash="#/blog"+(artHandle?"/"+encodeURIComponent(artSlug):"");
   window.open(url.href,"_blank","noopener");
 });
@@ -608,21 +648,25 @@ function guardQuit(){
 }
 
 /* =====================================================================
- *  文章列表
+ *  文章列表：直接枚举 blog 文件夹里的「子文件夹」与「.md 文件」
  * ===================================================================== */
 async function scanPosts(){
   const posts=[];
   if(!rootHandle)return posts;
   for await(const [name,h] of rootHandle.entries()){
-    if(h.kind!=="directory")continue;
-    let m={},body="";
+    const isDir=h.kind==="directory";
+    if(!isDir&&!/\.md$/i.test(name))continue;
+    const slug=isDir?name:name.replace(/\.md$/i,"");
+    let m={},body="",readable=true;
     try{
-      const p=parsePost(await readText(await h.getFileHandle("index.md")));
+      const p=parsePost(await readText(isDir?await h.getFileHandle("index.md"):h));
       m=p.meta;body=p.body;
-    }catch(e){}
+    }catch(e){ readable=false; }
+    if(!readable&&!isDir)continue;          /* 单个 .md 读不到就跳过 */
     const tags=Array.isArray(m.tags)?m.tags:(m.tags?String(m.tags).split(/[,，]/).map(s=>s.trim()).filter(Boolean):[]);
     posts.push({
-      handle:h,slug:name,title:m.title||name,desc:m.desc||"",tags,
+      handle:isDir?h:rootHandle,kind:isDir?"dir":"file",file:isDir?"":name,slug,
+      title:m.title||slug,desc:m.desc||"",tags,
       date:m.date||"",
       minutes:+m.minutes||Math.max(1,Math.round(body.replace(/\s/g,"").length/450)),
       cover:m.cover||"",bg:m.background||""
@@ -631,20 +675,12 @@ async function scanPosts(){
   posts.sort((a,b)=>(b.date||"").localeCompare(a.date||""));
   return posts;
 }
-/* 目录文件 index.json 的唯一写入口 */
-async function writeIndexFromScan(posts){
-  const clean=posts.map(p=>({
-    slug:p.slug,title:p.title,desc:p.desc,tags:p.tags,date:p.date,
-    minutes:p.minutes,cover:p.cover||"",bg:p.bg||""
-  }));
-  await writeText(rootHandle,"index.json",JSON.stringify({posts:clean},null,2)+"\n");
-}
 async function showList(){
   setCrumb();show("#scr-list");
   $("#backBtn").style.display="";
-  $("#listSub").textContent=`文件夹：${rootHandle.name} · 正在读取文章……`;
+  $("#listSub").textContent=`文件夹：${rootHandle.name} · 正在扫描……`;
   articleList=await scanPosts();
-  $("#listSub").textContent=`文件夹：${rootHandle.name} · 共 ${articleList.length} 篇文章 · 点卡片进入编辑`;
+  $("#listSub").textContent=`文件夹：${rootHandle.name} · 扫描到 ${articleList.length} 篇文章 · 点卡片进入编辑`;
   await renderGrid();
 }
 async function renderGrid(){
@@ -661,7 +697,7 @@ async function renderGrid(){
     <button class="art-card" data-slug="${esc(a.slug)}">
       ${a.cover?`<span class="thumb"><img data-cover="${esc(a.slug)}" alt="" onerror="this.parentNode.textContent='🖼️'"></span>`:`<span class="thumb">🖼️</span>`}
       <h4>${esc(a.title)}</h4>
-      <span class="slug">${esc(a.slug)}</span>
+      <span class="slug">${a.kind==="file"?"📄 "+esc(a.file):"📁 "+esc(a.slug)}</span>
       <div class="meta">
         ${a.date?`<span>${esc(a.date)}</span>`:""}
         ${(a.tags||[]).slice(0,3).map(t=>`<span class="tag">${esc(t)}</span>`).join("")}
@@ -689,64 +725,77 @@ $("#artGrid").addEventListener("click",async e=>{
   const card=e.target.closest(".art-card");
   if(!card)return;
   const entry=articleList.find(x=>x.slug===card.dataset.slug);
-  if(entry)await openArticle(entry.handle,entry.slug);
+  if(entry)await openArticle(entry.handle,entry.slug,false,entry.kind,entry.file);
 });
 async function deleteArticle(slug){
   const entry=articleList.find(x=>x.slug===slug);
   if(!entry)return;
-  if(!await ask({title:"删除文章",text:`确定要删除「${slug}」整个文件夹（含全部图片）吗？此操作不可恢复！`}))return;
-  if(!await ask({title:"再次确认",text:`真的要永久删除「${slug}」吗？删除后无法找回。`}))return;
+  const what=entry.kind==="file"?`文件 ${entry.file}`:`文件夹 ${entry.slug}（含全部图片）`;
+  if(!await ask({title:"删除文章",text:`确定要删除${what}吗？此操作不可恢复！`}))return;
+  if(!await ask({title:"再次确认",text:`真的要永久删除「${entry.title||slug}」吗？删除后无法找回。`}))return;
   try{
-    for await(const [name] of entry.handle.entries()){ try{await entry.handle.removeEntry(name);}catch(_){} }
-    await rootHandle.removeEntry(slug,{recursive:true});
+    if(entry.kind==="file")await rootHandle.removeEntry(entry.file);
+    else await rootHandle.removeEntry(entry.slug,{recursive:true});
     toast("已删除","ok");
     await showList();
-    await writeIndexFromScan(await scanPosts());
   }catch(err){toast("删除失败："+err.message,"err");}
 }
 async function renameArticle(slug){
   const entry=articleList.find(x=>x.slug===slug);
   if(!entry)return;
-  const name=await ask({title:"重命名文章文件夹",
-    text:"新名字会出现在文章链接里（建议英文 / 数字 / 短横线），文件夹里的内容会一起搬过去。",
-    input:true,value:slug});
+  const isFile=entry.kind==="file";
+  const name=await ask({title:isFile?"重命名文章文件":"重命名文章文件夹",
+    text:isFile?"会改掉 .md 的文件名（也就是文章链接里显示的名字）："
+              :"新名字会出现在文章链接里（建议英文 / 数字 / 短横线），文件夹里的内容会一起搬过去。",
+    input:true,value:isFile?entry.file.replace(/\.md$/i,""):slug});
   if(!name)return;
   const next=safeName(name);
   if(!next||next===slug)return;
   try{
-    try{await rootHandle.getDirectoryHandle(next);toast("已存在同名文件夹","err");return;}catch(e){}
-    const nd=await rootHandle.getDirectoryHandle(next,{create:true});
-    for await(const [fn,fh] of entry.handle.entries()){
-      if(fh.kind!=="file")continue;
-      await writeBlob(nd,fn,await fh.getFile());
+    if(isFile){
+      const txt=await readText(await rootHandle.getFileHandle(entry.file));
+      let exists=true;
+      try{await rootHandle.getFileHandle(next+".md");}catch(e){exists=false;}
+      if(exists&&next+".md"!==entry.file){toast("已存在同名文件","err");return;}
+      await writeText(rootHandle,next+".md",txt);
+      if(next+".md"!==entry.file)await rootHandle.removeEntry(entry.file);
+    }else{
+      try{await rootHandle.getDirectoryHandle(next);toast("已存在同名文件夹","err");return;}catch(e){}
+      const nd=await rootHandle.getDirectoryHandle(next,{create:true});
+      for await(const [fn,fh] of entry.handle.entries()){
+        if(fh.kind!=="file")continue;
+        await writeBlob(nd,fn,await fh.getFile());
+      }
+      await rootHandle.removeEntry(slug,{recursive:true});
     }
-    await rootHandle.removeEntry(slug,{recursive:true});
     toast(`已重命名为 ${next}`,"ok");
     await showList();
-    await writeIndexFromScan(await scanPosts());
   }catch(err){toast("重命名失败："+err.message,"err");}
 }
 $("#newArtBtn").addEventListener("click",async()=>{
-  const name=await ask({title:"新建文章",
-    text:"文章文件夹名（建议用英文 / 数字 / 短横线，会出现在文章链接里）：",
-    input:true,value:"post-"+new Date().toISOString().slice(0,10)});
-  if(!name)return;
-  const slug=safeName(name);
-  if(!slug){toast("文件夹名不合法","err");return;}
-  try{await rootHandle.getDirectoryHandle(slug,{create:true});}
-  catch(e){toast("创建失败："+e.message,"err");return;}
-  await openArticle(await rootHandle.getDirectoryHandle(slug),slug,true);
-});
-/* 重建目录：扫描全部文章文件夹，按各自 index.md 重写 index.json */
-$("#rebuildBtn").addEventListener("click",async()=>{
-  if(!await ask({title:"重建目录",
-    text:"将扫描 blog 下所有文章文件夹，并按各篇 index.md 里的信息重新生成 index.json。用于修复目录与文章不一致的情况，继续吗？"}))return;
+  const r=await askNewArticle("post-"+new Date().toISOString().slice(0,10));
+  if(!r)return;
+  const slug=safeName(r.name);
+  if(!slug){toast("名字不合法","err");return;}
   try{
-    const posts=await scanPosts();
-    await writeIndexFromScan(posts);
-    toast(`目录已重建，共 ${posts.length} 篇`,"ok");
-    await showList();
-  }catch(e){toast("重建失败："+e.message,"err");}
+    if(r.kind==="file"){
+      const fname=slug+".md";
+      let exists=true;
+      try{await rootHandle.getFileHandle(fname);}catch(e){exists=false;}
+      if(exists){toast("已存在同名文件","err");return;}
+      await writeText(rootHandle,fname,"---\ntitle: "+slug+"\ndate: "+new Date().toISOString().slice(0,10)+"\n---\n\n");
+      await openArticle(rootHandle,slug,false,"file",fname);
+    }else{
+      try{await rootHandle.getDirectoryHandle(slug);toast("已存在同名文件夹","err");return;}catch(e){}
+      await rootHandle.getDirectoryHandle(slug,{create:true});
+      await openArticle(await rootHandle.getDirectoryHandle(slug),slug,true,"dir");
+    }
+  }catch(e){toast("创建失败："+e.message,"err");}
+});
+/* 重新扫描：列表始终等于文件夹里真实存在的内容 */
+$("#refreshBtn").addEventListener("click",async()=>{
+  try{ await showList(); toast("已重新扫描文件夹","ok"); }
+  catch(e){ toast("扫描失败："+e.message,"err"); }
 });
 
 /* =====================================================================
@@ -809,20 +858,21 @@ function buildFrontMatter(m,body){
 }
 
 /* ---------- 打开文章 ---------- */
-async function openArticle(handle,slug,isNew){
-  artHandle=handle;artSlug=slug;setCrumb();
+async function openArticle(handle,slug,isNew,kind,file){
+  artHandle=handle;artSlug=slug;artKind=kind||"dir";artFile=file||"";setCrumb();
   show("#scr-edit");$("#backBtn").style.display="";
   setDirty(false);clearDraftView();
-  $("#slugLabel").textContent="文件夹："+slug;
+  $("#slugLabel").textContent=(artKind==="file"?"📄 ":"📁 ")+(artKind==="file"?artFile:slug);
   meta={...DEFAULT_META};mdText=DEFAULT_MD;
   if(!isNew){
     try{
-      const raw=await readText(await handle.getFileHandle("index.md"));
+      const src=artKind==="file"?await rootHandle.getFileHandle(artFile):await handle.getFileHandle("index.md");
+      const raw=await readText(src);
       const p=parsePost(raw);
       meta={...DEFAULT_META,...p.meta};
       if(typeof meta.tags==="string")meta.tags=meta.tags.split(",").map(s=>s.trim()).filter(Boolean);
       mdText=p.body;
-    }catch(e){ toast("没有 index.md，已为你创建模板"); }
+    }catch(e){ toast(artKind==="file"?"读不到这个文件，已为你创建模板":"没有 index.md，已为你创建模板"); }
   }
   fillForm();
   for(const k in blobCache){URL.revokeObjectURL(blobCache[k]);delete blobCache[k];}
@@ -844,8 +894,9 @@ function setPreviewUI(){
   $("#mdPreview").style.display=previewOn?"block":"none";
   $("#mdBox").style.display=previewOn?"none":"block";
   $("#previewBtn").textContent=previewOn?"✏ 继续编辑":"👁 预览";
-  /* 预览里的图片按「当前文章文件夹」解析，和站点里的相对路径规则一致 */
-  if(previewOn)$("#mdPreview").innerHTML=mdToHTML(mdText,artSlug+"/");
+  /* 预览里的图片按「当前文章的图片文件夹」解析，和站点里的相对路径规则一致
+     子文件夹文章 → 「文件夹名/」；单文件文章 → 图片就在 blog 根目录，前缀为空 */
+  if(previewOn)$("#mdPreview").innerHTML=mdToHTML(mdText,artKind==="file"?"":artSlug+"/");
 }
 
 /* ---------- 图片库 ---------- */
@@ -853,7 +904,7 @@ function imgURL(name){
   if(blobCache[name])return Promise.resolve(blobCache[name]);
   return new Promise(async res=>{
     try{
-      const f=await (await artHandle.getFileHandle(name)).getFile();
+      const f=await (await artDir().getFileHandle(name)).getFile();
       blobCache[name]=URL.createObjectURL(f);
       res(blobCache[name]);
     }catch(e){res("");}
@@ -865,14 +916,14 @@ function dropBlobCache(name){
 async function refreshImages(){
   imgNames=[];
   try{
-    for await(const [name,h] of artHandle.entries())
+    for await(const [name,h] of artDir().entries())
       if(h.kind==="file"&&IMG_RE.test(name))imgNames.push(name);
   }catch(e){}
   imgNames.sort((a,b)=>a.localeCompare(b,"zh-Hans-CN",{numeric:true}));
   $("#imgCount").textContent=imgNames.length?imgNames.length+" 张":"";
   const grid=$("#imgGrid");
   if(!imgNames.length){
-    grid.innerHTML=`<div class="img-empty">这个文件夹里还没有图片。<br>上传、粘贴或直接把图片拖进来都可以。</div>`;
+    grid.innerHTML=`<div class="img-empty">${artKind==="file"?"blog 根目录":"这个文件夹"}里还没有图片。<br>上传、粘贴或直接把图片拖进来都可以。</div>`;
     return;
   }
   grid.innerHTML=imgNames.map(n=>`
@@ -894,7 +945,7 @@ async function refreshImages(){
     if(!img)continue;
     img.src=await imgURL(n);
     try{
-      const f=await (await artHandle.getFileHandle(n)).getFile();
+      const f=await (await artDir().getFileHandle(n)).getFile();
       const tag=document.createElement("span");
       tag.className="size";tag.textContent=fmtSize(f.size);
       img.closest(".img-cell").appendChild(tag);
@@ -942,7 +993,7 @@ async function uploadImages(files){
       }else{
         uniq=pre+(i?"-"+i:"")+".png";i++;
       }
-      await writeBlob(artHandle,uniq,f);
+      await writeBlob(artDir(),uniq,f);
       inserted.push(uniq);
     }
     toast(`已上传 ${inserted.length} 张图片`,"ok");
@@ -971,7 +1022,7 @@ $("#imgGrid").addEventListener("click",async e=>{
     if(meta.cover===name)meta.cover="";
     if(meta.background===name)meta.background="";
     try{
-      await artHandle.removeEntry(name);dropBlobCache(name);
+      await artDir().removeEntry(name);dropBlobCache(name);
       setDirty(true);markDirtySoon();
       toast("已删除图片","ok");
     }catch(err){toast("删除失败："+err.message,"err");}
@@ -1170,7 +1221,7 @@ function mdToHTML(md,imgBase){
 }
 
 /* ---------- 本地草稿自动备份（防误关 / 崩溃） ---------- */
-function draftKey(){return "jy-blog-draft:"+artSlug;}
+function draftKey(){return "jy-blog-draft:"+(artKind==="file"?artFile:artSlug);}
 function clearDraftView(){$("#statDraft").textContent="";}
 function markDirtySoon(){
   clearTimeout(draftTimer);
@@ -1210,7 +1261,8 @@ async function maybeRestoreDraft(){
 }
 
 /* =====================================================================
- *  保存：写 index.md + 更新 blog/index.json
+ *  保存：只写这篇文章自己的文件（子文件夹文章写 index.md，单文件文章写 名字.md）
+ *        主页直接扫描 blog 文件夹，不需要任何目录清单
  * ===================================================================== */
 $("#saveBtn").addEventListener("click",saveArticle);
 async function saveArticle(){
@@ -1225,43 +1277,16 @@ async function saveArticle(){
   const st=$("#saveState");
   st.className="save-state";st.textContent="正在保存……";
   try{
-    await writeText(artHandle,"index.md",buildFrontMatter(meta,mdText));
+    await writeText(artDir(),mdName(),buildFrontMatter(meta,mdText));
   }catch(err){
     st.className="save-state err";st.textContent="保存失败";
-    toast("正文保存失败："+err.message,"err");
+    toast("保存失败："+err.message,"err");
     return;
   }
   setDirty(false);clearDraft();updateStats();
-  try{
-    await updateIndexJson();
-    st.className="save-state ok";st.textContent="已保存 ✓";
-    toast("保存成功，博客列表已更新","ok");
-    setTimeout(()=>{ if(st.textContent==="已保存 ✓")st.textContent=""; },3000);
-  }catch(err){
-    st.className="save-state err";st.textContent="正文已保存 · 目录未更新";
-    toast("文章已保存，但目录更新失败："+err.message+"（可回列表页点「重建目录」）","err");
-  }
-}
-async function updateIndexJson(){
-  if(!rootHandle){
-    const go=await ask({title:"更新博客目录",
-      text:"你直接打开的是单个文章文件夹，编辑器拿不到 blog 总文件夹，没法自动更新主页的文章目录。\n现在选择 blog 总文件夹来完成目录更新吗？（文章已经保存成功）"});
-    if(!go)throw new Error("已跳过目录更新");
-    const h=await pickDir();
-    if(!await ensurePerm(h,"readwrite"))throw new Error("未获得文件夹授权");
-    let isArticle=false;
-    try{await h.getFileHandle("index.md");isArticle=true;}catch(e){}
-    if(isArticle)throw new Error("选到了文章文件夹，请选择 blog 总文件夹");
-    rootHandle=h;
-  }
-  const posts=await scanPosts();
-  if(!posts.some(p=>p.slug===artSlug)){
-    posts.push({slug:artSlug,title:meta.title||"未命名",desc:meta.desc||"",tags:meta.tags||[],
-      date:meta.date||"",minutes:+meta.minutes||countStats(mdText).minutes,cover:meta.cover||"",bg:meta.background||""});
-    posts.sort((a,b)=>(b.date||"").localeCompare(a.date||""));
-  }
-  await writeIndexFromScan(posts);
-  articleList=posts;
+  st.className="save-state ok";st.textContent="已保存 ✓";
+  toast("已保存，主页刷新即可看到","ok");
+  setTimeout(()=>{ if(st.textContent==="已保存 ✓")st.textContent=""; },3000);
 }
 
 /* ---------- 启动检查 & 离开提醒 ---------- */
