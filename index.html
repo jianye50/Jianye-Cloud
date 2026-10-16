@@ -794,8 +794,8 @@ const I18N={
     blog:{
       title:"博客",
       sub:n=>`共 ${n} 篇 · 慢慢读`,
-      empty:"还没有文章。打开 blog/editor.html 写第一篇吧。",
-      err:"暂时读不到文章列表（blog/index.json）。<br>双击打开或用内置预览面板是读不到 blog 文件夹的——请在浏览器地址栏访问本地服务器，例如 <code>http://127.0.0.1:8765/new/index.html</code>（在站点根目录运行 <code>python -m http.server</code> 即可开启）。",
+      empty:"blog 文件夹里还没有文章。用 blog 里的编辑器写第一篇吧。",
+      err:"暂时读不到文章。<br>本地预览：在站点目录运行 <code>python -m http.server</code>，再访问 <code>http://127.0.0.1:8000/new/index.html</code>；<br>已部署：确认 <code>blog/</code> 里有文章子文件夹（含 <code>index.md</code>）或 <code>.md</code> 文件即可，无需任何清单。",
       back:"返回博客",
       read:"阅读全文",
       minutes:n=>`${n} 分钟读完`,
@@ -835,8 +835,8 @@ const I18N={
     blog:{
       title:"Blog",
       sub:n=>`${n} post${n===1?"":"s"} · keep reading`,
-      empty:"No posts yet. Open blog/editor.html to write your first one.",
-      err:"Can't load the post list (blog/index.json).<br>Opening the file directly or in a single-file preview can't see the blog folder — visit the local server in your browser, e.g. <code>http://127.0.0.1:8765/new/index.html</code> (run <code>python -m http.server</code> in the site root).",
+      empty:"No posts in the blog folder yet. Use the editor inside blog/ to write one.",
+      err:"Can't read any post.<br>For local preview: run <code>python -m http.server</code> in the site folder and open <code>http://127.0.0.1:8000/new/index.html</code>;<br>once deployed: just make sure <code>blog/</code> holds article folders (with <code>index.md</code>) or <code>.md</code> files — no manifest needed.",
       back:"Back to Blog",
       read:"Read article",
       minutes:n=>`${n} min read`,
@@ -1238,91 +1238,112 @@ function projectsGridHTML(){
 }
 
 /* =====================================================================
- *  博客：文章存放在仓库根 blog/<slug>/ 子文件夹里（index.md + 图片），
- *  blog/index.json 是目录清单，由 blog/editor.html 编辑器在保存时自动更新。
+ *  博客：文章就是 blog 文件夹里的内容本身，不需要任何清单文件
+ *    · 子文件夹文章：blog/<名字>/index.md ＋ 同一文件夹里的图片
+ *    · 单文件文章：  blog/<名字>.md（图片放在 blog 根目录）
+ *  文章列表靠「扫描目录」得到，两种来源自动适配：
+ *    ① 本地服务器 / 支持目录列表的托管 → 解析目录页里的文件夹与 .md 文件（本地、实时）
+ *    ② 静态托管没有目录列表（如 Cloudflare Pages）→ 走 GitHub 仓库目录 ＋ raw 直链
  * ===================================================================== */
-let blogCache=null, blogErr=false, blogBase="blog/";
+let blogCache=null, blogErr=false;
+const BLOG_WEB_DIRS=["blog/","../blog/"];   /* 相对本页的路径：本地服务器 / 托管 */
+const BLOG_REPO_DIRS=["blog","new/blog"];   /* 仓库里的路径：GitHub 兜底 */
+const GH_RAW=`https://raw.githubusercontent.com/${GH_REPO}/${GH_BRANCH}/`;
+
+/* 解析「目录列表」页 → [{name,dir}]；不是目录列表就返回 null */
+async function listingItems(base){
+  try{
+    const r=await fetch(base+"?t="+Date.now(),{cache:"no-store"});
+    if(!r.ok)return null;
+    if(!(r.headers.get("content-type")||"").toLowerCase().includes("html"))return null;
+    const html=await r.text();
+    const items=[],seen=new Set();
+    new DOMParser().parseFromString(html,"text/html").querySelectorAll("a[href]").forEach(a=>{
+      let h=(a.getAttribute("href")||"").split(/[?#]/)[0].replace(/^\.\//,"");
+      if(!h||/^[a-z][a-z0-9+.-]*:/i.test(h)||h.startsWith("/")||h.startsWith(".."))return;
+      const dir=h.endsWith("/");
+      let name=h.replace(/\/+$/,"");
+      try{name=decodeURIComponent(name);}catch(e){}
+      if(!name||name.includes("/"))return;
+      if(!dir&&!/\.md$/i.test(name))return;
+      if(seen.has(name))return;seen.add(name);
+      items.push({name:name,dir:dir});
+    });
+    const isListing=items.length>0||/directory listing for|index of\s*\/|<h1>\s*index\b/i.test(html);
+    return isListing?items:null;
+  }catch(e){return null;}
+}
+/* 把一篇 Markdown 读成文章对象（mdURL = 正文地址，imgBase = 图片前缀） */
+async function grabPost(slug,mdURL,imgBase,found){
+  if(!slug||found.has(slug))return;
+  let raw;
+  try{
+    const r=await fetch(mdURL+(mdURL.includes("?")?"&":"?")+"t="+Date.now(),{cache:"no-store"});
+    if(!r.ok)return;
+    raw=await r.text();
+  }catch(e){return;}
+  const {meta,body}=parsePost(raw);
+  const tags=Array.isArray(meta.tags)?meta.tags
+    :(meta.tags?String(meta.tags).split(/[,，]/).map(x=>x.trim()).filter(Boolean):[]);
+  found.set(slug,{
+    slug,mdURL,imgBase,
+    title:meta.title||slug,desc:meta.desc||"",tags,
+    date:meta.date||"",
+    minutes:+meta.minutes||Math.max(1,Math.round(body.replace(/\s/g,"").length/450)),
+    cover:meta.cover||"",bg:meta.background||""
+  });
+}
+/* ① 扫本地 / 托管的目录列表 */
+async function scanWebDir(absBase,found){
+  const items=await listingItems(absBase);
+  if(!items)return false;
+  for(const it of items){
+    const seg=encodeURIComponent(it.name);
+    await grabPost(it.dir?it.name:it.name.replace(/\.md$/i,""),
+      absBase+seg+(it.dir?"/index.md":""),
+      absBase+(it.dir?seg+"/":""),found);
+  }
+  return true;
+}
+/* ② 静态托管没有目录列表时，按仓库目录扫（GitHub API ＋ raw 直链） */
+async function scanGitHubDir(repoDir,found){
+  let arr;
+  try{
+    const r=await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${repoDir}?ref=${GH_BRANCH}`,
+      {headers:{Accept:"application/vnd.github+json"}});
+    if(!r.ok)return false;
+    arr=await r.json();
+  }catch(e){return false;}
+  if(!Array.isArray(arr))return false;
+  for(const it of arr){
+    const seg=encodeURIComponent(it.name);
+    if(it.type==="dir")
+      await grabPost(it.name,`${GH_RAW}${repoDir}/${seg}/index.md`,`${GH_RAW}${repoDir}/${seg}/`,found);
+    else if(it.type==="file"&&/\.md$/i.test(it.name))
+      await grabPost(it.name.replace(/\.md$/i,""),`${GH_RAW}${repoDir}/${seg}`,`${GH_RAW}${repoDir}/`,found);
+  }
+  return true;
+}
 async function loadBlog(){
   if(blogCache)return blogCache;
-  /* 站点首页部署在仓库根（blog/），本地开发时也可能从 new/ 打开（../blog/） */
-  for(const b of ["blog/","../blog/"]){
-    try{
-      const r=await fetch(b+"index.json?t="+Date.now(),{cache:"no-store"});
-      if(!r.ok)throw new Error(r.status);
-      const j=await r.json();
-      blogBase=b;
-      blogCache=(j.posts||[]).sort((a,b)=>(b.date||"").localeCompare(a.date||""));
-      blogErr=false;
-      return blogCache;
-    }catch(e){}
+  const found=new Map(),seen=new Set();
+  let sourceOK=false;
+  for(const base of BLOG_WEB_DIRS){
+    let abs;
+    try{abs=new URL(base,location.href).href;}catch(e){continue;}
+    if(seen.has(abs))continue;          /* 站点就在根目录时，两个基址是同一个地址 */
+    seen.add(abs);
+    try{ if(await scanWebDir(abs,found))sourceOK=true; }catch(e){}
   }
-  /* index.json 读不到：退化成扫描目录（本地服务器目录列表 → GitHub API），
-     从每篇文章的 index.md 头部元信息拼出列表 */
-  const fb=await loadBlogFallback();
-  if(fb&&fb.posts.length){
-    blogBase=fb.base;
-    blogCache=fb.posts;blogErr=false;
-    return blogCache;
+  if(!found.size){
+    for(const dir of BLOG_REPO_DIRS){
+      try{ if(await scanGitHubDir(dir,found))sourceOK=true; }catch(e){}
+      if(found.size)break;
+    }
   }
-  blogCache=[];blogErr=true;
+  blogCache=Array.from(found.values()).sort((a,b)=>(b.date||"").localeCompare(a.date||""));
+  blogErr=!sourceOK&&!blogCache.length;
   return blogCache;
-}
-async function loadBlogFallback(){
-  /* ① 本地服务器 / 支持目录列表的托管：直接解析 blog/ 目录页里的子文件夹链接 */
-  for(const b of ["blog/","../blog/"]){
-    try{
-      const base=new URL(b,location.href);
-      const res=await fetch(base.href);
-      if(!res.ok)continue;
-      const doc=new DOMParser().parseFromString(await res.text(),"text/html");
-      const slugs=new Set();
-      doc.querySelectorAll("a[href]").forEach(a=>{
-        let h=(a.getAttribute("href")||"").split("#")[0].split("?")[0];
-        if(!h.endsWith("/"))return;
-        const name=decodeURIComponent(h.replace(/\/$/,"").split("/").pop());
-        if(name&&name!==".."&&name!==".")slugs.add(name);
-      });
-      const posts=[];
-      for(const s of slugs){
-        try{
-          const r=await fetch(new URL(encodeURIComponent(s)+"/index.md",base).href,{cache:"no-store"});
-          if(!r.ok)continue;
-          const {meta}=parsePost(await r.text());
-          posts.push({slug:s,title:meta.title||s,desc:meta.desc||"",
-            tags:Array.isArray(meta.tags)?meta.tags:[],
-            date:meta.date||"",minutes:+meta.minutes||1,
-            cover:meta.cover||"",bg:meta.background||""});
-        }catch(e){}
-      }
-      if(posts.length)return {base:b,posts:posts.sort((a,c)=>(c.date||"").localeCompare(a.date||""))};
-    }catch(e){}
-  }
-  /* ② 部署后没有目录列表（如 Cloudflare Pages）：走 GitHub API */
-  for(const b of ["blog/","../blog/"]){
-    try{
-      const r=await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${b.replace(/\/$/,"")}?ref=${GH_BRANCH}`,
-        {headers:{Accept:"application/vnd.github+json"}});
-      if(!r.ok)continue;
-      const arr=await r.json();
-      if(!Array.isArray(arr))continue;
-      const dirs=arr.filter(x=>x.type==="dir");
-      if(!dirs.length)continue;
-      const posts=[];
-      for(const d of dirs){
-        try{
-          const r2=await fetch(`https://raw.githubusercontent.com/${GH_REPO}/${GH_BRANCH}/${b}${encodeURIComponent(d.name)}/index.md`,{cache:"no-store"});
-          if(!r2.ok)continue;
-          const {meta}=parsePost(await r2.text());
-          posts.push({slug:d.name,title:meta.title||d.name,desc:meta.desc||"",
-            tags:Array.isArray(meta.tags)?meta.tags:[],
-            date:meta.date||"",minutes:+meta.minutes||1,
-            cover:meta.cover||"",bg:meta.background||""});
-        }catch(e){}
-      }
-      if(posts.length)return {base:b,posts:posts.sort((a,c)=>(c.date||"").localeCompare(a.date||""))};
-    }catch(e){}
-  }
-  return null;
 }
 /* 解析 front matter（--- 包围的元信息）与正文 */
 function parsePost(raw){
@@ -1400,7 +1421,7 @@ function fmtDate(d,short){
     ?(short?`${+m[2]} 月 ${+m[3]} 日`:`${m[1]} 年 ${+m[2]} 月 ${+m[3]} 日`)
     :(short?`${MONTHS[+m[2]-1]} ${+m[3]}`:`${MONTHS[+m[2]-1]} ${+m[3]}, ${m[1]}`);
 }
-function postSrc(slug,f){ return /^(https?:|data:|\/)/.test(f)?f:`${blogBase}${slug}/${f}`; }
+function postSrc(p,f){ return /^(https?:|data:|\/)/.test(f)?f:((p&&p.imgBase)||"")+f; }
 
 async function renderBlog(){
   const t=T();
@@ -1421,7 +1442,7 @@ async function renderBlog(){
     if(y!==lastYear){html+=`<div class="blog-year">${y}</div>`;lastYear=y;}
     html+=`
     <a class="post-card" href="#/blog/${encodeURIComponent(p.slug)}">
-      <span class="post-thumb">${p.cover?`<img src="${esc(postSrc(p.slug,p.cover))}" alt="" loading="lazy" decoding="async" onerror="this.parentNode.innerHTML='🖼️'">`:"🖼️"}</span>
+      <span class="post-thumb">${p.cover?`<img src="${esc(postSrc(p,p.cover))}" alt="" loading="lazy" decoding="async" onerror="this.parentNode.innerHTML='🖼️'">`:"🖼️"}</span>
       <span class="post-mid">
         <span class="post-tags">${(p.tags||[]).map(x=>`<span class="tag">${esc(x)}</span>`).join("")}</span>
         <span class="post-title">${esc(p.title||t.blog.untitled)}</span>
@@ -1452,7 +1473,7 @@ async function renderPost(slug){
   if(!post){fail(esc(t.blog.err));return;}
   let raw="";
   try{
-    const r=await fetch(`${blogBase}${slug}/index.md?t=${Date.now()}`,{cache:"no-store"});
+    const r=await fetch(post.mdURL+(post.mdURL.includes("?")?"&":"?")+"t="+Date.now(),{cache:"no-store"});
     if(!r.ok)throw new Error(r.status);
     raw=await r.text();
   }catch(e){fail(esc(t.blog.err));return;}
@@ -1465,7 +1486,7 @@ async function renderPost(slug){
   const bg=meta.background||post.bg||"";
   app.innerHTML=`
   <section class="view">
-    <div class="post-hero">${bg?`<img class="post-bg" src="${esc(postSrc(slug,bg))}" alt="" decoding="async" onerror="this.remove()">`:""}</div>
+    <div class="post-hero">${bg?`<img class="post-bg" src="${esc(postSrc(post,bg))}" alt="" decoding="async" onerror="this.remove()">`:""}</div>
     <div class="wrap">
       <a class="post-back" href="#/blog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>${esc(t.blog.back)}</a>
       <header class="post-head">
@@ -1474,7 +1495,7 @@ async function renderPost(slug){
         ${desc?`<p class="post-sub">${esc(desc)}</p>`:""}
         <div class="post-meta"><span>${esc(fmtDate(date))}</span><span>·</span><span>${esc(t.blog.minutes(minutes))}</span></div>
       </header>
-      <article class="post-body">${mdToHTML(body,`${blogBase}${slug}/`)}</article>
+      <article class="post-body">${mdToHTML(body,post.imgBase)}</article>
       <div class="post-end">${esc(t.blog.end)}</div>
     </div>
   </section>`;
