@@ -249,6 +249,8 @@ img{display:block;max-width:100%}
 .stat-bar .sp{flex:1}
 .stat-bar .draft{color:var(--ok)}
 .save-bar{display:flex;align-items:center;gap:12px;margin-top:14px;flex-wrap:wrap}
+#autoBakBtn.on{border-color:var(--warn);color:var(--warn);background:rgba(255,177,77,.08)}
+#undoBtn:disabled,#redoBtn:disabled,#histBtn:disabled{opacity:.35;cursor:default}
 .save-state{font-size:12.5px;color:var(--text-3)}
 .save-state.dirty{color:var(--warn)}
 .save-state.ok{color:var(--ok)}
@@ -289,6 +291,17 @@ img{display:block;max-width:100%}
   color:var(--text-1);font-size:14px;outline:none;font-family:var(--mono);
 }
 .modal input:focus,.modal select:focus{border-color:rgba(77,141,255,.55)}
+/* 插图选择弹窗：缩略图网格 */
+.img-pick{width:min(640px,calc(100vw - 40px))}
+.ip-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:10px;margin-bottom:18px;max-height:54vh;overflow:auto;padding:2px}
+.ip-cell{display:flex;flex-direction:column;align-items:center;gap:7px;padding:8px 8px 7px;
+  border:1px solid var(--card-border);border-radius:12px;background:var(--bg-2);
+  cursor:pointer;font:inherit;color:var(--text-2)}
+.ip-cell:hover{border-color:rgba(77,141,255,.65);color:var(--text-1)}
+.ip-cell img{width:100%;height:76px;object-fit:cover;border-radius:7px;display:block}
+.ip-name{font-size:11px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ip-upload{min-height:76px;justify-content:center;gap:8px}
+.ip-plus{font-size:20px;line-height:1}
 </style>
 </head>
 <body>
@@ -383,6 +396,9 @@ img{display:block;max-width:100%}
         <input class="title-in" id="fTitle" placeholder="文章标题">
       </div>
       <div class="toolbar" id="toolbar">
+        <button data-act="undo" id="undoBtn" title="撤销 Ctrl+Z">↶ 撤销</button>
+        <button data-act="redo" id="redoBtn" title="重做 Ctrl+Shift+Z 或 Ctrl+Y">↷ 重做</button>
+        <span class="sep"></span>
         <button data-act="h2" title="二级标题（行首）">H2</button>
         <button data-act="h3" title="三级标题（行首）">H3</button>
         <button data-act="bold" title="加粗 Ctrl+B"><b>B</b></button>
@@ -393,11 +409,13 @@ img{display:block;max-width:100%}
         <button data-act="ol" title="有序列表">1. 列表</button>
         <button data-act="link" title="链接">🔗 链接</button>
         <span class="sep"></span>
-        <button data-act="img" title="插入图片（取图片库第一张）">🖼 插图</button>
+        <button data-act="img" title="插入图片（从图片库选择，也可以上传新图片）">🖼 插图</button>
         <button data-act="upload" title="上传新图片到图片文件夹">⬆ 传图</button>
         <button data-act="hr" title="分隔线">— 分隔线</button>
         <button data-act="callout" title="提示块">💡 提示</button>
-        <button data-act="center" title="居中短句（适合诗句、署名）">⇔ 居中</button>
+        <button data-act="align-l" title="左对齐段落（|l ）">⇤ 左</button>
+        <button data-act="align-c" title="居中段落（|c ）">⇔ 中</button>
+        <button data-act="align-r" title="右对齐段落（|r ）">⇥ 右</button>
         <span class="sep"></span>
         <button data-act="preview" id="previewBtn" title="就地预览渲染效果">👁 预览</button>
       </div>
@@ -413,10 +431,13 @@ img{display:block;max-width:100%}
       </div>
       <div class="save-bar">
         <button class="btn btn-primary" id="saveBtn">💾 保存到本地文件</button>
+        <button class="btn" id="autoBakBtn" title="开启后，你的每一次修改都会被记录，可随时还原到任意一次修改">⏺ 自动备份：关</button>
+        <button class="btn" id="histBtn" title="浏览并还原到历史版本">🕘 历史</button>
         <span class="save-state" id="saveState"></span>
       </div>
       <div class="tips">
         快捷键：<span class="kbd">Ctrl/⌘ + S</span> 保存 · <span class="kbd">Ctrl + Enter</span> 保存 ·
+        <span class="kbd">Ctrl + Z</span> 撤销 · <span class="kbd">Ctrl + Shift + Z</span> 重做 ·
         <span class="kbd">Ctrl + B</span> 加粗 · <span class="kbd">Ctrl + I</span> 斜体 ·
         <span class="kbd">Tab</span> 缩进 · <span class="kbd">Shift + Tab</span> 反缩进 ·
         <span class="kbd">Ctrl + V</span> 粘贴图片自动保存
@@ -440,6 +461,18 @@ img{display:block;max-width:100%}
     <div class="row">
       <button class="btn" id="mCancel">取消</button>
       <button class="btn btn-primary" id="mOk">确定</button>
+    </div>
+  </div>
+</div>
+
+<!-- 插图选择弹窗（缩略图点选） -->
+<div class="mask" id="imgPickMask">
+  <div class="modal img-pick">
+    <h4>🖼 选择要插入的图片</h4>
+    <p>点击图片即插入到正文光标处 · 库里没有想要的就上传新图片</p>
+    <div class="ip-grid" id="ipGrid"></div>
+    <div class="row">
+      <button class="btn" id="ipCancel">取消</button>
     </div>
   </div>
 </div>
@@ -478,6 +511,107 @@ let previewOn=false;
 let imgNames=[];
 const blobCache={};
 
+/* =====================================================================
+ *  撤销 / 重做（编辑器自己的历史栈：打字合并为一条，工具栏操作各记一条）
+ * ===================================================================== */
+let hStack=[],hPtr=-1,hTimer=null;
+function histPushNow(){
+  if(!editing())return;
+  const ta=mdBox(),snap={md:mdText,sel:ta.selectionStart,selEnd:ta.selectionEnd};
+  const top=hStack[hPtr];
+  if(top&&top.md===snap.md)return;
+  hStack=hStack.slice(0,hPtr+1);
+  hStack.push(snap);
+  if(hStack.length>200)hStack.shift();
+  hPtr=hStack.length-1;
+  updateUndoUI();
+}
+/* immediate=true 用于工具栏 / 粘贴等程序化修改（立即成一条）；打字则短暂合并 */
+function noteChange(immediate){
+  clearTimeout(hTimer);
+  hTimer=setTimeout(histPushNow,immediate?0:450);
+}
+function updateUndoUI(){
+  const u=$("#undoBtn"),r=$("#redoBtn");
+  if(u)u.disabled=hPtr<=0;
+  if(r)r.disabled=hPtr>=hStack.length-1;
+}
+function histApply(s){
+  const ta=mdBox();
+  previewOn=false;setPreviewUI();
+  ta.value=s.md;mdText=s.md;
+  ta.selectionStart=Math.min(s.sel,s.md.length);
+  ta.selectionEnd=Math.min(s.selEnd,s.md.length);
+  ta.focus();
+  setDirty(true);updateStats();updateUndoUI();noteChange(false);bakNote(false);
+}
+function doUndo(){
+  if(hPtr<=0)return;
+  clearTimeout(hTimer);hPtr--;histApply(hStack[hPtr]);
+}
+function doRedo(){
+  if(hPtr>=hStack.length-1)return;
+  clearTimeout(hTimer);hPtr++;histApply(hStack[hPtr]);
+}
+
+/* =====================================================================
+ *  自动备份（默认关闭）：开启后，每次修改都记一条快照，可还原到任意一次
+ *    · 快照 = 正文 + 标题/日期/标签/摘要/封面/背景 全套元信息
+ *    · 按文章分开存放（localStorage），每篇最多 300 条，超出挤掉最旧的
+ *    · 还原前会先把当前内容存一条历史，所以来回切换也不会丢东西
+ * ===================================================================== */
+let bakOn=false,bakTimer=null,histEntries=[];
+try{bakOn=localStorage.getItem("jy-blog-histon")==="1";}catch(e){}
+function histLoad(){
+  let arr=null;
+  try{arr=JSON.parse(localStorage.getItem("jy-blog-hist:"+slug));}catch(e){}
+  histEntries=Array.isArray(arr)?arr:[];
+}
+function histSave(){
+  try{localStorage.setItem("jy-blog-hist:"+slug,JSON.stringify(histEntries));}
+  catch(e){ /* 存满了：砍半再试一次 */
+    histEntries=histEntries.slice(-Math.floor(histEntries.length/2));
+    try{localStorage.setItem("jy-blog-hist:"+slug,JSON.stringify(histEntries));}catch(e2){}
+  }
+}
+function bakSnapshot(){
+  return {t:Date.now(),md:mdText,title:meta.title||"",date:meta.date||"",
+    minutes:meta.minutes||"",tags:meta.tags||[],desc:meta.desc||"",
+    cover:meta.cover||"",background:meta.background||""};
+}
+function bakNote(immediate){
+  if(!bakOn||!editing())return;
+  clearTimeout(bakTimer);
+  bakTimer=setTimeout(bakRecord,immediate?0:800);
+}
+function bakRecord(){
+  if(!bakOn||!editing())return;
+  const s=bakSnapshot();
+  const last=histEntries[histEntries.length-1];
+  if(last&&last.md===s.md&&last.title===s.title&&last.desc===s.desc)return;
+  histEntries.push(s);
+  if(histEntries.length>300)histEntries=histEntries.slice(-300);
+  histSave();updateHistBtn();
+}
+function setBak(on){
+  bakOn=on;
+  try{localStorage.setItem("jy-blog-histon",on?"1":"0");}catch(e){}
+  updateBakBtn();updateHistBtn();
+  if(on){bakRecord();toast("自动备份已开启：之后每次修改都会被记录，「🕘 历史」里可还原","ok");}
+  else toast("自动备份已关闭（已记录的历史仍保留，可查看和还原）","ok");
+}
+function updateBakBtn(){
+  const b=$("#autoBakBtn");
+  b.textContent=bakOn?"⏺ 自动备份：开":"⏺ 自动备份：关";
+  b.classList.toggle("on",bakOn);
+}
+function updateHistBtn(){
+  const b=$("#histBtn");
+  if(!b)return;
+  b.textContent=bakOn?`🕘 历史（${histEntries.length}）`:"🕘 历史";
+  b.disabled=!histEntries.length;
+}
+
 /* ---------- 小工具 ---------- */
 function toast(msg,cls){
   const t=$("#toast");t.textContent=msg;t.className="toast on"+(cls?" "+cls:"");
@@ -490,7 +624,12 @@ function fmtSize(n){
   if(n<1024*1024)return (n/1024).toFixed(0)+" KB";
   return (n/1024/1024).toFixed(1)+" MB";
 }
-function safeName(name){return String(name).replace(/[\\/:*?"<>|#%&{}$!'@+`=]/g,"-").trim();}
+function safeName(name){
+  return String(name)
+    .replace(/[\\/:*?"<>|#%&{}$!'@+`=]/g,"-")
+    .replace(/[\s()[\]]+/g,"-")          /* 空格和括号会破坏 Markdown 语法，统一换成 - */
+    .replace(/-{2,}/g,"-").replace(/^-+|-+$/g,"").trim();
+}
 async function ensurePerm(handle,mode){
   if(!handle)return false;
   try{
@@ -634,6 +773,8 @@ async function openArticle(cfg){
   show("#scr-edit");
   setDirty(false);clearDraftView();
   fillForm();setCrumb();updateImgUI();
+  hStack=[];hPtr=-1;histPushNow();   /* 撤销栈以打开时的状态为起点 */
+  histLoad();updateBakBtn();updateHistBtn();
   for(const k in blobCache){URL.revokeObjectURL(blobCache[k]);delete blobCache[k];}
   await refreshImages();
   await refreshCovers();
@@ -683,7 +824,7 @@ async function handleDrop(e){
     const list=[];
     for(const h of imgs){try{list.push(await h.getFile());}catch(err){}}
     if(!list.length){toast("读不到这些图片，请改用正文区的粘贴 / 拖拽","err");return;}
-    return uploadImages(list);
+    return uploadImages(list,{insert:false});   /* 拖到页面上 → 只进图片库 */
   }
   /* ② 拖进来的是散文件：编辑器只认文件夹，图片请拖到正文区或图片库里 */
   if(!dirs.length){
@@ -830,10 +971,13 @@ $("#uploadBtn").addEventListener("click",()=>{
 });
 $("#fileInput").addEventListener("change",async e=>{
   const files=[...e.target.files];e.target.value="";
-  if(files.length)await uploadImages(files);
+  if(files.length)await uploadImages(files,{insert:false});   /* 上传按钮：只进图片库 */
 });
-/* 上传图片：写入本文章文件夹 → 刷新 → 插到光标处 */
-async function uploadImages(files){
+/* 上传图片：写入本文章文件夹 → 刷新图片库。
+   opts.insert 为 false（点上传按钮 / 拖图到页面）时只入库，不自动插正文；
+   粘贴 / 拖图到正文时默认插入。 */
+async function uploadImages(files,opts){
+  opts=opts||{};
   const list=files.filter(f=>(f.type&&f.type.startsWith("image/"))||IMG_RE.test(f.name||""));
   if(!list.length){toast("没有可用的图片文件","err");return;}
   if(!artHandle){toast("先打开一篇文章","err");return;}
@@ -856,9 +1000,13 @@ async function uploadImages(files){
       await writeBlob(artHandle,uniq,f);
       inserted.push(uniq);
     }
-    toast(`已保存 ${inserted.length} 张图片到 ${artHandle.name}/`,"ok");
     await refreshImages();
-    insertAtCursor("\n"+inserted.map(n=>`![${n.replace(/\.[^.]+$/,"")}](${n})`).join("\n\n")+"\n");
+    if(opts.insert===false){
+      toast(`已存入图片库（${inserted.length} 张）· 在库里点图片即可插入正文`,"ok");
+    }else{
+      insertAtCursor("\n"+inserted.map(n=>`![${n.replace(/\.[^.]+$/,"")}](${n})`).join("\n\n")+"\n");
+      toast(`已保存 ${inserted.length} 张图片并插入正文`,"ok");
+    }
   }catch(err){toast("保存图片失败："+err.message,"err");}
 }
 $("#imgGrid").addEventListener("click",async e=>{
@@ -869,10 +1017,10 @@ $("#imgGrid").addEventListener("click",async e=>{
   if(!btn){insertImage(name);return;}
   const op=btn.dataset.op;
   if(op==="cover"){
-    meta.cover=(meta.cover===name)?"":name;setDirty(true);markDirtySoon();
+    meta.cover=(meta.cover===name)?"":name;setDirty(true);markDirtySoon();bakNote(false);
     await refreshImages();await refreshCovers();
   }else if(op==="bg"){
-    meta.background=(meta.background===name)?"":name;setDirty(true);markDirtySoon();
+    meta.background=(meta.background===name)?"":name;setDirty(true);markDirtySoon();bakNote(false);
     await refreshImages();await refreshCovers();
   }else if(op==="insert"){
     insertImage(name);
@@ -888,11 +1036,48 @@ $("#imgGrid").addEventListener("click",async e=>{
     await refreshImages();await refreshCovers();
   }
 });
-function insertImage(name){
-  previewOn=false;setPreviewUI();
+async function insertImage(name){
+  await primeImages();                 /* 确保预览能立刻显示这张图 */
+  const wasPrev=previewOn;
+  previewOn=false;                     /* 避免 taSet 把预览切回源码视图 */
   insertAtCursor(`\n![${name.replace(/\.[^.]+$/,"")}](${name})\n`);
+  if(wasPrev){previewOn=true;setPreviewUI();}   /* 原本在预览 → 留在预览，立刻看到图 */
   toast("已插入到正文光标处","ok");
 }
+
+/* ---------- 插图选择弹窗：缩略图点选，可顺便上传新图 ---------- */
+async function openImgPick(){
+  if(!artHandle){toast("先打开一篇文章","err");return;}
+  if(!editing()){toast("先打开一篇文章","err");return;}
+  await refreshImages();
+  if(!imgNames.length){$("#uploadBtn").click();return;}
+  const grid=$("#ipGrid");
+  grid.innerHTML=
+    `<button class="ip-cell ip-upload" id="ipUpload" type="button"><span class="ip-plus">⬆</span><span class="ip-name">上传新图片</span></button>`+
+    imgNames.map(n=>`
+      <button class="ip-cell" data-name="${esc(n)}" type="button">
+        <img alt="${esc(n)}" data-src="${esc(n)}">
+        <span class="ip-name">${esc(n)}</span>
+      </button>`).join("");
+  for(const n of imgNames){
+    const im=grid.querySelector(`img[data-src="${CSS.escape(n)}"]`);
+    if(im)im.src=await imgURL(n);
+  }
+  $("#imgPickMask").classList.add("on");
+}
+function closeImgPick(){$("#imgPickMask").classList.remove("on");}
+$("#ipCancel").addEventListener("click",closeImgPick);
+$("#imgPickMask").addEventListener("click",e=>{if(e.target.id==="imgPickMask")closeImgPick();});
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape"&&$("#imgPickMask").classList.contains("on"))closeImgPick();
+});
+$("#ipGrid").addEventListener("click",async e=>{
+  if(e.target.closest("#ipUpload")){closeImgPick();$("#uploadBtn").click();return;}
+  const c=e.target.closest(".ip-cell[data-name]");
+  if(!c)return;
+  closeImgPick();
+  await insertImage(c.dataset.name);
+});
 
 /* =====================================================================
  *  Markdown 渲染（与站点主页 mdToHTML 保持一致）
@@ -907,22 +1092,35 @@ function mdToHTML(md,imgBase){
   const pick=v=>typeof imgBase==="function"?imgBase(v):resolveImg(v,null);
   const inline=s=>{
     s=esc(s);
-    s=s.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g,(m,alt,src)=>
-      `<img src="${pick(src)}" alt="${alt}" loading="lazy" decoding="async">`);
-    s=s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+    /* 图片/链接路径允许空格与一层括号（Windows 截图等文件名常带空格/括号） */
+    s=s.replace(/!\[([^\]]*)\]\(((?:[^()]|\([^()]*\))+)\)/g,(m,alt,src)=>{
+      src=src.trim();
+      return `<img src="${pick(src)}" alt="${alt}" loading="lazy" decoding="async">`;
+    });
+    s=s.replace(/\[([^\]]+)\]\(((?:[^()]|\([^()]*\))+)\)/g,(m,txt,href)=>
+      `<a href="${href.trim()}" target="_blank" rel="noopener">${txt}</a>`);
     s=s.replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>")
        .replace(/\*([^*]+)\*/g,"<em>$1</em>")
        .replace(/`([^`]+)`/g,"<code>$1</code>");
     return s;
   };
   const lines=md.split(/\r?\n/),out=[];let i=0;
-  const BLOCK=/^(#{1,4})\s+|^```|^\s*>|^\s*[-*+]\s+|^\s*\d+[.)]\s+|^\s*(---+|\*\*\*+)\s*$/;
+  const BLOCK=/^(#{1,4})\s+|^```|^\s*>|^\s*[-*+]\s+|^\s*\d+[.)]\s+|^\s*(---+|\*\*\*+)\s*$|^\|[lcr]\s/;
+  const ALIGN={l:"left",c:"center",r:"right"};
   while(i<lines.length){
     const L=lines[i];
     if(/^```/.test(L)){
       const buf=[];i++;
       while(i<lines.length&&!/^```/.test(lines[i])){buf.push(lines[i]);i++;}
       i++;out.push(`<pre><code>${esc(buf.join("\n"))}</code></pre>`);continue;
+    }
+    /* 对齐段落：|l 文字 / |c 文字 / |r 文字（连续几行算一段），与站点渲染规则一致 */
+    const am=L.match(/^\|([lcr])\s+(.*)/);
+    if(am){
+      const buf=[am[2]];i++;
+      while(i<lines.length&&!/^\s*$/.test(lines[i])&&!BLOCK.test(lines[i])){buf.push(lines[i]);i++;}
+      out.push(`<p style="text-align:${ALIGN[am[1]]}">${inline(buf.join(" "))}</p>`);
+      continue;
     }
     const h=L.match(/^(#{1,4})\s+(.*)/);
     if(h){const lv=h[1].length+1;out.push(`<h${lv}>${inline(h[2])}</h${lv}>`);i++;continue;}
@@ -1044,7 +1242,13 @@ async function openPagePreview(){
   const tags=Array.isArray(meta.tags)?meta.tags:[];
   const minutes=+meta.minutes||countStats(mdText).minutes;
   const body=mdToHTML(mdText,null);
-  const link=h=>esc(info.dir?info.dir+"#/"+h:"#/"+h);
+  /* 预览页导航：跟随站点当前语言（localStorage jy-lang），且不可点击 */
+  const zh=currentLang()==="zh";
+  const navItems=[["","首页|Home"],["gallery","图库|Gallery"],["blog","博客|Blog"],["about","关于|About"]];
+  const navHtml=navItems.map(([k,label])=>{
+    const text=label.split("|")[zh?0:1];
+    return `<a class="nav-link${k==="blog"?" active":""}" tabindex="-1" style="cursor:default">${text}</a>`;
+  }).join("");
   const doc=`<!DOCTYPE html><html lang="zh-CN"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>效果预览 · ${esc(meta.title||slug)}</title><meta name="color-scheme" content="dark">
@@ -1057,27 +1261,30 @@ async function openPagePreview(){
 .jy-note em{font-style:normal;color:rgba(244,245,247,.42);font-weight:500}
 </style></head><body>
 <nav class="nav">
-  <a class="nav-brand" href="${link("")}"><span class="dot"></span><span>鉴业の小站</span></a>
-  <a class="nav-link" href="${link("")}">Home</a>
-  <a class="nav-link" href="${link("gallery")}">图库</a>
-  <a class="nav-link active" href="${link("blog")}">博客</a>
-  <a class="nav-link" href="${link("about")}">About</a>
+  <span class="nav-brand"><span class="dot"></span><span>鉴业の小站</span></span>
+  ${navHtml}
 </nav>
 <section class="view">
   <div class="post-hero">${bg?`<img class="post-bg" src="${bg}" alt="">`:""}</div>
   <div class="wrap">
-    <a class="post-back" href="${link("blog")}">← 返回博客</a>
+    <a class="post-back" href="#" id="jyBack">← 返回编辑器</a>
     <header class="post-head">
       ${tags.length?`<div class="post-tags">${tags.map(x=>`<span class="tag">${esc(x)}</span>`).join("")}</div>`:""}
       <h1>${esc(meta.title||"无标题")}</h1>
       ${meta.desc?`<p class="post-sub">${esc(meta.desc)}</p>`:""}
-      <div class="post-meta"><span>${esc(fmtDate(meta.date))}</span><span>·</span><span>${minutes} 分钟读完</span></div>
+      <div class="post-meta"><span>${esc(fmtDate(meta.date))}</span><span>·</span><span>${zh?`${minutes} 分钟读完`:`${minutes} min read`}</span></div>
     </header>
     <article class="post-body">${body}</article>
-    <div class="post-end">全文完</div>
+    <div class="post-end">${zh?"全文完":"· End ·"}</div>
   </div>
 </section>
 <div class="jy-note">本地预览 <em>· 未部署 · ${info.from?"样式取自站点主页":"使用内置样式"}</em></div>
+<script>
+document.getElementById("jyBack").addEventListener("click",function(e){
+  e.preventDefault();window.close();
+  setTimeout(function(){document.title="已返回失败？直接关闭这个标签页即可";},300);
+});
+<\/script>
 </body></html>`;
   const w=window.open("","_blank");
   if(!w){toast("浏览器拦截了新窗口，请允许本页弹出窗口","err");return;}
@@ -1145,26 +1352,172 @@ function updateStats(){
 }
 /* 正文工具 */
 function mdBox(){return $("#mdBox");}
-function insertAtCursor(text){
+function taSet(text,start,end,selMode){
   const ta=mdBox();
   if(previewOn){previewOn=false;setPreviewUI();}
-  const s=ta.selectionStart,e=ta.selectionEnd;
-  ta.setRangeText(text,s,e,"end");
+  ta.setRangeText(text,start,end,selMode||"end");
   ta.focus();ta.dispatchEvent(new Event("input"));
+  noteChange(true);bakNote(false);
 }
+function insertAtCursor(text){const ta=mdBox();taSet(text,ta.selectionStart,ta.selectionEnd,"end");}
 function wrapSel(before,after,ph){
-  const ta=mdBox();
-  const s=ta.selectionStart,e=ta.selectionEnd;
+  const ta=mdBox(),s=ta.selectionStart,e=ta.selectionEnd;
   const sel=ta.value.slice(s,e)||ph||"";
-  ta.setRangeText(before+sel+after,s,e,"select");
-  ta.focus();ta.dispatchEvent(new Event("input"));
+  taSet(before+sel+after,s,e,"select");
+}
+/* 加粗 / 斜体做成开关：选中的文字已带标记 → 去掉标记；没带 → 加上；光标在空标记 **|** 中间 → 删掉标记 */
+function toggleWrap(marker,ph){
+  const ta=mdBox(),val=ta.value,s=ta.selectionStart,e=ta.selectionEnd;
+  const sel=val.slice(s,e);
+  if(sel){
+    if(sel.length>=marker.length*2&&sel.startsWith(marker)&&sel.endsWith(marker))
+      taSet(sel.slice(marker.length,sel.length-marker.length),s,e,"select");
+    else
+      taSet(marker+sel+marker,s,e,"select");
+    return;
+  }
+  const before=val.slice(Math.max(0,s-marker.length),s),after=val.slice(e,e+marker.length);
+  if(before===marker&&after===marker){          /* **|** → 删掉两个标记 */
+    taSet("",s-marker.length,s,"end");
+    const t=mdBox();taSet("",t.selectionStart,t.selectionStart+marker.length,"end");
+    return;
+  }
+  taSet(marker+(ph||"")+marker,s,e,"select");   /* 插入占位并选中，直接打字即可替换 */
+}
+/* 标题做成开关：已是这个级别 → 取消标题；是别的级别 → 换级别；普通行 → 变标题 */
+function togglePrefix(prefix){
+  const {ta,lineStart,line}=taInfo();
+  if(line.startsWith(prefix)){taSet("",lineStart,lineStart+prefix.length,"end");return;}
+  const m=line.match(/^#{1,6}\s+/);
+  if(m)taSet(prefix,lineStart,lineStart+m[0].length,"end");
+  else taSet(prefix,lineStart,lineStart,"end");
 }
 function linePrefix(prefix){
-  const ta=mdBox();
-  const s=ta.selectionStart;
-  const lineStart=ta.value.lastIndexOf("\n",s-1)+1;
-  ta.setRangeText(prefix,lineStart,lineStart,"end");
-  ta.focus();ta.dispatchEvent(new Event("input"));
+  const {ta,lineStart}=taInfo();
+  taSet(prefix,lineStart,lineStart,"end");
+}
+/* 光标前若不是换行，则插入内容前补一个换行（避免在空行/空文档上多出空行） */
+function leadNL(){const {val,s}=taInfo();return (s>0&&val[s-1]!=="\n")?"\n":"";}
+/* 对齐（|l / |c / |r）做成开关，绝不覆盖已有文字：
+   · 选中 / 光标所在段落有文字 → 整段（按空行分段的每一段）应用对齐前缀
+   · 已是这种对齐 → 再点一次取消；是别的对齐 → 直接换级别
+   · 光标在空行 → 才插入占位文字 */
+function toggleAlign(kind){
+  const ta=mdBox(),val=ta.value;
+  const s=ta.selectionStart,e=ta.selectionEnd;
+  const from=val.lastIndexOf("\n",s-1)+1;
+  let to=val.indexOf("\n",e);if(to<0)to=val.length;
+  const block=val.slice(from,to);
+  if(!block.trim()){                      /* 空行：占位 */
+    taSet(leadNL()+"|"+kind+" 这里是对齐的文字\n",from,from,"end");
+    return;
+  }
+  const lines=block.split("\n");
+  const ARE=/^\|([lcr])[ \t]?/;
+  const first=lines[0].match(ARE);
+  if(first){                              /* 已带对齐前缀：取消或换级别 */
+    let out;
+    if(first[1]===kind)out=lines.map(l=>l.replace(ARE,"")).join("\n");
+    else out=lines.map(l=>l.replace(ARE,"|"+kind+" ")).join("\n");
+    taSet(out,from,to,"end");
+    return;
+  }
+  let paraStart=true;                     /* 没有前缀：每段第一行加上 */
+  const out=lines.map(l=>{
+    if(/^\s*$/.test(l)){paraStart=true;return l;}
+    const pre=paraStart?"|"+kind+" ":"";
+    paraStart=false;
+    return pre+l;
+  }).join("\n");
+  taSet(out,from,to,"end");
+}
+/* 提示块：有文字 → 把选中/当前段落变成 💡 提示（每行加 > 前缀，首行加标记）；
+   已是 💡 提示 → 摘掉标记还原成普通文字；空行 → 才插占位 */
+function smartCallout(){
+  const ta=mdBox(),val=ta.value;
+  const s=ta.selectionStart,e=ta.selectionEnd;
+  const from=val.lastIndexOf("\n",s-1)+1;
+  let to=val.indexOf("\n",e);if(to<0)to=val.length;
+  const block=val.slice(from,to);
+  if(!block.trim()){insertAtCursor(leadNL()+"> 💡 **提示**：在这里写提示内容\n");return;}
+  const CM=/^>\s?💡\s?\*\*提示\*\*[:：]\s?/;
+  const lines=block.split("\n");
+  if(CM.test(lines[0])){                  /* 已是提示：摘掉 */
+    const out=lines.map((l,i)=>i===0?l.replace(CM,""):l.replace(/^>\s?/,"")).join("\n");
+    taSet(out,from,to,"end");
+    return;
+  }
+  const out=lines.map((l,i)=>/^\s*$/.test(l)?l:(i===0?"> 💡 **提示**："+l:"> "+l)).join("\n");
+  taSet(out,from,to,"end");
+}
+/* 代码块：选中了文字 → 原文包进 ``` 围栏；光标已在围栏里 → 只换行；空 → 插模板 */
+function smartCode(){
+  const {val,s,e}=taInfo();
+  const inside=(val.slice(0,s).match(/```/g)||[]).length%2===1;
+  if(inside){insertAtCursor("\n");return;}
+  const sel=val.slice(s,e);
+  if(sel.trim()){taSet("```\n"+sel+"\n```\n",s,e,"end");return;}
+  insertAtCursor(leadNL()+"```js\n// 代码\n```\n");
+}
+/* 分隔线：有选中 / 当前行有内容 → 插到这一行之后，绝不吃掉文字 */
+function smartHr(){
+  const {s,e,line,lineEnd}=taInfo();
+  if(line.trim()||s!==e){taSet("\n\n---\n\n",lineEnd,lineEnd,"end");return;}
+  insertAtCursor("---\n\n");
+}
+/* 光标所在行的上下文 */
+function taInfo(){
+  const ta=mdBox(),val=ta.value,s=ta.selectionStart,e=ta.selectionEnd;
+  const lineStart=val.lastIndexOf("\n",s-1)+1;
+  let lineEnd=val.indexOf("\n",s);if(lineEnd<0)lineEnd=val.length;
+  return {ta,val,s,e,lineStart,lineEnd,line:val.slice(lineStart,lineEnd),atLineEnd:s===lineEnd};
+}
+/* 智能列表 / 引用：
+   · 光标在列表项上 → 在下面续一项（有序列表自动 +1）
+   · 上一行是列表、当前行是空的 → 当前行变成下一项
+   · 当前行有普通文字 → 直接把这行转成列表 / 引用
+   · 空列表项（如 "- "）→ 帮你填上占位文字 */
+function smartList(kind){
+  const {val,lineStart,lineEnd,line}=taInfo();
+  let prev="";
+  if(lineStart>1)prev=val.slice(val.lastIndexOf("\n",lineStart-2)+1,lineStart-1);
+  let p,pm;
+  if(kind==="ul"){
+    if(p=line.match(/^(\s*)([-*+])\s+\S/)){taSet("\n"+p[1]+p[2]+" ",lineEnd,lineEnd);return;}
+    if(p=line.match(/^(\s*)([-*+])\s*$/)){taSet("列表项",lineEnd,lineEnd);return;}
+    pm=prev.match(/^(\s*)([-*+])\s+\S/);
+    if(pm&&!line.trim()){taSet(pm[1]+pm[2]+" ",lineStart,lineEnd);return;}
+    if(line.trim()){linePrefix("- ");return;}
+    insertAtCursor("\n- 列表项\n");
+  }else if(kind==="ol"){
+    if(p=line.match(/^(\s*)(\d+)([.)])\s+\S/)){taSet("\n"+p[1]+(+p[2]+1)+p[3]+" ",lineEnd,lineEnd);return;}
+    if(p=line.match(/^(\s*)(\d+)([.)])\s*$/)){taSet("列表项",lineEnd,lineEnd);return;}
+    pm=prev.match(/^(\s*)(\d+)([.)])\s+\S/);
+    if(pm&&!line.trim()){taSet(pm[1]+(+pm[2]+1)+pm[3]+" ",lineStart,lineEnd);return;}
+    if(line.trim()){linePrefix("1. ");return;}
+    insertAtCursor("\n1. 列表项\n");
+  }else{ /* 引用 */
+    if(/^\s*>\s?\S/.test(line)){taSet("\n"+(line.match(/^(\s*>\s?)/)||["",""])[1],lineEnd,lineEnd);return;}
+    if(/^\s*>\s*$/.test(line)){taSet("引用内容",lineEnd,lineEnd);return;}
+    pm=prev.match(/^(\s*>\s?)\S/);
+    if(pm&&!line.trim()){taSet(pm[1],lineStart,lineEnd);return;}
+    if(line.trim()){linePrefix("> ");return;}
+    insertAtCursor("\n> 引用内容\n");
+  }
+}
+/* 回车智能续行（只在行尾生效）：
+   · 列表项末尾回车 → 自动出现下一项（有序列表自动 +1）
+   · 空列表项 / 空引用上回车 → 退出列表（把前缀删掉） */
+function smartEnter(){
+  const {val,s,lineStart,lineEnd,line}=taInfo();
+  if(s!==lineEnd)return false;
+  let m;
+  if(m=line.match(/^(\s*)([-*+])\s+\S/)){taSet("\n"+m[1]+m[2]+" ",s,s);return true;}
+  if(m=line.match(/^(\s*)(\d+)([.)])\s+\S/)){taSet("\n"+m[1]+(+m[2]+1)+m[3]+" ",s,s);return true;}
+  if(m=line.match(/^(\s*>\s?)\S/)){taSet("\n"+m[1],s,s);return true;}
+  if(/^(\s*)([-*+]|\d+[.)])\s*$/.test(line)){taSet("\n",lineStart,lineEnd);return true;}
+  if(/^\s*>\s?$/.test(line)){taSet("\n",lineStart,lineEnd);return true;}
+  return false;
 }
 function indentSelection(dedent){
   const ta=mdBox();
@@ -1180,29 +1533,29 @@ $("#toolbar").addEventListener("click",async e=>{
   const b=e.target.closest("button[data-act]");
   if(!b)return;
   const act=b.dataset.act;
+  if(act==="undo"){doUndo();return;}
+  if(act==="redo"){doRedo();return;}
   if(act==="preview"){previewOn=!previewOn;await primeImages();setPreviewUI();return;}
-  if(act==="h2")linePrefix("## ");
-  else if(act==="h3")linePrefix("### ");
-  else if(act==="bold")wrapSel("**","**","加粗文字");
-  else if(act==="italic")wrapSel("*","*","斜体文字");
-  else if(act==="quote")insertAtCursor("\n> 引用内容\n");
-  else if(act==="code")insertAtCursor("\n```js\n// 代码\n```\n");
-  else if(act==="ul")insertAtCursor("\n- 列表项\n");
-  else if(act==="ol")insertAtCursor("\n1. 列表项\n");
+  if(act==="h2")togglePrefix("## ");
+  else if(act==="h3")togglePrefix("### ");
+  else if(act==="bold")toggleWrap("**","加粗文字");
+  else if(act==="italic")toggleWrap("*","斜体文字");
+  else if(act==="quote")smartList("quote");
+  else if(act==="code")smartCode();
+  else if(act==="ul")smartList("ul");
+  else if(act==="ol")smartList("ol");
   else if(act==="link")wrapSel("[","](https://)","链接文字");
-  else if(act==="hr")insertAtCursor("\n\n---\n\n");
-  else if(act==="callout")insertAtCursor("\n> 💡 **提示**：在这里写提示内容\n");
-  else if(act==="center")insertAtCursor("\n> 这里是一行居中的短句\n");
+  else if(act==="hr")smartHr();
+  else if(act==="callout")smartCallout();
+  else if(act&&act.indexOf("align-")===0)toggleAlign(act.slice(6));
   else if(act==="upload")$("#uploadBtn").click();
-  else if(act==="img"){
-    if(imgNames.length)insertImage(imgNames[0]);
-    else $("#uploadBtn").click();
-  }
+  else if(act==="img")openImgPick();
 });
 /* 输入 */
 let draftTimer=null;
 $("#mdBox").addEventListener("input",()=>{
   mdText=$("#mdBox").value;setDirty(true);updateStats();markDirtySoon();
+  noteChange(false);bakNote(false);
 });
 ["fTitle","fDate","fMinutes","fTags","fDesc"].forEach(id=>{
   $("#"+id).addEventListener("input",()=>{
@@ -1212,6 +1565,7 @@ $("#mdBox").addEventListener("input",()=>{
     meta.tags=$("#fTags").value.split(/[,，]/).map(s=>s.trim()).filter(Boolean);
     meta.desc=$("#fDesc").value;
     setDirty(true);markDirtySoon();updateStats();
+    bakNote(false);
   });
 });
 $("#genDescBtn").addEventListener("click",()=>{
@@ -1229,7 +1583,7 @@ $("#genDescBtn").addEventListener("click",()=>{
   if(!plain){toast("正文还是空的，先写点内容吧","err");return;}
   $("#fDesc").value=plain.slice(0,72)+(plain.length>72?"…":"");
   meta.desc=$("#fDesc").value;
-  setDirty(true);markDirtySoon();
+  setDirty(true);markDirtySoon();bakNote(false);
   toast("已根据正文生成摘要，可再手动修改","ok");
 });
 /* 快捷键 */
@@ -1242,8 +1596,17 @@ document.addEventListener("keydown",e=>{
 $("#mdBox").addEventListener("keydown",e=>{
   const mod=e.ctrlKey||e.metaKey;
   const k=(e.key||"").toLowerCase();
-  if(mod&&k==="b"){e.preventDefault();wrapSel("**","**","加粗文字");return;}
-  if(mod&&k==="i"){e.preventDefault();wrapSel("*","*","斜体文字");return;}
+  if(mod&&(k==="z"||k==="y")){          /* 撤销 / 重做：用编辑器自己的历史栈 */
+    e.preventDefault();
+    if(k==="y"||(k==="z"&&e.shiftKey))doRedo();else doUndo();
+    return;
+  }
+  if(mod&&k==="b"){e.preventDefault();toggleWrap("**","加粗文字");return;}
+  if(mod&&k==="i"){e.preventDefault();toggleWrap("*","斜体文字");return;}
+  if(e.key==="Enter"&&!mod&&!e.shiftKey&&!e.isComposing){
+    if(smartEnter())e.preventDefault();
+    return;
+  }
   if(e.key==="Tab"){e.preventDefault();indentSelection(e.shiftKey);return;}
 });
 /* 粘贴 / 拖拽图片自动保存 */
@@ -1324,10 +1687,53 @@ async function saveArticle(){
     return;
   }
   setDirty(false);clearDraft();updateStats();
+  if(bakOn){ /* 在历史里标记「已保存」节点 */
+    bakRecord();
+    const last=histEntries[histEntries.length-1];
+    if(last){last.saved=true;histSave();}
+  }
   st.className="save-state ok";st.textContent="已保存 ✓";
   toast("已写入本地文件。记得把文件夹推送到 GitHub，线上才会更新","ok");
   setTimeout(()=>{if(st.textContent==="已保存 ✓")st.textContent="";},4200);
 }
+
+/* ---------- 自动备份开关 & 历史面板 ---------- */
+$("#autoBakBtn").addEventListener("click",()=>setBak(!bakOn));
+$("#histBtn").addEventListener("click",async()=>{
+  if(!editing())return;
+  if(!histEntries.length){toast("还没有历史记录。打开「自动备份」后，每次修改都会记进来","err");return;}
+  const labels=histEntries.map((en,i)=>{
+    const d=new Date(en.t);
+    const t=`${pad2(d.getMonth()+1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+    return `#${i+1} · ${t} · ${en.md.replace(/\s/g,"").length}字 · ${en.title||"未命名"}${en.saved?" · ✓已保存":""}`;
+  });
+  labels.push("🗑 清空该文章的全部历史");
+  const pick=await ask({title:`历史版本（${histEntries.length} 条）`,
+    text:"选择一个时间点，正文和标题 / 摘要 / 封面等会恢复到那一刻。\n恢复前，当前内容会先存一条历史，随时可以切回来。",
+    options:labels});
+  if(!pick)return;
+  if(pick.indexOf("🗑")===0){
+    if(await ask({title:"清空历史",text:"确定删除这篇文章的全部自动备份记录吗？\n文章文件本身不受影响。"})){
+      histEntries=[];histSave();updateHistBtn();toast("历史记录已清空","ok");
+    }
+    return;
+  }
+  const idx=labels.indexOf(pick);
+  const snap=histEntries[idx];
+  if(!snap)return;
+  if(!await ask({title:"恢复历史版本",
+    text:`将恢复到 ${new Date(snap.t).toLocaleString()} 的状态（正文 ${snap.md.replace(/\s/g,"").length} 字）。\n当前内容会先存一条历史，不会丢。继续吗？`}))return;
+  histEntries.push(bakSnapshot());histSave();      /* 先保当前 */
+  mdText=snap.md||"";
+  meta.title=snap.title||"";meta.date=snap.date||"";meta.minutes=snap.minutes||"";
+  meta.tags=snap.tags||[];meta.desc=snap.desc||"";
+  meta.cover=snap.cover||"";meta.background=snap.background||"";
+  fillForm();setDirty(true);updateStats();
+  hStack=[];hPtr=-1;histPushNow();                 /* 撤销栈以恢复后的状态重建 */
+  bakNote(true);
+  await refreshImages();await refreshCovers();
+  toast(`已恢复到 ${new Date(snap.t).toLocaleString()} 的版本`,"ok");
+});
 
 /* ---------- 启动检查 & 离开提醒 ---------- */
 (function(){
