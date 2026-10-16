@@ -399,6 +399,7 @@ img{display:block;max-width:100%}
   font-size:.9em;background:var(--chip);padding:2px 7px;border-radius:6px;
 }
 .section-more{text-align:center;padding:16px 0 30px}
+#aboutProjects{scroll-margin-top:86px}   /* 「查看全部项目」锚点定位时给顶部悬浮导航留出空间 */
 .link-more{
   display:inline-flex;align-items:center;gap:8px;
   padding:11px 26px;border-radius:999px;
@@ -592,6 +593,34 @@ body.lb-lock{overflow:hidden}
 .post-side{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:3px;color:var(--text-3);font-size:12px}
 .post-side svg{width:16px;height:16px;opacity:.55;margin-top:2px}
 .blog-empty{padding:60px 20px;text-align:center;color:var(--text-3);font-size:14px;line-height:2}
+/* ---------- 博客骨架屏扫光（加载动画） ---------- */
+#blogBody{position:relative}   /* 真实列表在骨架上层叠放淡入用 */
+.skl-wrap{position:relative;overflow:hidden;transition:opacity .3s ease}
+.skl-wrap.out{opacity:0;pointer-events:none}
+.skl{background:var(--chip);border-radius:8px}
+.skl-card{display:flex;align-items:center;gap:16px;padding:14px 16px;border-radius:16px;
+  border:1px solid var(--card-border);background:var(--bg-2)}
+.skl-thumb{width:104px;height:66px;border-radius:10px;flex:none}          /* 与真实封面缩略图同尺寸 */
+.skl-mid{flex:1;display:flex;flex-direction:column;gap:9px;min-width:0}
+.skl-pill{height:18px;border-radius:999px;width:40%}                      /* 标签条 */
+.skl-title{height:16px;border-radius:7px}                                 /* 标题条 */
+.skl-desc{height:11px;border-radius:6px}                                  /* 摘要条 */
+.skl-side{display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex:none}
+.skl-meta{height:10px;border-radius:5px}                                  /* 日期/时长条 */
+.skl-year{width:130px;height:15px;margin:10px 0 4px}                      /* 年份条 */
+/* 所有骨架共用的一道斜向光带，1.5s 从左往右扫过 */
+.skl-beam{position:absolute;inset:0;pointer-events:none}
+.skl-beam::before{content:"";position:absolute;top:-15%;bottom:-15%;left:0;width:38%;
+  background:linear-gradient(105deg,transparent 0%,rgba(122,162,255,.08) 28%,rgba(173,206,255,.22) 50%,rgba(122,162,255,.08) 72%,transparent 100%);
+  transform:translateX(-140%);animation:skl-sweep 1.5s ease-in-out infinite}
+@keyframes skl-sweep{to{transform:translateX(420%)}}
+/* 数据到达：卡片按顺序错开 60ms 依次浮现（淡入 + 上移 8px 归位） */
+.rv{animation:card-in .5s cubic-bezier(.22,.61,.36,1) both}
+@keyframes card-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@media (prefers-reduced-motion:reduce){
+  .skl-beam::before{animation:none}
+  .rv{animation:none}
+}
 /* 文章页 */
 .post-hero{position:relative;height:min(46vh,380px);background:var(--hero-fallback);overflow:hidden}
 .post-hero img.post-bg{width:100%;height:100%;object-fit:cover;display:block}
@@ -782,7 +811,7 @@ const I18N={
     nav:{home:"首页",gallery:"图库",blog:"博客",about:"关于"},
     langTip:"切换到英文",
     cloud:"云空间",
-    hero:{badge:"个人空间",sub:"造物、记录，<br>与喜欢的光影和想法。",read:"浏览图库",aboutBtn:"关于我",hint:"向下浏览"},
+    hero:{badge:"个人空间",sub:"造物、记录，<br>与喜欢的光影和想法。",read:"浏览博客",aboutBtn:"关于我",hint:"向下浏览"},
     home:{gallery:"图库",more:"查看全部照片",projects:"项目",moreProj:"查看全部项目"},
     gallery:{
       title:"图库",
@@ -823,7 +852,7 @@ const I18N={
     nav:{home:"Home",gallery:"Gallery",blog:"Blog",about:"About"},
     langTip:"Switch to Chinese",
     cloud:"Cloud Space",
-    hero:{badge:"PERSONAL SPACE",sub:"Making things, keeping notes,<br>and the light I like.",read:"Browse Gallery",aboutBtn:"About Me",hint:"Scroll down"},
+    hero:{badge:"PERSONAL SPACE",sub:"Making things, keeping notes,<br>and the light I like.",read:"Browse Blog",aboutBtn:"About Me",hint:"Scroll down"},
     home:{gallery:"Gallery",more:"View all photos",projects:"Projects",moreProj:"View all projects"},
     gallery:{
       title:"Gallery",
@@ -1090,7 +1119,7 @@ function renderHome(){
         <h1>${esc(t.brand)}</h1>
         <p>${t.hero.sub}</p>
         <div class="hero-actions">
-          <a class="btn btn-primary" href="#/gallery">${esc(t.hero.read)}</a>
+          <a class="btn btn-primary" href="#/blog">${esc(t.hero.read)}</a>
           <a class="btn btn-ghost" href="#/about">${esc(t.hero.aboutBtn)}</a>
         </div>
       </div>
@@ -1120,7 +1149,7 @@ function renderHome(){
           ${projectsGridHTML()}
         </div>
         <div class="section-more">
-          <a class="link-more" href="#/about">${esc(t.home.moreProj)} →</a>
+          <a class="link-more" href="#/about/projects">${esc(t.home.moreProj)} →</a>
         </div>
       </section>
     </div>
@@ -1172,7 +1201,7 @@ function renderAbout(){
       </div>
 
       <!-- 项目模块：从原「项目」页移入，位于个人介绍下方、友情链接上方 -->
-      <div class="about-card">
+      <div class="about-card" id="aboutProjects">
         <div class="section-label">${esc(t.about.projTitle)}</div>
         <p class="friends-sub">${esc(t.about.projSub)}</p>
         <div class="proj-grid">
@@ -1368,18 +1397,22 @@ function parsePost(raw){
 function mdToHTML(md,imgBase){
   const inline=s=>{
     s=esc(s);
-    s=s.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g,(m,alt,src)=>{
+    /* 图片/链接路径允许空格与一层括号（Windows 截图等文件名常带空格/括号） */
+    s=s.replace(/!\[([^\]]*)\]\(((?:[^()]|\([^()]*\))+)\)/g,(m,alt,src)=>{
+      src=src.trim();
       const u=/^(https?:|data:|\/)/.test(src)?src:imgBase+src;
       return `<img src="${u}" alt="${alt}" loading="lazy" decoding="async">`;
     });
-    s=s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+    s=s.replace(/\[([^\]]+)\]\(((?:[^()]|\([^()]*\))+)\)/g,(m,txt,href)=>
+      `<a href="${href.trim()}" target="_blank" rel="noopener">${txt}</a>`);
     s=s.replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>")
        .replace(/\*([^*]+)\*/g,"<em>$1</em>")
        .replace(/`([^`]+)`/g,"<code>$1</code>");
     return s;
   };
   const lines=md.split(/\r?\n/),out=[];let i=0;
-  const BLOCK=/^(#{1,4})\s+|^```|^\s*>|^\s*[-*+]\s+|^\s*\d+[.)]\s+|^\s*(---+|\*\*\*+)\s*$/;
+  const BLOCK=/^(#{1,4})\s+|^```|^\s*>|^\s*[-*+]\s+|^\s*\d+[.)]\s+|^\s*(---+|\*\*\*+)\s*$|^\|[lcr]\s/;
+  const ALIGN={l:"left",c:"center",r:"right"};
   while(i<lines.length){
     const L=lines[i];
     if(/^```/.test(L)){
@@ -1387,6 +1420,14 @@ function mdToHTML(md,imgBase){
       while(i<lines.length&&!/^```/.test(lines[i])){buf.push(lines[i]);i++;}
       i++;
       out.push(`<pre><code>${esc(buf.join("\n"))}</code></pre>`);continue;
+    }
+    /* 对齐段落：|l 文字 / |c 文字 / |r 文字（连续几行算一段） */
+    const am=L.match(/^\|([lcr])\s+(.*)/);
+    if(am){
+      const buf=[am[2]];i++;
+      while(i<lines.length&&!/^\s*$/.test(lines[i])&&!BLOCK.test(lines[i])){buf.push(lines[i]);i++;}
+      out.push(`<p style="text-align:${ALIGN[am[1]]}">${inline(buf.join(" "))}</p>`);
+      continue;
     }
     const h=L.match(/^(#{1,4})\s+(.*)/);
     if(h){const lv=h[1].length+1;out.push(`<h${lv}>${inline(h[2])}</h${lv}>`);i++;continue;}
@@ -1423,25 +1464,49 @@ function fmtDate(d,short){
 }
 function postSrc(p,f){ return /^(https?:|data:|\/)/.test(f)?f:((p&&p.imgBase)||"")+f; }
 
+/* 博客列表骨架屏：形状/尺寸与真实卡片一致（缩略图块、标签条、标题条、摘要条、日期条） */
+function blogSkeletonHTML(){
+  const card=(pw,tw,dw)=>`
+    <div class="skl-card">
+      <span class="skl skl-thumb"></span>
+      <span class="skl-mid">
+        <span class="skl skl-pill" style="width:${pw}%"></span>
+        <span class="skl skl-title" style="width:${tw}%"></span>
+        <span class="skl skl-desc" style="width:${dw}%"></span>
+      </span>
+      <span class="skl-side">
+        <span class="skl skl-meta" style="width:54px"></span>
+        <span class="skl skl-meta" style="width:40px"></span>
+      </span>
+    </div>`;
+  return `<div class="skl-wrap" id="blogSkl" aria-hidden="true">
+    <div class="blog-list">
+      <div class="skl skl-year"></div>
+      ${card(22,58,72)}${card(14,66,64)}${card(26,52,78)}${card(18,61,70)}${card(24,56,75)}${card(16,63,66)}
+    </div>
+    <div class="skl-beam"></div>
+  </div>`;
+}
 async function renderBlog(){
   const t=T();
   app.innerHTML=`<section class="view"><div class="wrap">
     <div class="page-head"><h1>${esc(t.blog.title)}</h1><p class="sub" id="blogSub"></p></div>
-    <div id="blogBody"></div>
+    <div id="blogBody">${blogSkeletonHTML()}</div>
   </div></section>`;
   const posts=await loadBlog();
   const sub=document.getElementById("blogSub");
   const body=document.getElementById("blogBody");
   if(!body)return;
   if(sub)sub.textContent=t.blog.sub(posts.length);
+  const skl=body.querySelector(".skl-wrap");
   if(blogErr){body.innerHTML=`<div class="blog-empty">${t.blog.err}</div>`;return;}
   if(!posts.length){body.innerHTML=`<div class="blog-empty">${esc(t.blog.empty)}</div>`;return;}
-  let html="",lastYear="";
+  let html="",lastYear="",i=0;
   posts.forEach(p=>{
     const y=(p.date||"").slice(0,4)||"····";
-    if(y!==lastYear){html+=`<div class="blog-year">${y}</div>`;lastYear=y;}
+    if(y!==lastYear){html+=`<div class="blog-year rv" style="animation-delay:${(i++)*60}ms">${y}</div>`;lastYear=y;}
     html+=`
-    <a class="post-card" href="#/blog/${encodeURIComponent(p.slug)}">
+    <a class="post-card rv" style="animation-delay:${(i++)*60}ms" href="#/blog/${encodeURIComponent(p.slug)}">
       <span class="post-thumb">${p.cover?`<img src="${esc(postSrc(p,p.cover))}" alt="" loading="lazy" decoding="async" onerror="this.parentNode.innerHTML='🖼️'">`:"🖼️"}</span>
       <span class="post-mid">
         <span class="post-tags">${(p.tags||[]).map(x=>`<span class="tag">${esc(x)}</span>`).join("")}</span>
@@ -1455,7 +1520,22 @@ async function renderBlog(){
       </span>
     </a>`;
   });
-  body.innerHTML=`<div class="blog-list">${html}</div>`;
+  /* 骨架淡出与卡片浮现同步：真实列表先叠在骨架上层，骨架 0.3s 淡出后再摘除，全程不闪白 */
+  if(skl){
+    body.style.minHeight=skl.offsetHeight+"px";
+    body.insertAdjacentHTML("beforeend",`<div class="blog-list" id="blogReal" style="position:absolute;inset:0">${html}</div>`);
+    skl.classList.add("out");
+    setTimeout(()=>{
+      const r=document.getElementById("blogReal");
+      if(r){r.style.position="";r.style.inset="";}
+      const s=document.getElementById("blogSkl");
+      if(s&&s.parentNode)s.remove();
+      const b=document.getElementById("blogBody");
+      if(b)b.style.minHeight="";
+    },340);
+  }else{
+    body.insertAdjacentHTML("beforeend",`<div class="blog-list">${html}</div>`);
+  }
 }
 
 async function renderPost(slug){
@@ -1502,6 +1582,29 @@ async function renderPost(slug){
 }
 
 /* ---------- 路由 ---------- */
+let pendingScroll=null;   /* 带锚点的路由：渲染后要缓缓滑到的板块 id */
+/* 缓速滑动：比浏览器原生 smooth 更从容（约 1 秒），用户滚轮/触摸可随时打断 */
+function glideTo(y,dur){
+  if(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches){window.scrollTo(0,y);return;}
+  const startY=window.scrollY,d=y-startY,t0=performance.now();
+  const ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;   /* easeInOutCubic：起停都柔 */
+  let stop=false;
+  const cancel=()=>{stop=true};
+  window.addEventListener("wheel",cancel,{once:true,passive:true});
+  window.addEventListener("touchstart",cancel,{once:true,passive:true});
+  const root=document.documentElement,prev=root.style.scrollBehavior;
+  root.style.scrollBehavior="auto";                    /* 逐帧设值，不能让 CSS smooth 插手 */
+  let last=startY;                                     /* 单调钳制：杜绝任何帧间的 1px 回抖 */
+  (function step(now){
+    if(stop){root.style.scrollBehavior=prev;return;}
+    const p=Math.min(1,Math.max(0,(now-t0)/dur));
+    const v=startY+d*ease(p);
+    last=d>=0?Math.max(last,v):Math.min(last,v);
+    window.scrollTo(0,last);
+    if(p<1)requestAnimationFrame(step);
+    else root.style.scrollBehavior=prev;
+  })(t0);
+}
 function route(){
   const hash=location.hash.replace(/^#\/?/,"");
   const parts=hash.split("/").filter(Boolean);
@@ -1512,8 +1615,12 @@ function route(){
     if(parts[1])renderPost(decodeURIComponent(parts.slice(1).join("/")));
     else renderBlog();
   }
-  else if(parts[0]==="about"){active="about";renderAbout()}
-  else if(parts[0]==="projects"){location.replace("#/about");return}  /* 旧链接兜底：项目已并入关于页 */
+  else if(parts[0]==="about"){
+    active="about";renderAbout();
+    /* #/about/projects → 渲染后平滑滚到项目板块 */
+    if(parts[1]==="projects")pendingScroll="aboutProjects";
+  }
+  else if(parts[0]==="projects"){location.replace("#/about/projects");return}  /* 旧链接兜底：项目已并入关于页 */
   else renderHome();
   document.querySelectorAll(".nav-link").forEach(el=>
     el.classList.toggle("active",el.dataset.nav===active));
@@ -1522,8 +1629,19 @@ function route(){
   const root=document.documentElement,
         prevSmooth=root.style.scrollBehavior;
   root.style.scrollBehavior="auto";
-  window.scrollTo(0,0);
-  root.style.scrollBehavior=prevSmooth;
+  /* 带锚点的路由（如 #/about/projects）：先正常展示「关于」页顶部，
+     然后页面再缓缓下滑到项目板块 */
+  const anchor=pendingScroll?document.getElementById(pendingScroll):null;
+  pendingScroll=null;
+  if(anchor){
+    const y=anchor.getBoundingClientRect().top+window.scrollY-86;
+    window.scrollTo(0,0);
+    root.style.scrollBehavior=prevSmooth;
+    requestAnimationFrame(()=>glideTo(y,950));
+  }else{
+    window.scrollTo(0,0);
+    root.style.scrollBehavior=prevSmooth;
+  }
 }
 window.addEventListener("hashchange",route);
 
