@@ -493,6 +493,137 @@ body.lb-lock{overflow:hidden}
 }
 .socials a:hover{transform:translateY(-2px);box-shadow:var(--shadow);color:var(--text-1)}
 .socials a .dot{width:8px;height:8px;border-radius:50%;flex:none}
+/* 友情链接（关于页底部）：自适应网格，加新朋友只往 FRIENDS 里加一条即可 */
+.friends-head{display:flex;align-items:center;gap:10px}
+.friends-count{
+  font-size:11.5px;font-weight:700;line-height:1;
+  color:var(--accent);background:var(--accent-soft);
+  padding:4px 9px;border-radius:999px;
+}
+.friend-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(226px,1fr));
+  gap:11px;margin-top:16px;
+}
+.friend{
+  position:relative;overflow:hidden;
+  display:flex;align-items:center;gap:13px;
+  padding:13px 15px;border-radius:16px;
+  border:1px solid var(--card-border);
+  background:linear-gradient(165deg,rgba(255,255,255,.05),rgba(255,255,255,0) 58%),var(--bg-2);
+  transition:transform .25s cubic-bezier(.2,.7,.2,1),border-color .25s,box-shadow .25s;
+}
+.friend::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(130px 96px at 92% -18%,var(--accent-soft),transparent 72%);
+  opacity:0;transition:opacity .3s;
+}
+.friend:hover{
+  transform:translateY(-3px);
+  border-color:rgba(77,141,255,.42);
+  box-shadow:0 12px 30px rgba(0,0,0,.42);
+}
+.friend:hover::before{opacity:1}
+.friend-logo{
+  position:relative;overflow:hidden;flex:none;
+  width:44px;height:44px;border-radius:13px;
+  display:grid;place-items:center;
+  font-size:18px;font-weight:800;color:#fff;letter-spacing:-.02em;
+  background:linear-gradient(140deg,var(--accent),#8b5cf6);
+  box-shadow:0 6px 16px rgba(77,141,255,.25),inset 0 0 0 1px rgba(255,255,255,.16);
+  transition:transform .28s cubic-bezier(.2,.7,.2,1),box-shadow .28s;
+}
+.friend-logo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.friend:hover .friend-logo{
+  transform:scale(1.07) rotate(-3deg);
+  box-shadow:0 10px 24px rgba(77,141,255,.4),inset 0 0 0 1px rgba(255,255,255,.22);
+}
+.friend-info{min-width:0;flex:1;padding-right:12px}
+.friend .friend-info h4{
+  font-size:14.5px;font-weight:700;letter-spacing:-.01em;margin:0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  transition:color .22s;
+}
+.friend .friend-info p{
+  font-size:12.5px;color:var(--text-3);line-height:1.5;margin:3px 0 0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  transition:color .22s;
+}
+.friend:hover .friend-info h4{color:var(--accent)}
+.friend:hover .friend-info p{color:var(--text-2)}
+.friend-arrow{
+  position:absolute;top:11px;right:11px;width:13px;height:13px;
+  color:var(--accent);opacity:0;transform:translate(-4px,4px);
+  transition:opacity .25s,transform .25s;
+}
+.friend:hover .friend-arrow{opacity:1;transform:none}
+/* 最后一张「交换友链」申请卡 */
+.friend-apply{border-style:dashed;background:none}
+.friend-apply::before{display:none}
+.friend-apply .friend-logo{
+  background:var(--chip);color:var(--text-2);box-shadow:none;
+}
+.friend-apply:hover .friend-logo{
+  background:var(--accent-soft);color:var(--accent);
+  transform:scale(1.07);box-shadow:none;
+}
+.friend-apply:hover{border-color:rgba(77,141,255,.42);box-shadow:none}
+.friend-apply:hover .friend-info h4{color:var(--accent)}
+.friends-sub{margin:8px 0 0;font-size:13px;color:var(--text-3)}
+/* ============ 博客（列表 + 文章） ============ */
+.blog-year{display:flex;align-items:center;gap:14px;margin:28px 0 14px;color:var(--text-3);font-size:13px;font-weight:700;letter-spacing:.06em}
+.blog-year::before{content:"";width:26px;height:2px;background:var(--accent);border-radius:2px}
+.blog-year::after{content:"";flex:1;height:1px;background:var(--card-border)}
+.blog-list{display:flex;flex-direction:column;gap:12px}
+.post-card{
+  display:flex;align-items:center;gap:16px;
+  padding:14px 16px;border-radius:16px;
+  border:1px solid var(--card-border);background:var(--bg-2);
+  transition:transform .22s,border-color .22s,box-shadow .22s;
+}
+.post-card:hover{transform:translateY(-2px);border-color:rgba(77,141,255,.4);box-shadow:var(--shadow)}
+.post-thumb{flex:none;width:104px;height:66px;border-radius:10px;overflow:hidden;background:var(--chip);display:grid;place-items:center;color:var(--text-3)}
+.post-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.post-mid{min-width:0;flex:1}
+.post-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px}
+.tag{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
+.post-title{display:block;font-size:16.5px;font-weight:750;color:var(--text-1);letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:color .2s}
+.post-card:hover .post-title{color:var(--accent)}
+.post-desc{display:block;font-size:13px;color:var(--text-2);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.post-side{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:3px;color:var(--text-3);font-size:12px}
+.post-side svg{width:16px;height:16px;opacity:.55;margin-top:2px}
+.blog-empty{padding:60px 20px;text-align:center;color:var(--text-3);font-size:14px;line-height:2}
+/* 文章页 */
+.post-hero{position:relative;height:min(46vh,380px);background:var(--hero-fallback);overflow:hidden}
+.post-hero img.post-bg{width:100%;height:100%;object-fit:cover;display:block}
+.post-hero::after{content:"";position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(11,13,18,.22) 0%,rgba(11,13,18,0) 42%,var(--bg) 100%)}
+.post-back{display:inline-flex;align-items:center;gap:6px;margin:26px 0 6px;
+  color:var(--text-3);font-size:13.5px;font-weight:600;transition:color .2s}
+.post-back:hover{color:var(--accent)}
+.post-back svg{width:15px;height:15px}
+.post-head{max-width:760px;margin:0 auto 6px}
+.post-head .post-tags{margin-bottom:10px}
+.post-head h1{font-size:clamp(26px,5vw,38px);font-weight:800;letter-spacing:-.02em;line-height:1.25;margin:0 0 10px}
+.post-head .post-sub{font-size:15px;color:var(--text-2);line-height:1.7;margin:0 0 12px}
+.post-meta{display:flex;align-items:center;gap:10px;color:var(--text-3);font-size:13px;padding-bottom:18px;border-bottom:1px solid var(--card-border)}
+.post-body{max-width:760px;margin:0 auto;padding-top:8px;font-size:15.5px;line-height:1.95;color:var(--text-2)}
+.post-body h2{font-size:22px;color:var(--text-1);margin:34px 0 12px;letter-spacing:-.01em}
+.post-body h3{font-size:18.5px;color:var(--text-1);margin:28px 0 10px}
+.post-body h4,.post-body h5{font-size:16px;color:var(--text-1);margin:22px 0 8px}
+.post-body p{margin:0 0 16px}
+.post-body a{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+.post-body img{max-width:100%;border-radius:14px;display:block;margin:18px auto;border:1px solid var(--card-border)}
+.post-body blockquote{margin:18px 0;padding:12px 18px;border-left:3px solid var(--accent);
+  background:var(--quote-bg);border-radius:0 12px 12px 0;color:var(--text-1)}
+.post-body pre{background:#0d1017;border:1px solid var(--card-border);border-radius:14px;padding:16px 18px;overflow-x:auto;margin:18px 0}
+.post-body code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:.9em;
+  background:var(--chip);padding:2px 6px;border-radius:6px;color:var(--accent-2)}
+.post-body pre code{background:none;padding:0;color:#cfe3ff;font-size:13px;line-height:1.7}
+.post-body hr{border:none;border-top:1px solid var(--card-border);margin:26px auto;width:60%}
+.post-body ul,.post-body ol{margin:0 0 16px;padding-left:24px}
+.post-body li{margin-bottom:6px}
+.post-end{display:flex;align-items:center;gap:14px;margin:44px auto 0;max-width:760px;color:var(--text-3);font-size:12.5px}
+.post-end::before,.post-end::after{content:"";flex:1;height:1px;background:var(--card-border)}
 .mail-line{margin-top:18px}
 .about-card h2{font-size:26px;font-weight:780;margin-bottom:14px;letter-spacing:-.01em}
 .about-card p{color:var(--text-2);line-height:1.9;font-size:15.5px;margin-bottom:12px}
@@ -538,7 +669,7 @@ footer .heart{color:#ff5d7a}
   </a>
   <a class="nav-link" data-nav="home" href="#/">Home</a>
   <a class="nav-link" data-nav="gallery" href="#/gallery">图库</a>
-  <a class="nav-link" data-nav="projects" href="#/projects">项目</a>
+  <a class="nav-link" data-nav="blog" href="#/blog">博客</a>
   <a class="nav-link" data-nav="about" href="#/about">About</a>
   <span class="nav-sep"></span>
   <button class="nav-icon" id="langBtn" title="切换到英文" aria-label="切换到英文">EN</button>
@@ -620,6 +751,13 @@ const SOCIALS=[
   {zh:"Steam",en:"Steam",u:"https://steamcommunity.com/id/aimjianye/",c:"#66c0f4"},
   {zh:"意见反馈",en:"Feedback",u:"https://my.feishu.cn/share/base/form/shrcnZomfA2kKrY311TeM2OaRpe",c:"#4d8dff"}
 ];
+/* ---------- 友情链接：加新朋友就往这里加一条 ---------- */
+const FRIEND_FORM="https://my.feishu.cn/share/base/form/shrcn33uvUS0WgKehGEiDMxZAHe"; /* 友链申请表单 */
+const FRIENDS=[
+  {zh:"小刚PE",en:"XiaoGang PE",
+   dzh:"小刚PE 系统维护",den:"XiaoGang PE · System maintenance",
+   u:"https://www.xgpe.top",logo:"https://www.xgpe.top/images/logo.jpg"}
+];
 
 /* ---------- 图库：照片来自站点根目录下的「图片」文件夹 ----------
    new/index.html 在子目录里，所以先试同级的 图片/，再试上一级的 ../图片/。
@@ -641,7 +779,7 @@ let photosStatus="loading"; // loading | ready | error
 const I18N={
   zh:{
     brand:"鉴业の小站",
-    nav:{home:"首页",gallery:"图库",projects:"项目",about:"关于"},
+    nav:{home:"首页",gallery:"图库",blog:"博客",about:"关于"},
     langTip:"切换到英文",
     cloud:"云空间",
     hero:{badge:"个人空间",sub:"造物、记录，<br>与喜欢的光影和想法。",read:"浏览图库",aboutBtn:"关于我",hint:"向下浏览"},
@@ -653,23 +791,36 @@ const I18N={
       empty:"「图片」文件夹里还没有照片，把图片放进去后刷新页面试试。",
       err:"暂时读不到「图片」文件夹。<br>用本地服务器打开本页即可自动扫描，例如在站点目录运行 <code>python -m http.server</code>。"
     },
+    blog:{
+      title:"博客",
+      sub:n=>`共 ${n} 篇 · 慢慢读`,
+      empty:"还没有文章。打开 blog/editor.html 写第一篇吧。",
+      err:"暂时读不到文章列表（blog/index.json）。<br>双击打开或用内置预览面板是读不到 blog 文件夹的——请在浏览器地址栏访问本地服务器，例如 <code>http://127.0.0.1:8765/new/index.html</code>（在站点根目录运行 <code>python -m http.server</code> 即可开启）。",
+      back:"返回博客",
+      read:"阅读全文",
+      minutes:n=>`${n} 分钟读完`,
+      end:"全文完",
+      untitled:"无标题"
+    },
     about:{
       title:"关于",hello:"你好，我是鉴业。",
       tagline:"开发者 · 设计爱好者 · 生活记录者",
       bio1:"喜欢写代码，也喜欢把东西做得好看又好用；白天在屏幕前构建数字世界，其余时间用照片、音乐和游戏给生活调色。",
       bio2:"这个站点是我的数字空间——把项目、相册和喜欢的光影想法收进同一个地方，欢迎随便逛逛。",
       contact:"想聊项目、交流技术，或者只是打个招呼：",
-      socials:"找到我"
-    },
-    projects:{
-      title:"项目",
-      sub:"我做过的一些东西，点击卡片可访问 →"
+      socials:"找到我",
+      projTitle:"项目",
+      projSub:"我做过的一些东西，点击卡片可访问 →",
+      friends:"友情链接",
+      friendsSub:"这些朋友的站点，也欢迎逛逛",
+      friendApply:"申请友链",
+      friendApplySub:"填写表单提交申请"
     },
     footer:"© 2026 Jianye · 用心血手写"
   },
   en:{
     brand:"Jianye's Corner",
-    nav:{home:"Home",gallery:"Gallery",projects:"Projects",about:"About"},
+    nav:{home:"Home",gallery:"Gallery",blog:"Blog",about:"About"},
     langTip:"Switch to Chinese",
     cloud:"Cloud Space",
     hero:{badge:"PERSONAL SPACE",sub:"Making things, keeping notes,<br>and the light I like.",read:"Browse Gallery",aboutBtn:"About Me",hint:"Scroll down"},
@@ -681,17 +832,30 @@ const I18N={
       empty:"No photos in the “图片” folder yet. Drop some in and refresh.",
       err:"Can't read the “图片” folder right now.<br>Serve the site locally to scan it, e.g. run <code>python -m http.server</code> in the site folder."
     },
+    blog:{
+      title:"Blog",
+      sub:n=>`${n} post${n===1?"":"s"} · keep reading`,
+      empty:"No posts yet. Open blog/editor.html to write your first one.",
+      err:"Can't load the post list (blog/index.json).<br>Opening the file directly or in a single-file preview can't see the blog folder — visit the local server in your browser, e.g. <code>http://127.0.0.1:8765/new/index.html</code> (run <code>python -m http.server</code> in the site root).",
+      back:"Back to Blog",
+      read:"Read article",
+      minutes:n=>`${n} min read`,
+      end:"End of post",
+      untitled:"Untitled"
+    },
     about:{
       title:"About",hello:"Hi, I'm Jianye.",
       tagline:"Developer · Design lover · Life recorder",
       bio1:"I love writing code and making things that look good and work well — building digital worlds by day, coloring life with photos, music and games the rest of the time.",
       bio2:"This site is my digital space — projects, photos and ideas I like, all in one place. Feel free to look around.",
       contact:"For projects, tech chats, or just saying hi:",
-      socials:"Find me"
-    },
-    projects:{
-      title:"Projects",
-      sub:"Things I've built — click a card to visit →"
+      socials:"Find me",
+      projTitle:"Projects",
+      projSub:"Things I've built — click a card to visit →",
+      friends:"Friendly Links",
+      friendsSub:"Sites from friends — worth a visit",
+      friendApply:"Apply for a Link",
+      friendApplySub:"Fill in the form to apply"
     },
     footer:"© 2026 Jianye · Handcrafted"
   }
@@ -738,7 +902,7 @@ function setLang(v){
   $("#langBtn").title=T().langTip||"Switch language";
   $("#langBtn").setAttribute("aria-label",$("#langBtn").title);
   $("#navBrand").textContent=T().brand;
-  ["home","gallery","projects","about"].forEach(k=>{
+  ["home","gallery","blog","about"].forEach(k=>{
     const el=document.querySelector(`[data-nav="${k}"]`);
     if(el)el.textContent=T().nav[k];
   });
@@ -953,15 +1117,10 @@ function renderHome(){
       <section class="section" id="homeProjects">
         <div class="section-label">${esc(t.home.projects)}</div>
         <div class="proj-grid">
-          ${PROJECTS.map(p=>`
-          <a class="proj" href="${esc(p.u)}" target="_blank" rel="noopener">
-            <div class="ic" style="background:${p.c}">${p.ic}</div>
-            <h4>${esc(lang==="zh"?p.zh:p.en)}</h4>
-            <p>${esc(lang==="zh"?p.dzh:p.den)}</p>
-          </a>`).join("")}
+          ${projectsGridHTML()}
         </div>
         <div class="section-more">
-          <a class="link-more" href="#/projects">${esc(t.home.moreProj)} →</a>
+          <a class="link-more" href="#/about">${esc(t.home.moreProj)} →</a>
         </div>
       </section>
     </div>
@@ -1011,27 +1170,312 @@ function renderAbout(){
           </a>`).join("")}
         </div>
       </div>
+
+      <!-- 项目模块：从原「项目」页移入，位于个人介绍下方、友情链接上方 -->
+      <div class="about-card">
+        <div class="section-label">${esc(t.about.projTitle)}</div>
+        <p class="friends-sub">${esc(t.about.projSub)}</p>
+        <div class="proj-grid">
+          ${projectsGridHTML()}
+        </div>
+      </div>
+
+      ${FRIENDS.length?`
+      <div class="about-card">
+        <div class="friends-head">
+          <div class="section-label" style="margin:0">${esc(t.about.friends)}</div>
+          <span class="friends-count">${FRIENDS.length}</span>
+        </div>
+        <p class="friends-sub">${esc(t.about.friendsSub)}</p>
+        <div class="friend-grid">
+          ${FRIENDS.map(f=>{
+            const name=lang==="zh"?f.zh:f.en;
+            const desc=(lang==="zh"?f.dzh:f.den)||"";
+            return `
+          <a class="friend" href="${esc(f.u)}" target="_blank" rel="noopener">
+            <div class="friend-logo">${esc(name.slice(0,1))}
+              ${f.logo?`<img src="${esc(f.logo)}" alt="" loading="lazy" decoding="async"
+                   referrerpolicy="no-referrer" onerror="this.remove()">`:""}
+            </div>
+            <div class="friend-info">
+              <h4>${esc(name)}</h4>${desc?`<p>${esc(desc)}</p>`:""}
+            </div>
+            <svg class="friend-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M7 17 17 7"/><path d="M9 7h8v8"/>
+            </svg>
+          </a>`;}).join("")}
+          <a class="friend friend-apply" href="${FRIEND_FORM}" target="_blank" rel="noopener">
+            <div class="friend-logo">
+              <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor"
+                   stroke-width="2.4" stroke-linecap="round" aria-hidden="true">
+                <path d="M12 5v14M5 12h14"/>
+              </svg>
+            </div>
+            <div class="friend-info">
+              <h4>${esc(t.about.friendApply)}</h4>
+              <p>${esc(t.about.friendApplySub)}</p>
+            </div>
+            <svg class="friend-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M7 17 17 7"/><path d="M9 7h8v8"/>
+            </svg>
+          </a>
+        </div>
+      </div>`:""}
     </div>
   </section>`;
 }
 
-function renderProjects(){
+/* ---------- 关于页里的项目模块（原独立「项目」页已并入此处） ---------- */
+function projectsGridHTML(){
+  return PROJECTS.map(p=>`
+  <a class="proj" href="${esc(p.u)}" target="_blank" rel="noopener">
+    <div class="ic" style="background:${p.c}">${p.ic}</div>
+    <h4>${esc(lang==="zh"?p.zh:p.en)}</h4>
+    <p>${esc(lang==="zh"?p.dzh:p.den)}</p>
+  </a>`).join("");
+}
+
+/* =====================================================================
+ *  博客：文章存放在仓库根 blog/<slug>/ 子文件夹里（index.md + 图片），
+ *  blog/index.json 是目录清单，由 blog/editor.html 编辑器在保存时自动更新。
+ * ===================================================================== */
+let blogCache=null, blogErr=false, blogBase="blog/";
+async function loadBlog(){
+  if(blogCache)return blogCache;
+  /* 站点首页部署在仓库根（blog/），本地开发时也可能从 new/ 打开（../blog/） */
+  for(const b of ["blog/","../blog/"]){
+    try{
+      const r=await fetch(b+"index.json?t="+Date.now(),{cache:"no-store"});
+      if(!r.ok)throw new Error(r.status);
+      const j=await r.json();
+      blogBase=b;
+      blogCache=(j.posts||[]).sort((a,b)=>(b.date||"").localeCompare(a.date||""));
+      blogErr=false;
+      return blogCache;
+    }catch(e){}
+  }
+  /* index.json 读不到：退化成扫描目录（本地服务器目录列表 → GitHub API），
+     从每篇文章的 index.md 头部元信息拼出列表 */
+  const fb=await loadBlogFallback();
+  if(fb&&fb.posts.length){
+    blogBase=fb.base;
+    blogCache=fb.posts;blogErr=false;
+    return blogCache;
+  }
+  blogCache=[];blogErr=true;
+  return blogCache;
+}
+async function loadBlogFallback(){
+  /* ① 本地服务器 / 支持目录列表的托管：直接解析 blog/ 目录页里的子文件夹链接 */
+  for(const b of ["blog/","../blog/"]){
+    try{
+      const base=new URL(b,location.href);
+      const res=await fetch(base.href);
+      if(!res.ok)continue;
+      const doc=new DOMParser().parseFromString(await res.text(),"text/html");
+      const slugs=new Set();
+      doc.querySelectorAll("a[href]").forEach(a=>{
+        let h=(a.getAttribute("href")||"").split("#")[0].split("?")[0];
+        if(!h.endsWith("/"))return;
+        const name=decodeURIComponent(h.replace(/\/$/,"").split("/").pop());
+        if(name&&name!==".."&&name!==".")slugs.add(name);
+      });
+      const posts=[];
+      for(const s of slugs){
+        try{
+          const r=await fetch(new URL(encodeURIComponent(s)+"/index.md",base).href,{cache:"no-store"});
+          if(!r.ok)continue;
+          const {meta}=parsePost(await r.text());
+          posts.push({slug:s,title:meta.title||s,desc:meta.desc||"",
+            tags:Array.isArray(meta.tags)?meta.tags:[],
+            date:meta.date||"",minutes:+meta.minutes||1,
+            cover:meta.cover||"",bg:meta.background||""});
+        }catch(e){}
+      }
+      if(posts.length)return {base:b,posts:posts.sort((a,c)=>(c.date||"").localeCompare(a.date||""))};
+    }catch(e){}
+  }
+  /* ② 部署后没有目录列表（如 Cloudflare Pages）：走 GitHub API */
+  for(const b of ["blog/","../blog/"]){
+    try{
+      const r=await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${b.replace(/\/$/,"")}?ref=${GH_BRANCH}`,
+        {headers:{Accept:"application/vnd.github+json"}});
+      if(!r.ok)continue;
+      const arr=await r.json();
+      if(!Array.isArray(arr))continue;
+      const dirs=arr.filter(x=>x.type==="dir");
+      if(!dirs.length)continue;
+      const posts=[];
+      for(const d of dirs){
+        try{
+          const r2=await fetch(`https://raw.githubusercontent.com/${GH_REPO}/${GH_BRANCH}/${b}${encodeURIComponent(d.name)}/index.md`,{cache:"no-store"});
+          if(!r2.ok)continue;
+          const {meta}=parsePost(await r2.text());
+          posts.push({slug:d.name,title:meta.title||d.name,desc:meta.desc||"",
+            tags:Array.isArray(meta.tags)?meta.tags:[],
+            date:meta.date||"",minutes:+meta.minutes||1,
+            cover:meta.cover||"",bg:meta.background||""});
+        }catch(e){}
+      }
+      if(posts.length)return {base:b,posts:posts.sort((a,c)=>(c.date||"").localeCompare(a.date||""))};
+    }catch(e){}
+  }
+  return null;
+}
+/* 解析 front matter（--- 包围的元信息）与正文 */
+function parsePost(raw){
+  const meta={};let body=raw;
+  const m=raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
+  if(m){
+    m[1].split(/\r?\n/).forEach(line=>{
+      const kv=line.match(/^([A-Za-z][\w-]*):\s*(.*)$/);
+      if(!kv)return;
+      let v=kv[2].trim();
+      if(/^\[.*\]$/.test(v)){
+        try{v=JSON.parse(v);}
+        catch(e){v=v.slice(1,-1).split(",").map(s=>s.trim().replace(/^["']|["']$/g,"")).filter(Boolean);}
+      }else v=v.replace(/^["']|["']$/g,"");
+      meta[kv[1].toLowerCase()]=v;
+    });
+    body=m[2];
+  }
+  return {meta,body};
+}
+/* 极简 Markdown 渲染：标题/引用/代码块/列表/图片/链接/加粗/斜体/行内码/分隔线 */
+function mdToHTML(md,imgBase){
+  const inline=s=>{
+    s=esc(s);
+    s=s.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g,(m,alt,src)=>{
+      const u=/^(https?:|data:|\/)/.test(src)?src:imgBase+src;
+      return `<img src="${u}" alt="${alt}" loading="lazy" decoding="async">`;
+    });
+    s=s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+    s=s.replace(/\*\*([^*]+)\*\*/g,"<strong>$1</strong>")
+       .replace(/\*([^*]+)\*/g,"<em>$1</em>")
+       .replace(/`([^`]+)`/g,"<code>$1</code>");
+    return s;
+  };
+  const lines=md.split(/\r?\n/),out=[];let i=0;
+  const BLOCK=/^(#{1,4})\s+|^```|^\s*>|^\s*[-*+]\s+|^\s*\d+[.)]\s+|^\s*(---+|\*\*\*+)\s*$/;
+  while(i<lines.length){
+    const L=lines[i];
+    if(/^```/.test(L)){
+      const buf=[];i++;
+      while(i<lines.length&&!/^```/.test(lines[i])){buf.push(lines[i]);i++;}
+      i++;
+      out.push(`<pre><code>${esc(buf.join("\n"))}</code></pre>`);continue;
+    }
+    const h=L.match(/^(#{1,4})\s+(.*)/);
+    if(h){const lv=h[1].length+1;out.push(`<h${lv}>${inline(h[2])}</h${lv}>`);i++;continue;}
+    if(/^\s*(---+|\*\*\*+)\s*$/.test(L)){out.push("<hr>");i++;continue;}
+    if(/^\s*>\s?/.test(L)){
+      const buf=[];
+      while(i<lines.length&&/^\s*>\s?/.test(lines[i])){buf.push(lines[i].replace(/^\s*>\s?/,""));i++;}
+      out.push(`<blockquote>${inline(buf.join(" "))}</blockquote>`);continue;
+    }
+    if(/^\s*[-*+]\s+/.test(L)){
+      const buf=[];
+      while(i<lines.length&&/^\s*[-*+]\s+/.test(lines[i])){buf.push(lines[i].replace(/^\s*[-*+]\s+/,""));i++;}
+      out.push(`<ul>${buf.map(x=>`<li>${inline(x)}</li>`).join("")}</ul>`);continue;
+    }
+    if(/^\s*\d+[.)]\s+/.test(L)){
+      const buf=[];
+      while(i<lines.length&&/^\s*\d+[.)]\s+/.test(lines[i])){buf.push(lines[i].replace(/^\s*\d+[.)]\s+/,""));i++;}
+      out.push(`<ol>${buf.map(x=>`<li>${inline(x)}</li>`).join("")}</ol>`);continue;
+    }
+    if(/^\s*$/.test(L)){i++;continue;}
+    const buf=[];
+    while(i<lines.length&&!/^\s*$/.test(lines[i])&&!BLOCK.test(lines[i])){buf.push(lines[i]);i++;}
+    out.push(`<p>${inline(buf.join(" "))}</p>`);
+  }
+  return out.join("");
+}
+const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function fmtDate(d,short){
+  const m=(d||"").match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if(!m)return d||"";
+  return lang==="zh"
+    ?(short?`${+m[2]} 月 ${+m[3]} 日`:`${m[1]} 年 ${+m[2]} 月 ${+m[3]} 日`)
+    :(short?`${MONTHS[+m[2]-1]} ${+m[3]}`:`${MONTHS[+m[2]-1]} ${+m[3]}, ${m[1]}`);
+}
+function postSrc(slug,f){ return /^(https?:|data:|\/)/.test(f)?f:`${blogBase}${slug}/${f}`; }
+
+async function renderBlog(){
   const t=T();
+  app.innerHTML=`<section class="view"><div class="wrap">
+    <div class="page-head"><h1>${esc(t.blog.title)}</h1><p class="sub" id="blogSub"></p></div>
+    <div id="blogBody"></div>
+  </div></section>`;
+  const posts=await loadBlog();
+  const sub=document.getElementById("blogSub");
+  const body=document.getElementById("blogBody");
+  if(!body)return;
+  if(sub)sub.textContent=t.blog.sub(posts.length);
+  if(blogErr){body.innerHTML=`<div class="blog-empty">${t.blog.err}</div>`;return;}
+  if(!posts.length){body.innerHTML=`<div class="blog-empty">${esc(t.blog.empty)}</div>`;return;}
+  let html="",lastYear="";
+  posts.forEach(p=>{
+    const y=(p.date||"").slice(0,4)||"····";
+    if(y!==lastYear){html+=`<div class="blog-year">${y}</div>`;lastYear=y;}
+    html+=`
+    <a class="post-card" href="#/blog/${encodeURIComponent(p.slug)}">
+      <span class="post-thumb">${p.cover?`<img src="${esc(postSrc(p.slug,p.cover))}" alt="" loading="lazy" decoding="async" onerror="this.parentNode.innerHTML='🖼️'">`:"🖼️"}</span>
+      <span class="post-mid">
+        <span class="post-tags">${(p.tags||[]).map(x=>`<span class="tag">${esc(x)}</span>`).join("")}</span>
+        <span class="post-title">${esc(p.title||t.blog.untitled)}</span>
+        ${p.desc?`<span class="post-desc">${esc(p.desc)}</span>`:""}
+      </span>
+      <span class="post-side">
+        <span>${esc(fmtDate(p.date,true))}</span>
+        <span>${esc(t.blog.minutes(p.minutes||1))}</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+      </span>
+    </a>`;
+  });
+  body.innerHTML=`<div class="blog-list">${html}</div>`;
+}
+
+async function renderPost(slug){
+  const t=T();
+  app.innerHTML=`<section class="view">
+    <div class="post-hero"></div>
+    <div class="wrap"><a class="post-back" href="#/blog">${esc(t.blog.back)}</a></div>
+  </section>`;
+  const posts=await loadBlog();
+  const post=posts.find(p=>p.slug===slug);
+  const fail=msg=>{app.innerHTML=`<section class="view"><div class="wrap">
+    <div class="blog-empty">${msg}</div>
+    <div style="text-align:center"><a class="post-back" href="#/blog">${esc(t.blog.back)}</a></div>
+  </div></section>`;};
+  if(!post){fail(esc(t.blog.err));return;}
+  let raw="";
+  try{
+    const r=await fetch(`${blogBase}${slug}/index.md?t=${Date.now()}`,{cache:"no-store"});
+    if(!r.ok)throw new Error(r.status);
+    raw=await r.text();
+  }catch(e){fail(esc(t.blog.err));return;}
+  const {meta,body}=parsePost(raw);
+  const title=meta.title||post.title||t.blog.untitled;
+  const desc=meta.desc||post.desc||"";
+  const tags=meta.tags||post.tags||[];
+  const date=meta.date||post.date||"";
+  const minutes=+meta.minutes||post.minutes||Math.max(1,Math.round(body.replace(/\s/g,"").length/450));
+  const bg=meta.background||post.bg||"";
   app.innerHTML=`
   <section class="view">
+    <div class="post-hero">${bg?`<img class="post-bg" src="${esc(postSrc(slug,bg))}" alt="" decoding="async" onerror="this.remove()">`:""}</div>
     <div class="wrap">
-      <div class="page-head">
-        <h1>${esc(t.projects.title)}</h1>
-        <p class="sub">${esc(t.projects.sub)}</p>
-      </div>
-      <div class="proj-grid">
-        ${PROJECTS.map(p=>`
-        <a class="proj" href="${esc(p.u)}" target="_blank" rel="noopener">
-          <div class="ic" style="background:${p.c}">${p.ic}</div>
-          <h4>${esc(lang==="zh"?p.zh:p.en)}</h4>
-          <p>${esc(lang==="zh"?p.dzh:p.den)}</p>
-        </a>`).join("")}
-      </div>
+      <a class="post-back" href="#/blog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>${esc(t.blog.back)}</a>
+      <header class="post-head">
+        ${tags.length?`<div class="post-tags">${tags.map(x=>`<span class="tag">${esc(x)}</span>`).join("")}</div>`:""}
+        <h1>${esc(title)}</h1>
+        ${desc?`<p class="post-sub">${esc(desc)}</p>`:""}
+        <div class="post-meta"><span>${esc(fmtDate(date))}</span><span>·</span><span>${esc(t.blog.minutes(minutes))}</span></div>
+      </header>
+      <article class="post-body">${mdToHTML(body,`${blogBase}${slug}/`)}</article>
+      <div class="post-end">${esc(t.blog.end)}</div>
     </div>
   </section>`;
 }
@@ -1042,8 +1486,13 @@ function route(){
   const parts=hash.split("/").filter(Boolean);
   let active="home";
   if(parts[0]==="gallery"){active="gallery";renderGallery()}
-  else if(parts[0]==="projects"){active="projects";renderProjects()}
+  else if(parts[0]==="blog"){
+    active="blog";
+    if(parts[1])renderPost(decodeURIComponent(parts.slice(1).join("/")));
+    else renderBlog();
+  }
   else if(parts[0]==="about"){active="about";renderAbout()}
+  else if(parts[0]==="projects"){location.replace("#/about");return}  /* 旧链接兜底：项目已并入关于页 */
   else renderHome();
   document.querySelectorAll(".nav-link").forEach(el=>
     el.classList.toggle("active",el.dataset.nav===active));
@@ -1452,7 +1901,6 @@ input[type=range].mp-range::-moz-range-thumb{
 
   const ppBtn=el("mpPP"); ppBtn.innerHTML=ICON_PLAY;
   nextBtn.innerHTML=ICON_NEXT;
-  modeBtn.innerHTML=MODE_ICON[0];
   ringEl.style.strokeDashoffset=String(RING_C);
 
   /* ---------------- 状态 ---------------- */
@@ -1475,6 +1923,28 @@ input[type=range].mp-range::-moz-range-thumb{
   let wantPlay=false, gen=0, loadingId="", swapping=false;
   let quietLoad=false;   /* 正在为「进页面恢复上次那首」做静默预加载（不是用户操作，别当成播放意图） */
   let recentIds=[];      /* 最近放过的曲目 id：随机播放时用来避开重复 */
+
+  /* ---------------- 播放顺序（列表循环 / 单曲循环 / 随机播放） ----------------
+     「先读状态，再同步」：一进页面就把存档里的播放顺序读进内存、并把按钮画对，
+     而不是先默认成「列表循环」、等歌单读完（restoreState 可能推迟好几秒）再改。
+     否则会出两种毛病：
+       ① 界面显示的是列表循环，实际按存档里的随机走（或反过来），看着「总是对不上」；
+       ② 用户在歌单读好之前手动改了顺序，随后 restoreState 又按存档把它改回去。 */
+  let modeUserSet=false;                 /* 用户本次手动改过顺序 → 存档不许再覆盖 */
+  function paintMode(){
+    const label=L().modeTitle+MODE_TIPS()[mode];
+    modeBtn.innerHTML=MODE_ICON[mode];
+    modeBtn.title=label;
+    modeBtn.setAttribute("aria-label",label);
+  }
+  function persistMode(){                /* 改一次就落盘：中途刷新 / 直接关标签也不丢 */
+    try{ const st=readSaved()||{}; st.mode=mode; localStorage.setItem(KEY,JSON.stringify(st)); }catch(e){}
+  }
+  (function initMode(){
+    const st=readSaved();
+    if(st&&typeof st.mode==="number"&&st.mode>=0&&st.mode<=2)mode=st.mode;
+    paintMode();
+  })();
 
   const poolOf=k=> k==="kg"?kgPool : k==="local"?localPool : searchPool;
   const curTrack=()=> (cur>=0&&cur<q.length)?q[cur]:null;
@@ -2063,8 +2533,8 @@ input[type=range].mp-range::-moz-range-thumb{
     let st=null;
     try{ st=JSON.parse(localStorage.getItem(KEY)||"null"); }catch(e){}
     if(!st||typeof st!=="object"){ restored=true; renderList(); return; }
-    if(typeof st.mode==="number"&&st.mode>=0&&st.mode<=2)mode=st.mode;
-    modeBtn.innerHTML=MODE_ICON[mode]; modeBtn.title=L().modeTitle+MODE_TIPS()[mode];
+    if(!modeUserSet&&typeof st.mode==="number"&&st.mode>=0&&st.mode<=2)mode=st.mode;
+    paintMode();
     if(typeof st.vol==="number"&&st.vol>0&&st.vol<=1){ audio.volume=st.vol; volEl.value=String(Math.round(st.vol*100)); }
     if(!st.track||!st.track.name){ restored=true; renderList(); paintSub(); return; }
     /* 对应的列表还没读好（本地要扫目录、酷狗要读快照）就先挂起，读好了再恢复 */
@@ -2194,8 +2664,9 @@ input[type=range].mp-range::-moz-range-thumb{
   nextBtn.addEventListener("click",()=>step(1));
   modeBtn.addEventListener("click",()=>{
     mode=(mode+1)%3;
-    modeBtn.innerHTML=MODE_ICON[mode];
-    modeBtn.title=L().modeTitle+MODE_TIPS()[mode];
+    modeUserSet=true;                  /* 这是用户的选择，之后的 restoreState 不许覆盖 */
+    paintMode();
+    persistMode();                     /* 立刻落盘，不等退出时才写 */
     flash(L().modeTitle+MODE_TIPS()[mode]);
     save();
   });
@@ -2342,7 +2813,7 @@ input[type=range].mp-range::-moz-range-thumb{
     ppBtn.title=t.playPause; ppBtn.setAttribute("aria-label",t.playPause);
     nextBtn.title=t.next; nextBtn.setAttribute("aria-label",t.next);
     syncBtn.title=t.sync; syncBtn.setAttribute("aria-label",t.sync);
-    modeBtn.title=t.modeTitle+MODE_TIPS()[mode]; modeBtn.setAttribute("aria-label",t.mode);
+    paintMode();   /* 播放顺序按钮：图标 + 提示文案都跟着语言走 */
     paintSearchUI();
     seekEl.setAttribute("aria-label",t.seekAria);
     volEl.setAttribute("aria-label",t.volAria);

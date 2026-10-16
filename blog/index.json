@@ -1,0 +1,24 @@
+{
+  "posts": [
+    {
+      "slug": "hello-blog",
+      "title": "博客使用指南",
+      "desc": "怎么用编辑器写文章、传图片、配封面和背景。",
+      "tags": ["指南", "博客"],
+      "date": "2026-10-16",
+      "minutes": 2,
+      "cover": "",
+      "bg": ""
+    },
+    {
+      "slug": "新建文件夹",
+      "title": "华为电脑管家",
+      "desc": "华为电脑管家",
+      "tags": ["华为"],
+      "date": "2026-10-15",
+      "minutes": 1,
+      "cover": "WallpaperEngineLockOverride_randomMQJVRT.jpg",
+      "bg": "luna-final-2-frame-001-00-00-00-000.png"
+    }
+  ]
+}
