@@ -1,0 +1,35 @@
+# 博客文章变动时自动重新生成 blog/index.json 并提交，
+# Cloudflare Pages 会随之自动重新部署。
+# （也可以不用本 Action，改为在 Pages 的构建命令里填：node scripts/gen-blog-index.mjs）
+name: gen-blog-index
+on:
+  push:
+    paths:
+      - "blog/**"
+      - "scripts/gen-blog-index.mjs"
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: gen-blog-index
+  cancel-in-progress: true
+jobs:
+  gen:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: node scripts/gen-blog-index.mjs
+      - name: Commit & Push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add blog/index.json
+          if git diff --cached --quiet; then
+            echo "博客索引无变化，跳过提交"
+          else
+            git commit -m "chore: 自动更新博客索引 blog/index.json"
+            git push
+          fi
