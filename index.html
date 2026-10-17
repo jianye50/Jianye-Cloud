@@ -1188,6 +1188,7 @@ function renderHome(){
     </div>
   </section>`;
   paintPhotoGrids();
+  setTimeout(prefetchBlog,600);   /* 闲时预取博客清单：点进博客秒开 */
 }
 
 function renderGallery(){
@@ -1311,6 +1312,41 @@ let blogCache=null, blogErr=false;
 const BLOG_WEB_DIRS=["blog/","../blog/"];   /* 相对本页的路径：本地服务器 / 托管 */
 const BLOG_REPO_DIRS=["blog","new/blog"];   /* 仓库里的路径：GitHub 兜底 */
 const GH_RAW=`https://raw.githubusercontent.com/${GH_REPO}/${GH_BRANCH}/`;
+/* 是否本地打开：本地目录列表实时可用，不走清单与缓存（写完刷新就能看到） */
+const IS_LOCAL=location.protocol==="file:"||
+  /^(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\]|192\.168\.|10\.|172\.(1[6-9]|2\d|3[01])\.)/i.test(location.hostname);
+const LS_BLOG="jy-blog-list-v1", LS_BLOG_TTL=10*60*1000;   /* 部署环境的列表缓存：10 分钟内秒开 */
+const byDateDesc=(a,b)=>(b.date||"").localeCompare(a.date||"");
+function lsRead(){
+  try{
+    const o=JSON.parse(localStorage.getItem(LS_BLOG)||"null");
+    if(o&&Array.isArray(o.posts)&&o.posts.length)return o;
+  }catch(e){}
+  return null;
+}
+function lsSave(posts){try{localStorage.setItem(LS_BLOG,JSON.stringify({t:Date.now(),posts}));}catch(e){}}
+function samePosts(a,b){return JSON.stringify(a)===JSON.stringify(b);}
+/* ⓪ 部署环境优先读静态清单 blog/index.json：一次几 KB 的请求＝整份列表，
+      图片与正文全部走本站域名（Cloudflare CDN），不再碰 GitHub API / raw。
+      清单由 scripts/gen-blog-index.mjs 自动生成（GitHub Action 或 Pages 构建命令运行），无需手动维护 */
+async function manifestPosts(){
+  try{
+    const r=await fetch("blog/index.json?t="+Date.now(),{cache:"no-store"});
+    if(!r.ok)return null;
+    const j=await r.json();
+    if(!j||!Array.isArray(j.posts))return null;
+    return j.posts.filter(p=>p&&p.slug&&p.md).map(p=>({
+      slug:String(p.slug),
+      mdURL:encodeURI(String(p.md)),
+      imgBase:encodeURI(String(p.imgBase||"")),
+      title:p.title||p.slug,desc:p.desc||"",
+      tags:Array.isArray(p.tags)?p.tags:[],
+      date:p.date||"",
+      minutes:+p.minutes||1,
+      cover:p.cover||"",bg:p.bg||p.background||""
+    })).sort(byDateDesc);
+  }catch(e){return null;}
+}
 
 /* 解析「目录列表」页 → [{name,dir}]；不是目录列表就返回 null */
 async function listingItems(base){
@@ -1355,19 +1391,19 @@ async function grabPost(slug,mdURL,imgBase,found){
     cover:meta.cover||"",bg:meta.background||""
   });
 }
-/* ① 扫本地 / 托管的目录列表 */
+/* ① 扫本地 / 托管的目录列表（多篇并行抓取） */
 async function scanWebDir(absBase,found){
   const items=await listingItems(absBase);
   if(!items)return false;
-  for(const it of items){
+  await Promise.all(items.map(it=>{
     const seg=encodeURIComponent(it.name);
-    await grabPost(it.dir?it.name:it.name.replace(/\.md$/i,""),
+    return grabPost(it.dir?it.name:it.name.replace(/\.md$/i,""),
       absBase+seg+(it.dir?"/index.md":""),
       absBase+(it.dir?seg+"/":""),found);
-  }
+  }));
   return true;
 }
-/* ② 静态托管没有目录列表时，按仓库目录扫（GitHub API ＋ raw 直链） */
+/* ② 静态托管没有目录列表时，按仓库目录扫（GitHub API ＋ raw 直链，多篇并行） */
 async function scanGitHubDir(repoDir,found){
   let arr;
   try{
@@ -1377,35 +1413,81 @@ async function scanGitHubDir(repoDir,found){
     arr=await r.json();
   }catch(e){return false;}
   if(!Array.isArray(arr))return false;
-  for(const it of arr){
+  await Promise.all(arr.map(it=>{
     const seg=encodeURIComponent(it.name);
     if(it.type==="dir")
-      await grabPost(it.name,`${GH_RAW}${repoDir}/${seg}/index.md`,`${GH_RAW}${repoDir}/${seg}/`,found);
-    else if(it.type==="file"&&/\.md$/i.test(it.name))
-      await grabPost(it.name.replace(/\.md$/i,""),`${GH_RAW}${repoDir}/${seg}`,`${GH_RAW}${repoDir}/`,found);
-  }
+      return grabPost(it.name,`${GH_RAW}${repoDir}/${seg}/index.md`,`${GH_RAW}${repoDir}/${seg}/`,found);
+    if(it.type==="file"&&/\.md$/i.test(it.name))
+      return grabPost(it.name.replace(/\.md$/i,""),`${GH_RAW}${repoDir}/${seg}`,`${GH_RAW}${repoDir}/`,found);
+    return Promise.resolve();
+  }));
   return true;
 }
-async function loadBlog(){
-  if(blogCache)return blogCache;
-  const found=new Map(),seen=new Set();
-  let sourceOK=false;
+/* 扫描链路：本地/托管目录列表 → GitHub 兜底 */
+async function fetchBlogData(){
+  const found=new Map(),seen=new Set();let ok=false;
   for(const base of BLOG_WEB_DIRS){
     let abs;
     try{abs=new URL(base,location.href).href;}catch(e){continue;}
     if(seen.has(abs))continue;          /* 站点就在根目录时，两个基址是同一个地址 */
     seen.add(abs);
-    try{ if(await scanWebDir(abs,found))sourceOK=true; }catch(e){}
+    try{ if(await scanWebDir(abs,found))ok=true; }catch(e){}
   }
   if(!found.size){
     for(const dir of BLOG_REPO_DIRS){
-      try{ if(await scanGitHubDir(dir,found))sourceOK=true; }catch(e){}
+      try{ if(await scanGitHubDir(dir,found))ok=true; }catch(e){}
       if(found.size)break;
     }
   }
-  blogCache=Array.from(found.values()).sort((a,b)=>(b.date||"").localeCompare(a.date||""));
-  blogErr=!sourceOK&&!blogCache.length;
+  return {posts:Array.from(found.values()).sort(byDateDesc),ok};
+}
+async function loadBlog(){
+  if(blogCache)return blogCache;
+  /* 部署环境：优先读静态清单（一次请求、走 CDN，最快） */
+  if(!IS_LOCAL){
+    const m=await manifestPosts();
+    if(m&&m.length){blogCache=m;blogErr=false;lsSave(m);return blogCache;}
+  }
+  /* 本地：目录列表实时可用，直接扫，保证「写完刷新就能看到」 */
+  if(IS_LOCAL){
+    const r=await fetchBlogData();
+    blogCache=r.posts;blogErr=!r.ok&&!r.posts.length;
+    return blogCache;
+  }
+  /* 部署但没有清单：先吃 10 分钟内的本地缓存秒开，同时后台静默刷新 */
+  const ls=lsRead();
+  if(ls&&Date.now()-ls.t<LS_BLOG_TTL){
+    blogCache=ls.posts;blogErr=false;
+    refreshBlogInBackground();
+    return blogCache;
+  }
+  const r=await fetchBlogData();
+  if(r.posts.length){blogCache=r.posts;blogErr=false;lsSave(r.posts);}
+  else if(ls){blogCache=ls.posts;blogErr=false;}   /* 网络抽风也有旧列表兜底 */
+  else{blogCache=[];blogErr=true;}
   return blogCache;
+}
+/* 后台静默刷新：拿到新列表后就地更新（不重滚页面、不丢搜索词） */
+let blogBgBusy=false;
+async function refreshBlogInBackground(){
+  if(blogBgBusy)return;blogBgBusy=true;
+  try{
+    const r=await fetchBlogData();
+    if(r.posts.length&&!samePosts(r.posts,blogCache)){
+      blogCache=r.posts;
+      if(!IS_LOCAL)lsSave(r.posts);
+      window.dispatchEvent(new CustomEvent("bloglist"));
+    }
+  }catch(e){}
+  blogBgBusy=false;
+}
+/* 首页闲时预取清单：等你点进「博客」时列表已经在手里了 */
+let blogPreAt=0;
+function prefetchBlog(){
+  if(IS_LOCAL||blogCache||location.hash.indexOf("#/blog")===0)return;
+  const now=Date.now();
+  if(now-blogPreAt<120000)return;blogPreAt=now;
+  manifestPosts().then(m=>{if(m&&m.length){blogCache=m;blogErr=false;}});
 }
 /* 解析 front matter（--- 包围的元信息）与正文 */
 function parsePost(raw){
@@ -1606,6 +1688,16 @@ document.addEventListener("keydown",e=>{
   if(/^(INPUT|TEXTAREA|SELECT)$/.test(tag))return;
   const inp=document.getElementById("blogSearch");
   if(inp){e.preventDefault();inp.focus();}
+});
+/* 后台拿到新列表后就地重绘（仅博客列表页；保留搜索词，不重滚） */
+window.addEventListener("bloglist",()=>{
+  if(!/^#\/blog$/.test(location.hash))return;
+  const mount=document.getElementById("blogListMount");
+  if(!mount)return;
+  blogPosts=blogCache||[];
+  applyBlogFilter();
+  const sub=document.getElementById("blogSub");
+  if(sub&&!blogQuery)sub.textContent=T().blog.sub(blogPosts.length);
 });
 async function renderBlog(){
   const t=T();
