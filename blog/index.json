@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-17T05:11:46.835Z",
+  "generated": "2026-10-17T05:46:01.234Z",
   "posts": [
     {
       "slug": "一键重装",
@@ -69,6 +69,27 @@
       },
       "coverThumb": "blog/thumbs/建站记录-cover.webp",
       "bgThumb": "blog/thumbs/建站记录-bg.webp"
+    },
+    {
+      "slug": "文件传送",
+      "md": "blog/文件传送/index.md",
+      "imgBase": "blog/文件传送/",
+      "title": "鉴业文件传送：网页版P2P点对点文件互传工具｜无需下载，打开网页直接传文件",
+      "desc": "平时在电脑、手机之间互相传递文件，总会遇到各种各样的痛点：社交软件有严格的…",
+      "tags": [
+        "文件传送",
+        "传输"
+      ],
+      "date": "2026-10-17",
+      "minutes": 6,
+      "cover": "1745762721370.jpg",
+      "bg": "1745762721370.jpg",
+      "imgs": {
+        "1745762721370.jpg": "blog/thumbs/文件传送-i0.webp",
+        "屏幕截图_17-10-2026_134242_jianye.pages.dev.jpg": "blog/thumbs/文件传送-i2.webp"
+      },
+      "coverThumb": "blog/thumbs/文件传送-cover.webp",
+      "bgThumb": "blog/thumbs/文件传送-bg.webp"
     }
   ]
 }
