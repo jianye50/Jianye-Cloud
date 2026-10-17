@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-17T05:04:53.730Z",
+  "generated": "2026-10-17T05:10:29.830Z",
   "posts": [
     {
       "slug": "一键重装",
@@ -14,6 +14,14 @@
       "minutes": 3,
       "cover": "330.png",
       "bg": "330.png",
+      "imgs": {
+        "330.png": "blog/thumbs/一键重装-i0.webp",
+        "7a20f87a-1f5b-43f1-9dfa-d8da48695a3d.png": "blog/thumbs/一键重装-i1.webp",
+        "8bf52137-e5ba-45ba-be09-c64d2f55868d.png": "blog/thumbs/一键重装-i2.webp",
+        "8d4b5ff8-aeb6-4feb-aa43-2d6b3cb696f7.png": "blog/thumbs/一键重装-i3.webp",
+        "d9a508e6-7479-459a-afe5-95a662eeda9b.png": "blog/thumbs/一键重装-i4.webp",
+        "e17e17d0e330ebe2b3dce31e2cec3531.png": "blog/thumbs/一键重装-i5.webp"
+      },
       "coverThumb": "blog/thumbs/一键重装-cover.webp",
       "bgThumb": "blog/thumbs/一键重装-bg.webp"
     },
@@ -32,6 +40,10 @@
       "minutes": 6,
       "cover": "391.png",
       "bg": "391.png",
+      "imgs": {
+        "391.png": "blog/thumbs/加密软件-i0.webp",
+        "FoCnobLdHNSDkR6Y77fkqanhUFYt.png": "blog/thumbs/加密软件-i1.webp"
+      },
       "coverThumb": "blog/thumbs/加密软件-cover.webp",
       "bgThumb": "blog/thumbs/加密软件-bg.webp"
     },
@@ -49,6 +61,12 @@
       "minutes": 1,
       "cover": "luna-final-2-frame-001-00-00-00-000.png",
       "bg": "Windows 12 概念.jpg",
+      "imgs": {
+        "Moon Cat Under theMoonlight (Day - Night)月光下的月猫(昼夜).png": "blog/thumbs/建站记录-i0.webp",
+        "Windows 12 概念.jpg": "blog/thumbs/建站记录-i1.webp",
+        "luna-final-2-frame-001-00-00-00-000.png": "blog/thumbs/建站记录-i3.webp",
+        "头像.png": "blog/thumbs/建站记录-i4.webp"
+      },
       "coverThumb": "blog/thumbs/建站记录-cover.webp",
       "bgThumb": "blog/thumbs/建站记录-bg.webp"
     }
