@@ -751,7 +751,7 @@ body.np-open .veil{opacity:0;visibility:hidden}
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3.4" y="4.4" width="17.2" height="12" rx="2"/><path d="M8.5 20h7"/></svg>
         </button>
       </div>
-      <p>独立页面，与主站互不影响。<br>收藏与设置只存在这台设备上。</p>
+      <p>收藏与设置只存在这台设备上。</p>
     </div>
   </aside>
   <div class="sb-veil" id="sbVeil"></div>
@@ -969,13 +969,36 @@ function toast(msg){
 /* ---------------- 主题（独立于主站） ---------------- */
 let themePref=store.get('theme','auto');
 const mqLight=window.matchMedia('(prefers-color-scheme: light)');
+/* 「跟随系统」按钮图标按当前设备显示：电脑→显示器、平板→平板、手机→手机 */
+function deviceKind(){
+  const ua=navigator.userAgent||'';
+  if(/iPad|Tablet|PlayBook|Silk/i.test(ua)) return 'tablet';
+  if(/Android/i.test(ua)&&!/Mobile/i.test(ua)) return 'tablet';          /* 安卓平板 */
+  if(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1) return 'tablet'; /* iPadOS 仿桌面 UA */
+  if(/Mobi|iPhone|iPod|Windows Phone|IEMobile/i.test(ua)) return 'phone';
+  return 'desktop';
+}
+const DEVICE_NAMES={desktop:'电脑',tablet:'平板',phone:'手机'};
+const DEVICE_ICONS={
+  desktop:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.4" y="4.4" width="17.2" height="12" rx="2"/><path d="M12 16.4v3.1M8.5 20.5h7"/></svg>',
+  tablet:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4.6" y="2.8" width="14.8" height="18.4" rx="2.4"/><path d="M10.8 18.6h2.4"/></svg>',
+  phone:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="7.2" y="2.8" width="9.6" height="18.4" rx="2.2"/><path d="M10.9 18.6h2.2"/></svg>'
+};
+const deviceK=deviceKind();
+const deviceIc=DEVICE_ICONS[deviceK];
 function applyTheme(){
   const dark = themePref==='dark' || (themePref==='auto' && !mqLight.matches);
   document.documentElement.dataset.theme = dark?'dark':'light';
   $('meta[name="theme-color"]').setAttribute('content', dark?'#0b0b0d':'#fbfbfd');
   $$('#themeSeg button').forEach(b=>b.classList.toggle('on', b.dataset.themeSet===themePref));
+  const autoBtn=$('#themeSeg [data-theme-set="auto"]');
+  if(autoBtn){
+    autoBtn.innerHTML=deviceIc;
+    autoBtn.title='跟随系统（'+DEVICE_NAMES[deviceK]+'）· 当前'+(dark?'深色':'浅色');
+  }
 }
-mqLight.addEventListener('change',()=>{ if(themePref==='auto') applyTheme(); });
+/* 系统深浅色切换时刷新（显式选了浅色/深色时也刷新「跟随系统」图标，代价为零） */
+mqLight.addEventListener('change',()=>applyTheme());
 
 /* =========================================================
    数据：推荐歌单（人工挑选，播放时按「歌名 + 歌手」在线匹配）
