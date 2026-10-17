@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-17T04:54:27.777Z",
+  "generated": "2026-10-17T05:04:26.923Z",
   "posts": [
     {
       "slug": "一键重装",
@@ -13,7 +13,9 @@
       "date": "2026-10-17",
       "minutes": 3,
       "cover": "330.png",
-      "bg": "330.png"
+      "bg": "330.png",
+      "coverThumb": "blog/thumbs/一键重装-cover.webp",
+      "bgThumb": "blog/thumbs/一键重装-bg.webp"
     },
     {
       "slug": "加密软件",
@@ -29,7 +31,9 @@
       "date": "2026-10-17",
       "minutes": 6,
       "cover": "391.png",
-      "bg": "391.png"
+      "bg": "391.png",
+      "coverThumb": "blog/thumbs/加密软件-cover.webp",
+      "bgThumb": "blog/thumbs/加密软件-bg.webp"
     },
     {
       "slug": "建站记录",
@@ -44,7 +48,9 @@
       "date": "2026-10-17",
       "minutes": 1,
       "cover": "luna-final-2-frame-001-00-00-00-000.png",
-      "bg": "Windows 12 概念.jpg"
+      "bg": "Windows 12 概念.jpg",
+      "coverThumb": "blog/thumbs/建站记录-cover.webp",
+      "bgThumb": "blog/thumbs/建站记录-bg.webp"
     }
   ]
 }
