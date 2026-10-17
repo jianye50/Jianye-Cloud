@@ -109,7 +109,7 @@ html[data-theme="light"] .ambient .a2{opacity:.24}
 html[data-theme="light"] .ambient .a3{opacity:.16}
 
 /* ---------- 应用外壳 ---------- */
-.app{position:relative;z-index:1;height:100vh;height:100dvh;display:grid;
+.app{position:fixed;inset:0;z-index:1;display:grid;
   grid-template-columns:var(--sidebar-w) minmax(0,1fr) var(--np-w)}
 
 /* ---------- 侧边栏 ---------- */
@@ -635,6 +635,9 @@ body.np-open .veil{opacity:0;visibility:hidden}
   .app{grid-template-columns:var(--sidebar-w) minmax(0,1fr)}
   /* 窄屏不再使用右侧面板：歌词/队列在全屏播放页的选项卡里 */
   .nowpanel{display:none}
+  /* 平板（980-1279）没有右侧面板，显示底部播放条；往右挪避开常驻侧栏 */
+  .mini{display:flex;left:calc(var(--sidebar-w) + 14px)}
+  .scroller{padding-bottom:96px}
 }
 @media (max-width:979px){
   .app{grid-template-columns:minmax(0,1fr)}
@@ -651,7 +654,7 @@ body.np-open .veil{opacity:0;visibility:hidden}
   .hero-tx{max-width:100%}
   .hero-art{width:150px;height:150px;transform:none}
   .hero:hover .hero-art{transform:none}
-  .mini{display:flex}
+  .mini{display:flex;left:10px}
   .np-full{padding:0}
   /* 手机全屏：歌词在上、控制区钉在底部，方便操作 */
   .npx{display:flex;flex-direction:column;align-items:stretch;
@@ -974,8 +977,17 @@ function deviceKind(){
   const ua=navigator.userAgent||'';
   if(/iPad|Tablet|PlayBook|Silk/i.test(ua)) return 'tablet';
   if(/Android/i.test(ua)&&!/Mobile/i.test(ua)) return 'tablet';          /* 安卓平板 */
-  if(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1) return 'tablet'; /* iPadOS 仿桌面 UA */
   if(/Mobi|iPhone|iPod|Windows Phone|IEMobile/i.test(ua)) return 'phone';
+  /* UA 看不出来时按输入方式判断：主指针是手指且不能悬停 → 触屏设备，
+     再按短边尺寸区分平板/手机；这样 iPadOS 仿桌面 UA 和浏览器设备模拟都能认对 */
+  try{
+    const coarse=matchMedia('(pointer: coarse)').matches;
+    const noHover=matchMedia('(hover: none)').matches;
+    if(coarse||noHover){
+      return Math.min(screen.width,screen.height)>=600?'tablet':'phone';
+    }
+  }catch(e){}
+  if(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1) return 'tablet'; /* iPadOS 仿桌面 UA */
   return 'desktop';
 }
 const DEVICE_NAMES={desktop:'电脑',tablet:'平板',phone:'手机'};
