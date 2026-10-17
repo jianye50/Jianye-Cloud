@@ -5,17 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="dark">
 <title>鉴业の小站</title>
-<meta name="description" content="鉴业の小站 —— 造物、记录，与喜欢的光影。">
-<!-- 站点图标：站点根目录的 icon.ico（本页在子目录里也能取到） -->
-<link rel="icon" href="../icon.ico" sizes="any">
-<link rel="apple-touch-icon" href="../icon.ico">
+<meta name="description" content="鉴业の小站 —— 愿我们拥有的时候不要毁，失去的时候不要悔。">
+<!-- 站点图标：站点根目录的 icon.ico -->
+<link rel="icon" href="icon.ico" sizes="any">
+<link rel="apple-touch-icon" href="icon.ico">
 <!-- 移动端地址栏配色（站点固定深色） -->
 <meta name="theme-color" content="#0b0d12">
 <!-- 分享卡片预览 -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="鉴业の小站">
 <meta property="og:title" content="鉴业の小站">
-<meta property="og:description" content="造物、记录，与喜欢的光影和想法。">
+<meta property="og:description" content="愿我们拥有的时候不要毁，失去的时候不要悔。">
 <meta property="og:url" content="https://jianye.pages.dev/">
 <meta property="og:image" content="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1200&q=75&auto=format">
 <meta name="twitter:card" content="summary_large_image">
@@ -621,6 +621,31 @@ body.lb-lock{overflow:hidden}
   .skl-beam::before{animation:none}
   .rv{animation:none}
 }
+/* ---------- 博客搜索框 ---------- */
+.blog-search{display:flex;align-items:center;gap:12px;margin:0 0 18px}
+.bs-box{position:relative;flex:1;max-width:460px}
+.bs-box>svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);
+  width:16px;height:16px;color:var(--text-3);pointer-events:none;transition:color .2s}
+.bs-box:focus-within>svg{color:var(--accent)}
+#blogSearch{width:100%;padding:11px 40px;border-radius:12px;
+  border:1px solid var(--card-border);background:var(--bg-2);
+  color:var(--text-1);font-size:14px;font-family:inherit;outline:none;
+  transition:border-color .2s,box-shadow .2s}
+#blogSearch::placeholder{color:var(--text-3)}
+#blogSearch:focus{border-color:rgba(77,141,255,.55);box-shadow:0 0 0 3px var(--accent-soft)}
+#blogSearch::-webkit-search-cancel-button,#blogSearch::-webkit-search-decoration{-webkit-appearance:none;display:none}
+#blogSearchClear{position:absolute;right:8px;top:50%;transform:translateY(-50%);
+  width:24px;height:24px;padding:0;border:none;border-radius:50%;
+  background:var(--chip);color:var(--text-2);cursor:pointer;
+  display:none;place-items:center;font-size:12px;line-height:1;transition:background .2s,color .2s}
+#blogSearchClear:hover{background:var(--accent-soft);color:var(--accent)}
+#blogSearchClear.on{display:grid}
+.bs-count{font-size:12.5px;color:var(--text-3);white-space:nowrap}
+.bs-kbd{flex:none;margin-left:auto;font-size:11.5px;color:var(--text-3);border:1px solid var(--card-border);
+  border-radius:6px;padding:2px 7px;line-height:1.5;user-select:none}
+mark{background:rgba(77,141,255,.30);color:var(--text-1);border-radius:3px;padding:0 1px}
+.rvf{animation:card-in .2s ease both}   /* 筛选重绘：快速淡入，不做错峰 */
+@media (max-width:560px){.bs-kbd{display:none}.blog-search{gap:8px}}
 /* 文章页 */
 .post-hero{position:relative;height:min(46vh,380px);background:var(--hero-fallback);overflow:hidden}
 .post-hero img.post-bg{width:100%;height:100%;object-fit:cover;display:block}
@@ -762,7 +787,7 @@ const PROJECTS=[
 ];
 /* ---------- 个人信息 ---------- */
 const EMAIL="aimjianye@outlook.com";
-const AVATAR="../%E5%A4%B4%E5%83%8F.png";   /* 站点根目录的「头像.png」，本页在子目录里 */
+const AVATAR="%E5%A4%B4%E5%83%8F.png";   /* 站点根目录的「头像.png」（首页已在根目录，直接同级引用） */
 const CHIPS=[
   {i:"📍",zh:"中国",en:"China"},
   {i:"💻",zh:"全栈开发",en:"Full-stack Dev"},
@@ -811,7 +836,7 @@ const I18N={
     nav:{home:"首页",gallery:"图库",blog:"博客",about:"关于"},
     langTip:"切换到英文",
     cloud:"云空间",
-    hero:{badge:"个人空间",sub:"造物、记录，<br>与喜欢的光影和想法。",read:"浏览博客",aboutBtn:"关于我",hint:"向下浏览"},
+    hero:{badge:"个人空间",sub:"愿我们拥有的时候不要毁，<br>失去的时候不要悔。",read:"浏览博客",aboutBtn:"关于我",hint:"向下浏览"},
     home:{gallery:"图库",more:"查看全部照片",projects:"项目",moreProj:"查看全部项目"},
     gallery:{
       title:"图库",
@@ -829,7 +854,11 @@ const I18N={
       read:"阅读全文",
       minutes:n=>`${n} 分钟读完`,
       end:"全文完",
-      untitled:"无标题"
+      untitled:"无标题",
+      searchPh:"搜索文章（标题 / 标签 / 摘要）",
+      found:n=>`找到 ${n} 篇`,
+      noResult:q=>`没有找到与「${q}」相关的文章，换个关键词试试。`,
+      clearTip:"清空搜索"
     },
     about:{
       title:"关于",hello:"你好，我是鉴业。",
@@ -870,7 +899,11 @@ const I18N={
       read:"Read article",
       minutes:n=>`${n} min read`,
       end:"End of post",
-      untitled:"Untitled"
+      untitled:"Untitled",
+      searchPh:"Search posts (title / tag / summary)",
+      found:n=>`${n} post${n===1?"":"s"} found`,
+      noResult:q=>`No posts match “${q}”. Try another keyword.`,
+      clearTip:"Clear search"
     },
     about:{
       title:"About",hello:"Hi, I'm Jianye.",
@@ -1487,31 +1520,42 @@ function blogSkeletonHTML(){
     <div class="skl-beam"></div>
   </div>`;
 }
-async function renderBlog(){
+/* ---------- 博客搜索 ---------- */
+let blogPosts=[];        /* 最近一次加载的文章列表 */
+let blogQuery="";        /* 搜索词：会话内保留，看完文章返回博客还在 */
+function blogMatch(p,q){
+  if(!q)return true;
+  const hay=((p.title||"")+" "+(p.desc||"")+" "+((p.tags||[]).join(" "))+" "+(p.slug||"")).toLowerCase();
+  return q.toLowerCase().split(/\s+/).filter(Boolean).every(w=>hay.includes(w));
+}
+/* 转义后高亮：命中片段包 <mark>，不会引入 HTML 注入 */
+function hiText(str,q){
+  let s=esc(str||"");
+  const words=(q||"").trim().split(/\s+/).filter(Boolean);
+  words.forEach(w=>{
+    const safe=esc(w).replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+    if(safe)s=s.replace(new RegExp("("+safe+")","gi"),"<mark>$1</mark>");
+  });
+  return s;
+}
+function blogListHTML(list,q,stagger){
   const t=T();
-  app.innerHTML=`<section class="view"><div class="wrap">
-    <div class="page-head"><h1>${esc(t.blog.title)}</h1><p class="sub" id="blogSub"></p></div>
-    <div id="blogBody">${blogSkeletonHTML()}</div>
-  </div></section>`;
-  const posts=await loadBlog();
-  const sub=document.getElementById("blogSub");
-  const body=document.getElementById("blogBody");
-  if(!body)return;
-  if(sub)sub.textContent=t.blog.sub(posts.length);
-  const skl=body.querySelector(".skl-wrap");
-  if(blogErr){body.innerHTML=`<div class="blog-empty">${t.blog.err}</div>`;return;}
-  if(!posts.length){body.innerHTML=`<div class="blog-empty">${esc(t.blog.empty)}</div>`;return;}
+  if(!list.length)return `<div class="blog-empty">${esc(t.blog.noResult(q||""))}</div>`;
   let html="",lastYear="",i=0;
-  posts.forEach(p=>{
+  list.forEach(p=>{
     const y=(p.date||"").slice(0,4)||"····";
-    if(y!==lastYear){html+=`<div class="blog-year rv" style="animation-delay:${(i++)*60}ms">${y}</div>`;lastYear=y;}
+    if(y!==lastYear){
+      html+=`<div class="blog-year ${stagger?"rv":""}"${stagger?` style="animation-delay:${(i++)*60}ms"`:""}>${y}</div>`;
+      lastYear=y;
+    }
+    const dly=stagger?` style="animation-delay:${(i++)*60}ms"`:"";
     html+=`
-    <a class="post-card rv" style="animation-delay:${(i++)*60}ms" href="#/blog/${encodeURIComponent(p.slug)}">
+    <a class="post-card ${stagger?"rv":"rvf"}"${dly} href="#/blog/${encodeURIComponent(p.slug)}">
       <span class="post-thumb">${p.cover?`<img src="${esc(postSrc(p,p.cover))}" alt="" loading="lazy" decoding="async" onerror="this.parentNode.innerHTML='🖼️'">`:"🖼️"}</span>
       <span class="post-mid">
         <span class="post-tags">${(p.tags||[]).map(x=>`<span class="tag">${esc(x)}</span>`).join("")}</span>
-        <span class="post-title">${esc(p.title||t.blog.untitled)}</span>
-        ${p.desc?`<span class="post-desc">${esc(p.desc)}</span>`:""}
+        <span class="post-title">${hiText(p.title||t.blog.untitled,q)}</span>
+        ${p.desc?`<span class="post-desc">${hiText(p.desc,q)}</span>`:""}
       </span>
       <span class="post-side">
         <span>${esc(fmtDate(p.date,true))}</span>
@@ -1520,22 +1564,95 @@ async function renderBlog(){
       </span>
     </a>`;
   });
+  return `<div class="blog-list">${html}</div>`;
+}
+function bsSync(){
+  const inp=document.getElementById("blogSearch");
+  const clr=document.getElementById("blogSearchClear");
+  const cnt=document.getElementById("bsCount");
+  if(inp&&clr)clr.classList.toggle("on",!!inp.value.trim());
+  if(cnt){
+    const n=blogPosts.filter(p=>blogMatch(p,blogQuery)).length;
+    cnt.textContent=blogQuery?(n?T().blog.found(n):""):"";
+  }
+}
+function applyBlogFilter(){
+  const mount=document.getElementById("blogListMount");
+  if(!mount)return;
+  const list=blogPosts.filter(p=>blogMatch(p,blogQuery));
+  mount.innerHTML=blogListHTML(list,blogQuery,false);
+  bsSync();
+}
+function bindBlogSearch(){
+  const inp=document.getElementById("blogSearch");
+  const clr=document.getElementById("blogSearchClear");
+  if(!inp)return;
+  inp.value=blogQuery;
+  let deb=null;
+  inp.addEventListener("input",()=>{
+    clearTimeout(deb);
+    deb=setTimeout(()=>{blogQuery=inp.value.trim();applyBlogFilter();},110);
+  });
+  inp.addEventListener("keydown",e=>{
+    if(e.key==="Escape"&&inp.value){e.stopPropagation();inp.value="";blogQuery="";applyBlogFilter();}
+  });
+  if(clr)clr.addEventListener("click",()=>{inp.value="";blogQuery="";applyBlogFilter();inp.focus();});
+  bsSync();
+}
+/* 在博客页按「/」快速聚焦搜索框 */
+document.addEventListener("keydown",e=>{
+  if(e.key!=="/"||e.ctrlKey||e.metaKey||e.altKey)return;
+  const tag=((document.activeElement||{}).tagName||"");
+  if(/^(INPUT|TEXTAREA|SELECT)$/.test(tag))return;
+  const inp=document.getElementById("blogSearch");
+  if(inp){e.preventDefault();inp.focus();}
+});
+async function renderBlog(){
+  const t=T();
+  app.innerHTML=`<section class="view"><div class="wrap">
+    <div class="page-head"><h1>${esc(t.blog.title)}</h1><p class="sub" id="blogSub"></p></div>
+    <div class="blog-search">
+      <div class="bs-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+        <input id="blogSearch" type="search" autocomplete="off" spellcheck="false"
+               placeholder="${esc(t.blog.searchPh)}" aria-label="${esc(t.blog.searchPh)}">
+        <button id="blogSearchClear" type="button" title="${esc(t.blog.clearTip)}" aria-label="${esc(t.blog.clearTip)}">✕</button>
+      </div>
+      <span class="bs-count" id="bsCount"></span>
+      <span class="bs-kbd" title="按 / 快速搜索">/</span>
+    </div>
+    <div id="blogBody">${blogSkeletonHTML()}<div id="blogListMount"></div></div>
+  </div></section>`;
+  const posts=await loadBlog();
+  const sub=document.getElementById("blogSub");
+  const body=document.getElementById("blogBody");
+  if(!body)return;
+  blogPosts=posts;
+  if(sub)sub.textContent=t.blog.sub(posts.length);
+  if(blogErr){body.innerHTML=`<div class="blog-empty">${t.blog.err}</div>`;return;}
+  if(!posts.length){body.innerHTML=`<div class="blog-empty">${esc(t.blog.empty)}</div>`;return;}
+  bindBlogSearch();
+  const mount=document.getElementById("blogListMount");
+  const skl=body.querySelector(".skl-wrap");
+  const list=posts.filter(p=>blogMatch(p,blogQuery));
+  mount.innerHTML=blogListHTML(list,blogQuery,!blogQuery);   /* 带搜索词时不播错峰，直接出结果 */
+  const mountList=mount.firstElementChild;
   /* 骨架淡出与卡片浮现同步：真实列表先叠在骨架上层，骨架 0.3s 淡出后再摘除，全程不闪白 */
   if(skl){
     body.style.minHeight=skl.offsetHeight+"px";
-    body.insertAdjacentHTML("beforeend",`<div class="blog-list" id="blogReal" style="position:absolute;inset:0">${html}</div>`);
+    if(mountList&&mountList.classList.contains("blog-list")){
+      mountList.style.position="absolute";mountList.style.inset="0";
+    }
     skl.classList.add("out");
     setTimeout(()=>{
-      const r=document.getElementById("blogReal");
-      if(r){r.style.position="";r.style.inset="";}
+      if(mountList&&mountList.style){mountList.style.position="";mountList.style.inset="";}
       const s=document.getElementById("blogSkl");
       if(s&&s.parentNode)s.remove();
       const b=document.getElementById("blogBody");
       if(b)b.style.minHeight="";
     },340);
-  }else{
-    body.insertAdjacentHTML("beforeend",`<div class="blog-list">${html}</div>`);
   }
+  bsSync();
 }
 
 async function renderPost(slug){
