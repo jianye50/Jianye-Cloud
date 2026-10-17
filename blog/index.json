@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-17T05:46:01.234Z",
+  "generated": "2026-10-17T06:01:07.626Z",
   "posts": [
     {
       "slug": "一键重装",
@@ -90,6 +90,27 @@
       },
       "coverThumb": "blog/thumbs/文件传送-cover.webp",
       "bgThumb": "blog/thumbs/文件传送-bg.webp"
+    },
+    {
+      "slug": "浏览器主页",
+      "md": "blog/浏览器主页/index.md",
+      "imgBase": "blog/浏览器主页/",
+      "title": "我做了一个极简浏览器主页，告别广告与信息轰炸",
+      "desc": "每次打开浏览器新建标签页，你会看到什么？满屏推送新闻、弹窗广告、五花八门的内容推荐。很多起始页不断堆砌功能，把新标签页变成信息流广场，我们本只想快速搜索，却被各种信息裹挟，注意力被不断切碎。",
+      "tags": [
+        "浏览器主页",
+        "简洁"
+      ],
+      "date": "2026-10-17",
+      "minutes": 3,
+      "cover": "微信图片_20260614030832_13646_1032.jpg",
+      "bg": "微信图片_20260614030832_13646_1032.jpg",
+      "imgs": {
+        "屏幕截图_17-10-2026_13579_jianye.pages.dev.jpg": "blog/thumbs/浏览器主页-i1.webp",
+        "微信图片_20260614030832_13646_1032.jpg": "blog/thumbs/浏览器主页-i2.webp"
+      },
+      "coverThumb": "blog/thumbs/浏览器主页-cover.webp",
+      "bgThumb": "blog/thumbs/浏览器主页-bg.webp"
     }
   ]
 }
