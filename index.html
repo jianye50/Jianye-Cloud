@@ -1343,7 +1343,9 @@ async function manifestPosts(){
       tags:Array.isArray(p.tags)?p.tags:[],
       date:p.date||"",
       minutes:+p.minutes||1,
-      cover:p.cover||"",bg:p.bg||p.background||""
+      cover:p.cover||"",bg:p.bg||p.background||"",
+      coverThumb:p.coverThumb?encodeURI(String(p.coverThumb)):"",
+      bgThumb:p.bgThumb?encodeURI(String(p.bgThumb)):""
     })).sort(byDateDesc);
   }catch(e){return null;}
 }
@@ -1633,7 +1635,7 @@ function blogListHTML(list,q,stagger){
     const dly=stagger?` style="animation-delay:${(i++)*60}ms"`:"";
     html+=`
     <a class="post-card ${stagger?"rv":"rvf"}"${dly} href="#/blog/${encodeURIComponent(p.slug)}">
-      <span class="post-thumb">${p.cover?`<img src="${esc(postSrc(p,p.cover))}" alt="" loading="lazy" decoding="async" onerror="this.parentNode.innerHTML='🖼️'">`:"🖼️"}</span>
+      <span class="post-thumb">${(p.coverThumb||p.cover)?`<img src="${esc(postSrc(p,p.coverThumb||p.cover))}" alt="" loading="lazy" decoding="async" onerror="this.onerror=null;this.parentNode.innerHTML='🖼️'">`:"🖼️"}</span>
       <span class="post-mid">
         <span class="post-tags">${(p.tags||[]).map(x=>`<span class="tag">${esc(x)}</span>`).join("")}</span>
         <span class="post-title">${hiText(p.title||t.blog.untitled,q)}</span>
@@ -1773,9 +1775,10 @@ async function renderPost(slug){
   const date=meta.date||post.date||"";
   const minutes=+meta.minutes||post.minutes||Math.max(1,Math.round(body.replace(/\s/g,"").length/450));
   const bg=meta.background||post.bg||"";
+  const bgSrc=(post.bgThumb||meta.bgThumb||"")||bg;   /* 文章页头图优先用构建时压缩的 1600px WebP 版 */
   app.innerHTML=`
   <section class="view">
-    <div class="post-hero">${bg?`<img class="post-bg" src="${esc(postSrc(post,bg))}" alt="" decoding="async" onerror="this.remove()">`:""}</div>
+    <div class="post-hero">${bg?`<img class="post-bg" src="${esc(postSrc(post,bgSrc))}" alt="" decoding="async" onerror="this.onerror=null;this.src='${esc(postSrc(post,bg))}'">`:""}</div>
     <div class="wrap">
       <a class="post-back" href="#/blog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>${esc(t.blog.back)}</a>
       <header class="post-head">

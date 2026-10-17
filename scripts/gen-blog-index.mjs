@@ -45,6 +45,7 @@ function parseFM(raw) {
 }
 
 const posts = [];
+const coverDirs = [];   /* slug → 文章图片所在目录（生成缩略图用） */
 for (const name of readdirSync(blogDir)) {
   const p = join(blogDir, name);
   let mdPath = null, slug = null, imgBase = "blog/";
@@ -57,6 +58,7 @@ for (const name of readdirSync(blogDir)) {
     mdPath = p; slug = name.replace(/\.md$/i, "");   /* 散篇 .md：图片放在 blog 根目录 */
   }
   if (!mdPath) continue;
+  coverDirs.push({ slug, dir: join(blogDir, imgBase === "blog/" ? "" : name) });
   const { meta, body } = parseFM(readFileSync(mdPath, "utf8"));
   const tags = Array.isArray(meta.tags) ? meta.tags
     : (meta.tags ? String(meta.tags).split(/[,，]/).map(x => x.trim()).filter(Boolean) : []);
@@ -74,6 +76,60 @@ for (const name of readdirSync(blogDir)) {
   });
 }
 posts.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+
+/* ---------- 生成缩略图（可选，装了 sharp 就自动做）----------
+ * 列表缩略图 480px WebP / 文章页头图 1600px WebP，输出到 blog/thumbs/。
+ * 没装 sharp 时自动跳过，网站会回退用原图，不影响构建。 */
+import { mkdirSync } from "node:fs";
+import { pathToFileURL } from "node:url";
+let sharp = null;
+try { sharp = (await import("sharp")).default; } catch (e) {}
+if (!sharp && process.env.SHARP_PATH) {
+  try { sharp = (await import(pathToFileURL(process.env.SHARP_PATH).href)).default; } catch (e) {}
+}
+if (!sharp) {
+  /* CI 环境自动装 sharp（本地没有也自动装，装不上则跳过缩略图） */
+  try {
+    const { execSync } = await import("node:child_process");
+    execSync("npm install sharp --no-save --no-fund --no-audit", { cwd: root, stdio: "ignore", timeout: 240000 });
+    sharp = (await import("sharp")).default;
+  } catch (e) {}
+}
+const thumbDir = join(blogDir, "thumbs");
+const slugSafe = s => String(s).replace(/[\\/:*?"<>|\s]+/g, "_").slice(0, 80);   /* 只替换文件系统禁用符，保留中文 */
+if (sharp) {
+  try {
+    mkdirSync(thumbDir, { recursive: true });
+    let n = 0;
+    for (const { slug, dir } of coverDirs) {
+      const post = posts.find(x => x.slug === slug);
+      if (!post) continue;
+      for (const [role, field, width, q] of [["cover", "cover", 480, 74], ["bg", "bg", 1600, 70]]) {
+        const file = post[field];
+        if (!file) continue;
+        const src = join(dir, file);
+        if (!existsSync(src)) continue;
+        const outName = `${slugSafe(slug)}-${role}.webp`;
+        await sharp(src, { failOn: "none" }).rotate()
+          .resize({ width, withoutEnlargement: true })
+          .webp({ quality: q })
+          .toFile(join(thumbDir, outName));
+        post[role === "cover" ? "coverThumb" : "bgThumb"] = `blog/thumbs/${outName}`;
+        n++;
+      }
+    }
+    console.log(`✓ 已生成 ${n} 张缩略图到 blog/thumbs/`);
+    /* 把缩略图加入 git 暂存区（配合 GitHub Action 的提交步骤；本地手动运行时静默跳过） */
+    try {
+      const { execSync } = await import("node:child_process");
+      execSync("git add blog/thumbs", { cwd: root, stdio: "ignore" });
+    } catch (e) {}
+  } catch (e) {
+    console.warn("! 缩略图生成失败（网站会回退用原图）：" + e.message);
+  }
+} else {
+  console.log("! 未安装 sharp，跳过缩略图（可运行 npm install sharp 后重试）");
+}
 
 const out = JSON.stringify({ generated: new Date().toISOString(), posts }, null, 2);
 if (process.argv.includes("--stdout")) {
