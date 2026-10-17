@@ -573,6 +573,15 @@ html[data-theme="light"] .topbar{background:linear-gradient(to bottom,rgba(247,2
 .npx-queue .q-i .q-art{width:42px;height:42px;border-radius:8px}
 .npx-queue .q-i b{font-size:14px}
 .npx-queue .q-i span{font-size:12px}
+/* 全屏播放页背景永远是深色，队列文字与悬停全部固定白色系，不随主题切换 */
+.npx-queue .q-i span{color:rgba(255,255,255,.55)}
+.npx-queue .q-i:hover{background:rgba(255,255,255,.12)}
+.npx-queue .q-i.on{background:rgba(255,255,255,.16)}
+.npx-queue .q-i.on b{color:var(--accent-2,#ff77b0)}
+.npx-queue .q-more{color:rgba(255,255,255,.5)}
+.npx-queue .q-more:hover{color:#fff;background:rgba(255,255,255,.12)}
+.npx-queue .q-del{color:rgba(255,255,255,.55)}
+.npx-queue .q-del:hover{color:#ff5c6c;background:rgba(255,255,255,.14)}
 .npx-queue .q-hd{color:rgba(255,255,255,.6)}
 .npx-queue .q-clear{color:rgba(255,255,255,.55)}
 .npx-queue .q-clear:hover{color:#fff;background:rgba(255,255,255,.12)}
