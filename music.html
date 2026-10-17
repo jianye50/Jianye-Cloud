@@ -646,7 +646,7 @@ body.np-open .veil{opacity:0;visibility:hidden}
   .np-full{padding:0}
   /* 手机全屏：歌词在上、控制区钉在底部，方便操作 */
   .npx{display:flex;flex-direction:column;align-items:stretch;
-    padding:calc(10px + env(safe-area-inset-top,0px)) 22px calc(14px + env(safe-area-inset-bottom,0px))}
+    padding:calc(10px + env(safe-area-inset-top,0px)) 22px calc(40px + env(safe-area-inset-bottom,0px))}
   .npx-col{display:contents}
   .npx-hd{order:0;flex:none;margin-bottom:2px}
   .npx-lyr-col{order:1;display:flex;flex-direction:column;flex:1 1 0;min-height:0;height:auto;
@@ -1078,11 +1078,11 @@ const KG=(()=>{
 if(KG) PLAYLISTS.unshift(KG);
 
 function kgSyncLabel(){
-  if(!kgMeta.cloud||!kgMeta.syncedAt) return '内置快照备用的歌单';
+  if(!kgMeta.cloud||!kgMeta.syncedAt) return '本地快照 · 等待首次同步';
   const d=new Date(kgMeta.syncedAt), p2=n=>String(n).padStart(2,'0');
   return '已同步 '+p2(d.getMonth()+1)+'-'+p2(d.getDate())+' '+p2(d.getHours())+':'+p2(d.getMinutes());
 }
-/* 比对云端与本地：哪些是新加的、哪些云端已经没有了 */
+/* 比对云端与本地，得到新增/减少的数量（只用于提示） */
 function kgDiff(d){
   const p=PLAYLISTS.find(x=>x.id==='kg');
   if(!p||!d) return null;
@@ -1092,90 +1092,89 @@ function kgDiff(d){
   const after=new Set(fresh.map(t=>t.id));
   return {
     fresh,
-    added:fresh.filter(t=>!before.has(t.id)),
-    gone:p.tracks.filter(t=>!after.has(t.id))
+    added:fresh.reduce((n,t)=>n+(before.has(t.id)?0:1),0),
+    removed:p.tracks.reduce((n,t)=>n+(after.has(t.id)?0:1),0)
   };
 }
 const kgRow=t=>t.artist&&t.artist!=='未知艺人'?t.name+'|'+t.artist:t.name;
-/* merge=true 时把云端已经没有的歌接在后面保留，避免接口漏抓导致一次性丢歌 */
-function applyKg(d,merge){
+/* 一律以云端为准：直接覆盖本地歌单，只保留已经解析好的封面与音源 */
+function applyKg(d){
   const p=PLAYLISTS.find(x=>x.id==='kg');
   const diff=kgDiff(d);
   if(!p||!diff) return null;
-  const tracks=(merge&&diff.gone.length)?diff.fresh.concat(diff.gone):diff.fresh;
-  p.tracks=tracks;
+  p.tracks=diff.fresh;
   if(d.name) p.title=d.name;
   kgMeta.cloud=true; kgMeta.at=d.at||Date.now(); kgMeta.syncedAt=Date.now();
-  /* 合并结果也一起存下来，下次打开还是这个样子 */
-  store.set('kg',{at:kgMeta.at,syncedAt:kgMeta.syncedAt,name:p.title,merged:!!(merge&&diff.gone.length),
-    songs:tracks.map(kgRow)});
+  store.set('kg',{at:kgMeta.at,syncedAt:kgMeta.syncedAt,name:p.title,songs:diff.fresh.map(kgRow)});
   renderSidebarPlaylists();
-  if(currentView==='playlist'&&plCurId==='kg') renderPlaylist('kg',true);
-  return {total:tracks.length,added:diff.added.length,removed:(merge?0:diff.gone.length),kept:(merge?diff.gone.length:0)};
-}
-function kgFinish(d,merge){
-  const info=applyKg(d,merge);
-  if(!info){ toast('同步失败：歌单数据不对'); return; }
-  const bits=['共 '+info.total+' 首'];
-  if(info.added) bits.push('新增 '+info.added);
-  if(info.removed) bits.push('移除 '+info.removed);
-  if(info.kept) bits.push('保留 '+info.kept+' 首云端已下架');
-  toast('同步完成 · '+bits.join(' · '));
-}
-/* 手动同步：点歌单页的「同步更新」 */
-let kgSyncing=false;
-async function syncKg(){
-  if(kgSyncing) return;
-  const p=PLAYLISTS.find(x=>x.id==='kg');
-  if(!p){ toast('歌单还没加载好，稍后再试'); return; }
-  if(location.protocol!=='http:'&&location.protocol!=='https:'){
-    toast('本地打开没法联网同步，部署到线上再点这个按钮'); return;
+  if(currentView==='playlist'&&plCurId==='kg'){
+    const changed=diff.added||diff.removed;
+    const ae=document.activeElement;
+    if(!changed){
+      /* 内容没变：只刷新「已同步 时间」，不重绘列表 */
+      const t=$('.pl-src span'); if(t) t.textContent=kgSyncLabel();
+    }else if(ae&&ae.id==='plFilter'){
+      /* 正在歌单里搜歌：只换列表，不重建输入框，免得打断输入法 */
+      updatePlTracks();
+    }else{
+      const y=scroller?scroller.scrollTop:0;
+      renderPlaylist('kg',true);
+      if(scroller) scroller.scrollTop=y;
+    }
   }
-  kgSyncing=true;
-  const btn=$('#plSync'), tx=$('#plSyncTx');
+  return {total:diff.fresh.length,added:diff.added,removed:diff.removed};
+}
+/* silent=true 用于后台自动同步：不占按钮、失败不打扰 */
+let kgSyncing=false, kgLastPull=0;
+async function pullKg(silent,force){
+  if(kgSyncing) return null;
+  if(!KG) return null;
+  if(location.protocol!=='http:'&&location.protocol!=='https:'){
+    if(!silent) toast('本地打开没法联网同步，部署到线上才能自动更新');
+    return null;
+  }
+  const now=Date.now();
+  if(silent&&now-kgLastPull<120e3) return null;   /* 自动同步两分钟内不重复拉 */
+  kgSyncing=true; kgLastPull=now;
+  const btn=silent?null:$('#plSync'), tx=silent?null:$('#plSyncTx');
   if(btn){ btn.classList.add('busy'); btn.disabled=true; }
   if(tx) tx.textContent='同步中…';
   try{
-    const r=await fetch('/api/kg?refresh=1&_='+Date.now(),{cache:'no-store'});
+    const url=force?('/api/kg?refresh=1&_='+now):('/api/kg?_='+now);
+    const r=await fetch(url,{cache:'no-store'});
     const d=await r.json().catch(()=>null);
     if(!r.ok||!d||d.ok===false) throw new Error((d&&d.error)||('HTTP '+r.status));
-    const diff=kgDiff(d);
-    if(!diff) throw new Error('接口返回的歌单是空的');
-    /* 云端一次少掉很多歌（多半是下架，也可能是接口没抓全）→ 让用户自己选 */
-    if(diff.gone.length>20){
-      const rect=btn?btn.getBoundingClientRect():{left:80,top:120,bottom:150};
-      openCtx(rect.left, rect.bottom+6, [
-        {label:'合并：新歌加上，保留 '+diff.gone.length+' 首云端没有的', icon:I.plus, fn:()=>kgFinish(d,true)},
-        {label:'覆盖：完全照云端，少掉 '+diff.gone.length+' 首', icon:I.sync, danger:true, fn:()=>kgFinish(d,false)}
-      ]);
-      return;
+    const info=applyKg(d);
+    if(!info) throw new Error('歌单数据不对');
+    if(!silent){
+      const bits=['已与云端同步 · 共 '+info.total+' 首'];
+      if(info.added) bits.push('新增 '+info.added);
+      if(info.removed) bits.push('移除 '+info.removed);
+      toast(bits.join(' · '));
+    }else if(info.added||info.removed){
+      toast('歌单已自动更新 · 新增 '+info.added+' · 移除 '+info.removed);
     }
-    kgFinish(d,false);
+    return info;
   }catch(e){
-    toast('同步失败：'+esc((e&&e.message)||'网络异常'));
+    if(!silent) toast('同步失败：'+esc((e&&e.message)||'网络异常'));
+    return null;
   }finally{
     kgSyncing=false;
     const b=$('#plSync'); if(b){ b.classList.remove('busy'); b.disabled=false; }
     const t2=$('#plSyncTx'); if(t2) t2.textContent='同步更新';
   }
 }
-/* 打开页面时静默对一次，有更新才重绘；之前手动合并过的不自动覆盖 */
-(async()=>{
-  if(!KG) return;
-  if(location.protocol!=='http:'&&location.protocol!=='https:') return;
-  try{
-    const r=await fetch('/api/kg',{cache:'no-store'});
-    if(!r.ok) return;
-    const d=await r.json();
-    if(!d||!d.ok||!Array.isArray(d.songs)||!d.songs.length) return;
-    if(kgCache&&kgCache.merged) return;
-    if(kgMeta.at&&d.at&&d.at<=kgMeta.at) return;   /* 本地已经是最新 */
-    const diff=kgDiff(d);
-    if(!diff||diff.gone.length>20) return;         /* 差异太大就交给用户手动决定 */
-    if(!diff.added.length&&!diff.gone.length) return;
-    applyKg(d,false);
-  }catch(e){}
-})();
+/* 手动点按钮：强制绕过云端缓存，拿酷狗实时歌单 */
+function syncKg(){ return pullKg(false,true); }
+/* 自动同步：打开页面拉一次，之后每 10 分钟和切回页面时各对一次；
+   距上次同步超过 10 分钟就强制绕过云端缓存，保证刚在酷狗加的歌能马上出现 */
+function kgStale(){ return !kgMeta.syncedAt||Date.now()-kgMeta.syncedAt>600e3; }
+function startKgAutoSync(){
+  const tick=()=>{ if(!document.hidden) pullKg(true,kgStale()); };
+  tick();
+  document.addEventListener('visibilitychange',tick);
+  setInterval(tick,600e3);
+}
 
 const FEATURED=[
   ['晴天','周杰伦'],['富士山下','陈奕迅'],['起风了','买辣椒也用券'],['平凡之路','朴树'],
@@ -1998,12 +1997,12 @@ function renderPlaylist(id,keep){
         <span>${durTxt}</span><span class="dot"></span>
         <span>${esc(p.tag)}</span>
       </div>
-      ${p.id==='kg'?`<div class="pl-src">${I.cloud}<span>${esc(kgSyncLabel())}</span><span class="dot"></span><span>新增喜欢的歌后点「同步更新」即可拉过来</span></div>`:''}
+      ${p.id==='kg'?`<div class="pl-src">${I.cloud}<span>${esc(kgSyncLabel())}</span><span class="dot"></span><span>自动同步 · 在酷狗加歌后自己会过来</span></div>`:''}
       <div class="pl-actions">
         <button class="btn primary" data-act="play-pl" data-id="${p.id}">${I.play}播放</button>
         <button class="btn ghost dark" data-act="shuffle-pl" data-id="${p.id}">${I.shuffle}随机播放</button>
         <button class="pl-save${saved?' on':''}" data-act="save-pl" data-id="${p.id}">${saved?I.heartFill:I.heart}${saved?'已收藏':'收藏歌单'}</button>
-        ${p.id==='kg'?`<button class="pl-sync" id="plSync" data-act="sync-pl" title="从酷狗重新拉取最新歌单">${I.sync}<span id="plSyncTx">同步更新</span></button>`:''}
+        ${p.id==='kg'?`<button class="pl-sync" id="plSync" data-act="sync-pl" title="立即从酷狗同步一次（会以云端为准覆盖本地）">${I.sync}<span id="plSyncTx">同步更新</span></button>`:''}
       </div>
     </div>
   </div>
@@ -2617,6 +2616,7 @@ function init(){
   route();
   renderLyrics();
   syncUI();
+  startKgAutoSync();
   setInterval(()=>{ if(!audio.paused) saveStateSoon(); },10000);
 }
 
