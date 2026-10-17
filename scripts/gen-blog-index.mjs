@@ -97,6 +97,7 @@ if (!sharp) {
 }
 const thumbDir = join(blogDir, "thumbs");
 const slugSafe = s => String(s).replace(/[\\/:*?"<>|\s]+/g, "_").slice(0, 80);   /* 只替换文件系统禁用符，保留中文 */
+const IMG_RE = /\.(jpe?g|png|gif|webp|bmp|avif|heic|heif)$/i;
 if (sharp) {
   try {
     mkdirSync(thumbDir, { recursive: true });
@@ -104,17 +105,37 @@ if (sharp) {
     for (const { slug, dir } of coverDirs) {
       const post = posts.find(x => x.slug === slug);
       if (!post) continue;
-      for (const [role, field, width, q] of [["cover", "cover", 480, 74], ["bg", "bg", 1600, 70]]) {
+      /* 正文图片映射：文章文件夹里每一张图 → 1600px WebP（页面宽度足够 retina 显示） */
+      const imgs = {};
+      try {
+        readdirSync(dir).forEach((f, i) => {
+          if (!IMG_RE.test(f)) return;
+          const outName = `${slugSafe(slug)}-i${i}.webp`;
+          imgs[f] = `blog/thumbs/${outName}`;
+        });
+      } catch (e) {}
+      for (const [srcFile, outRel] of Object.entries(imgs)) {
+        const src = join(dir, srcFile);
+        if (!existsSync(src)) continue;
+        await sharp(src, { failOn: "none" }).rotate()
+          .resize({ width: 1600, withoutEnlargement: true })
+          .webp({ quality: 72 })
+          .toFile(join(thumbDir, outRel.split("/").pop()));
+        n++;
+      }
+      if (Object.keys(imgs).length) post.imgs = imgs;
+      /* 封面 480px / 头图 1600px 专用版本 */
+      for (const [field, width, q, key] of [["cover", 480, 74, "coverThumb"], ["bg", 1600, 70, "bgThumb"]]) {
         const file = post[field];
         if (!file) continue;
         const src = join(dir, file);
         if (!existsSync(src)) continue;
-        const outName = `${slugSafe(slug)}-${role}.webp`;
+        const outName = `${slugSafe(slug)}-${key === "coverThumb" ? "cover" : "bg"}.webp`;
         await sharp(src, { failOn: "none" }).rotate()
           .resize({ width, withoutEnlargement: true })
           .webp({ quality: q })
           .toFile(join(thumbDir, outName));
-        post[role === "cover" ? "coverThumb" : "bgThumb"] = `blog/thumbs/${outName}`;
+        post[key] = `blog/thumbs/${outName}`;
         n++;
       }
     }

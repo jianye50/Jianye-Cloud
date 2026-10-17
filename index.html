@@ -1345,7 +1345,8 @@ async function manifestPosts(){
       minutes:+p.minutes||1,
       cover:p.cover||"",bg:p.bg||p.background||"",
       coverThumb:p.coverThumb?encodeURI(String(p.coverThumb)):"",
-      bgThumb:p.bgThumb?encodeURI(String(p.bgThumb)):""
+      bgThumb:p.bgThumb?encodeURI(String(p.bgThumb)):"",
+      imgMap:(p.imgs&&typeof p.imgs==="object")?p.imgs:null
     })).sort(byDateDesc);
   }catch(e){return null;}
 }
@@ -1511,13 +1512,24 @@ function parsePost(raw){
   return {meta,body};
 }
 /* 极简 Markdown 渲染：标题/引用/代码块/列表/图片/链接/加粗/斜体/行内码/分隔线 */
-function mdToHTML(md,imgBase){
+function mdToHTML(md,imgBase,imgMap){
+  /* 正文图片缩略图映射：文件名 → 构建时压缩的 WebP 版本 */
+  const imgHit=src=>{
+    if(!imgMap)return null;
+    if(imgMap[src])return imgMap[src];
+    try{ return imgMap[decodeURIComponent(src)]||null; }catch(e){ return null; }
+  };
   const inline=s=>{
     s=esc(s);
     /* 图片/链接路径允许空格与一层括号（Windows 截图等文件名常带空格/括号） */
     s=s.replace(/!\[([^\]]*)\]\(((?:[^()]|\([^()]*\))+)\)/g,(m,alt,src)=>{
       src=src.trim();
-      const u=/^(https?:|data:|\/)/.test(src)?src:imgBase+src;
+      let u;
+      if(/^(https?:|data:|\/)/.test(src))u=src;
+      else{
+        const hit=imgHit(src);
+        u=hit?encodeURI(hit):imgBase+src;
+      }
       return `<img src="${u}" alt="${alt}" loading="lazy" decoding="async">`;
     });
     s=s.replace(/\[([^\]]+)\]\(((?:[^()]|\([^()]*\))+)\)/g,(m,txt,href)=>
@@ -1635,7 +1647,7 @@ function blogListHTML(list,q,stagger){
     const dly=stagger?` style="animation-delay:${(i++)*60}ms"`:"";
     html+=`
     <a class="post-card ${stagger?"rv":"rvf"}"${dly} href="#/blog/${encodeURIComponent(p.slug)}">
-      <span class="post-thumb">${(p.coverThumb||p.cover)?`<img src="${esc(postSrc(p,p.coverThumb||p.cover))}" alt="" loading="lazy" decoding="async" onerror="this.onerror=null;this.parentNode.innerHTML='🖼️'">`:"🖼️"}</span>
+      <span class="post-thumb">${(p.coverThumb||p.cover)?`<img src="${esc(p.coverThumb||postSrc(p,p.cover))}" alt="" loading="lazy" decoding="async" onerror="this.onerror=null;this.parentNode.innerHTML='🖼️'">`:"🖼️"}</span>
       <span class="post-mid">
         <span class="post-tags">${(p.tags||[]).map(x=>`<span class="tag">${esc(x)}</span>`).join("")}</span>
         <span class="post-title">${hiText(p.title||t.blog.untitled,q)}</span>
@@ -1775,10 +1787,12 @@ async function renderPost(slug){
   const date=meta.date||post.date||"";
   const minutes=+meta.minutes||post.minutes||Math.max(1,Math.round(body.replace(/\s/g,"").length/450));
   const bg=meta.background||post.bg||"";
-  const bgSrc=(post.bgThumb||meta.bgThumb||"")||bg;   /* 文章页头图优先用构建时压缩的 1600px WebP 版 */
+  /* 文章页头图优先用构建时压缩的 1600px WebP 版（bgThumb 是站点相对路径，不要再拼前缀） */
+  const bgThumb=(post.bgThumb||meta.bgThumb||"");
+  const bgImg=bgThumb?esc(bgThumb):(bg?esc(postSrc(post,bg)):"");
   app.innerHTML=`
   <section class="view">
-    <div class="post-hero">${bg?`<img class="post-bg" src="${esc(postSrc(post,bgSrc))}" alt="" decoding="async" onerror="this.onerror=null;this.src='${esc(postSrc(post,bg))}'">`:""}</div>
+    <div class="post-hero">${bgImg?`<img class="post-bg" src="${bgImg}" alt="" decoding="async" onerror="this.remove()">`:""}</div>
     <div class="wrap">
       <a class="post-back" href="#/blog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>${esc(t.blog.back)}</a>
       <header class="post-head">
@@ -1787,7 +1801,7 @@ async function renderPost(slug){
         ${desc?`<p class="post-sub">${esc(desc)}</p>`:""}
         <div class="post-meta"><span>${esc(fmtDate(date))}</span><span>·</span><span>${esc(t.blog.minutes(minutes))}</span></div>
       </header>
-      <article class="post-body">${mdToHTML(body,post.imgBase)}</article>
+      <article class="post-body">${mdToHTML(body,post.imgBase,post.imgMap)}</article>
       <div class="post-end">${esc(t.blog.end)}</div>
     </div>
   </section>`;
