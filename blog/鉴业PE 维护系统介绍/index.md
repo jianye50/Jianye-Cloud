@@ -1,6 +1,7 @@
 ---
 title: Jianye PE｜颜值与实力兼备的纯净Windows PE维护系统
-tags: []
+desc: 电脑蓝屏无法开机？系统需要重装？重要数据需要抢救？遇到这些问题，一套好用的PE…
+tags: [PE, 维护系统]
 date: 2026-10-18
 minutes: 4
 cover: mmexport1786370573713.jpg
