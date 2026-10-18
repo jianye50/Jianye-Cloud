@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- jye.html · build 2026-10-18.3 · 懒创建输出文件：密码错误不会在目标文件夹留下任何文件 -->
+<!-- jye.html → index.html · build 2026-10-18.4 · 密码错误零残留 + 自动清理旧空壳残留 -->
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
@@ -1775,6 +1775,9 @@ const t = (key, params) => window.__jyeI18n.t(key, params);
   }
 
   /* ---------- saving ---------- */
+  /* Resolves the output name. A name clash with an EMPTY (0-byte) file is
+     treated as a stale leftover from an earlier failed run: it is reused and,
+     if this run fails too, deleted — so one retry always cleans the folder. */
   async function uniqueName(dir, name) {
     const clean = String(name || 'output').replace(/[\\/:*?"<>|]/g, '_').trim() || 'output';
     const dot = clean.lastIndexOf('.');
@@ -1782,11 +1785,15 @@ const t = (key, params) => window.__jyeI18n.t(key, params);
     const ext = dot > 0 ? clean.slice(dot) : '';
     let candidate = clean;
     for (let n = 1; n < 500; n++) {
-      try { await dir.getFileHandle(candidate); }
-      catch { return candidate; }
+      let size = -1;
+      try {
+        const fh = await dir.getFileHandle(candidate);
+        size = (await fh.getFile()).size;
+      } catch { return { name: candidate, reusedEmpty: false }; }
+      if (size === 0) return { name: candidate, reusedEmpty: true };
       candidate = `${stem} (${n})${ext}`;
     }
-    return `${stem} (${Date.now()})${ext}`;
+    return { name: `${stem} (${Date.now()})${ext}`, reusedEmpty: false };
   }
 
   function download(url, name) {
@@ -1848,7 +1855,8 @@ const t = (key, params) => window.__jyeI18n.t(key, params);
         let outName = it.target || (it.dir === 'encrypt' ? JYE.encryptedNameFor(it.file.name) : it.file.name);
 
         if (dirHandle) {
-          const savedName = await uniqueName(dirHandle, outName);
+          const un = await uniqueName(dirHandle, outName);
+          const savedName = un.name;
           let fh = null, writable = null;
           /* The output file is only created when the first real chunk lands.
              A wrong password is rejected before any write, so it leaves no
@@ -1873,7 +1881,7 @@ const t = (key, params) => window.__jyeI18n.t(key, params);
             try { if (writable) await writable.abort(); } catch {}
             /* abort() only discards the hidden .crswap; the placeholder file
                that getFileHandle(create) made must be removed explicitly. */
-            try { await dirHandle.removeEntry(savedName); } catch {}
+            try { if (writable || un.reusedEmpty) await dirHandle.removeEntry(savedName); } catch {}
             throw e;
           }
           it.target = savedName;
