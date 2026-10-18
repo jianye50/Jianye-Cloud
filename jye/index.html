@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- jye.html → index.html · build 2026-10-18.4 · 密码错误零残留 + 自动清理旧空壳残留 -->
+<!-- jye.html → index.html · build 2026-10-18.5 · 启动加载动画 + 密码错误零残留 + 自动清理旧空壳残留 -->
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
@@ -369,6 +369,54 @@
     color:#F0B0A6;font-size:12px;line-height:1.6;letter-spacing:.02em;
   }
 
+  /* ---------- boot splash ---------- */
+  .boot{
+    position:fixed;inset:0;z-index:200;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;
+    background:
+      radial-gradient(900px 520px at 50% 34%, rgba(217,180,122,.10), transparent 66%),
+      var(--bg);
+    transition:opacity .55s var(--ease),visibility .55s;
+  }
+  .boot.done{opacity:0;visibility:hidden;pointer-events:none}
+  .boot-ring{position:relative;width:76px;height:76px;display:grid;place-items:center}
+  .boot-ring::before{
+    content:"";position:absolute;inset:0;border-radius:50%;
+    border:1px solid rgba(217,180,122,.16);
+  }
+  .boot-ring::after{
+    content:"";position:absolute;inset:0;border-radius:50%;
+    border:1.5px solid transparent;
+    border-top-color:var(--accent);border-right-color:rgba(217,180,122,.4);
+    animation:bootSpin 1.05s linear infinite;
+    filter:drop-shadow(0 0 7px rgba(217,180,122,.45));
+  }
+  @keyframes bootSpin{to{transform:rotate(360deg)}}
+  .boot-mark{
+    width:42px;height:42px;border-radius:13px;display:grid;place-items:center;
+    border:1px solid rgba(217,180,122,.34);
+    background:linear-gradient(160deg, rgba(217,180,122,.18), rgba(217,180,122,.03));
+    color:var(--accent);
+    animation:bootPulse 2.2s ease-in-out infinite;
+  }
+  @keyframes bootPulse{
+    0%,100%{box-shadow:0 0 0 0 rgba(217,180,122,.20)}
+    50%{box-shadow:0 0 0 9px rgba(217,180,122,0)}
+  }
+  .boot-name{font-size:10px;letter-spacing:.36em;color:var(--muted-2);text-transform:uppercase}
+  .boot-bar{width:136px;height:2px;border-radius:2px;background:rgba(255,255,255,.07);overflow:hidden}
+  .boot-bar i{
+    display:block;height:100%;width:40%;border-radius:2px;
+    background:linear-gradient(90deg,transparent,var(--accent),transparent);
+    animation:bootSlide 1.2s var(--ease) infinite;
+  }
+  @keyframes bootSlide{from{transform:translateX(-120%)}to{transform:translateX(380%)}}
+  @media (prefers-reduced-motion:reduce){
+    .boot-ring::after{animation:bootSpin 2.4s linear infinite}
+    .boot-mark,.boot-bar i{animation:none}
+    .boot-bar i{width:100%;opacity:.5}
+  }
+
   @media (max-width:940px){
     .wrap{grid-template-columns:1fr;gap:36px;padding:24px 22px 44px;max-width:560px}
     .topbar{padding:20px 22px}
@@ -388,8 +436,40 @@
     *{animation-duration:.01ms!important;transition-duration:.01ms!important}
   }
 </style>
+<noscript><style>.boot{display:none!important}</style></noscript>
 </head>
 <body>
+
+<div class="boot" id="boot" role="status" aria-live="polite">
+  <div class="boot-ring">
+    <span class="boot-mark" aria-hidden="true">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="4.5" y="10.5" width="15" height="10" rx="2.6"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/><circle cx="12" cy="15.4" r="1.15" fill="currentColor" stroke="none"/>
+      </svg>
+    </span>
+  </div>
+  <div class="boot-name">Jianye · File Encryptor</div>
+  <div class="boot-bar" aria-hidden="true"><i></i></div>
+</div>
+<script>
+/* 启动动画：最短展示 520ms，页面 load 后淡出并移除；6s 兜底防卡死 */
+(function () {
+  var el = document.getElementById('boot');
+  if (!el) return;
+  var t0 = Date.now(), MIN = 520, gone = false;
+  function hide() {
+    if (gone) return; gone = true;
+    var wait = Math.max(0, MIN - (Date.now() - t0));
+    setTimeout(function () {
+      el.classList.add('done');
+      setTimeout(function () { if (el && el.parentNode) el.parentNode.removeChild(el); }, 700);
+    }, wait);
+  }
+  if (document.readyState === 'complete') hide();
+  else window.addEventListener('load', hide, { once: true });
+  setTimeout(hide, 6000);
+})();
+</script>
 
 <noscript><div class="nojs">本工具需要 JavaScript 才能加解密文件 · This tool requires JavaScript to encrypt or decrypt files.</div></noscript>
 
