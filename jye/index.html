@@ -1,0 +1,1924 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#070809">
+<meta name="referrer" content="no-referrer">
+<meta name="description" content="AES-256 file encryption that runs entirely in your browser. Files never leave your device. 20 languages.">
+<link rel="canonical" href="https://jianye.pages.dev/">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://jianye.pages.dev/">
+<meta property="og:site_name" content="Jianye">
+<meta property="og:title" content="鉴业文件加密 · Jianye File Encryptor">
+<meta property="og:description" content="AES-256 加密与解密全部在浏览器本地完成，文件不上传。20 种语言 · 大文件分块流式处理。">
+<meta name="twitter:card" content="summary">
+<title>鉴业文件加密 · Jianye File Encryptor</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23D9B47A' stroke-width='1.8' stroke-linecap='round'%3E%3Crect x='4.5' y='10.5' width='15' height='10' rx='2.6'/%3E%3Cpath d='M8 10.5V7a4 4 0 0 1 8 0v3.5'/%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#070809;
+    --ink:#F4F2ED;
+    --ink-2:#C9C7C1;
+    --muted:#8A8983;
+    --muted-2:#6B6A65;
+    --line:rgba(255,255,255,.075);
+    --line-2:rgba(255,255,255,.14);
+    --panel:rgba(255,255,255,.028);
+    --accent:#D9B47A;
+    --accent-2:#EFD4A4;
+    --accent-soft:rgba(217,180,122,.12);
+    --danger:#E4786C;
+    --ok:#83C9A8;
+    --r:14px;
+    --ease:cubic-bezier(.32,.72,0,1);
+    --font:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+    --mono:"SF Mono","JetBrains Mono","Cascadia Mono",Consolas,"Courier New",monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:
+      radial-gradient(1100px 620px at 10% -12%, rgba(217,180,122,.11), transparent 62%),
+      radial-gradient(820px 520px at 100% 4%, rgba(126,146,214,.055), transparent 60%),
+      var(--bg);
+    color:var(--ink);
+    font-family:var(--font);
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+    line-height:1.5;
+    min-height:100%;
+    display:flex;
+    flex-direction:column;
+    overflow-x:hidden;
+  }
+  body::after{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.5;
+    background:radial-gradient(120% 90% at 50% 0%, transparent 40%, rgba(0,0,0,.55) 100%);
+  }
+  ::selection{background:rgba(217,180,122,.26)}
+
+  /* ---------- top bar ---------- */
+  .topbar{
+    position:relative;z-index:2;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:26px 40px;
+  }
+  .top-actions{display:flex;align-items:center;gap:10px}
+  .brand{display:flex;align-items:center;gap:11px}
+  .mark{
+    width:32px;height:32px;border-radius:9px;display:grid;place-items:center;
+    border:1px solid rgba(217,180,122,.34);
+    background:linear-gradient(160deg, rgba(217,180,122,.16), rgba(217,180,122,.03));
+    color:var(--accent);
+    box-shadow:0 1px 0 rgba(255,255,255,.06) inset, 0 8px 24px -14px rgba(217,180,122,.6);
+  }
+  .brand b{font-weight:600;font-size:15px;letter-spacing:.04em}
+  .brand span{display:block;font-size:9.5px;letter-spacing:.22em;color:var(--muted-2);margin-top:-1px;text-transform:uppercase}
+  .pill{
+    display:inline-flex;align-items:center;gap:7px;
+    font-size:11.5px;letter-spacing:.06em;color:var(--muted);
+    border:1px solid var(--line);border-radius:999px;
+    padding:7px 13px;background:rgba(255,255,255,.02);
+  }
+  .dot{width:5px;height:5px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px rgba(131,201,168,.12)}
+  .lang{position:relative;display:inline-flex}
+  .lang-btn{
+    display:inline-flex;align-items:center;gap:7px;
+    background:rgba(255,255,255,.02);border:1px solid var(--line);
+    color:var(--muted);font-family:inherit;font-size:11.5px;letter-spacing:.05em;
+    border-radius:999px;padding:7px 14px;cursor:pointer;outline:none;
+    transition:color .2s,border-color .2s;max-width:220px;white-space:nowrap;
+  }
+  .lang-btn:hover{color:var(--ink-2);border-color:var(--line-2)}
+  .lang-btn:focus-visible{border-color:rgba(217,180,122,.5);color:var(--ink)}
+  .lang-btn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .lang-btn svg{flex:none;opacity:.75}
+  .lang-btn .chev{transition:transform .25s var(--ease)}
+  .lang.open .lang-btn{color:var(--ink);border-color:rgba(217,180,122,.45)}
+  .lang.open .lang-btn .chev{transform:rotate(180deg)}
+  .lang-pop{
+    position:absolute;top:calc(100% + 8px);right:0;z-index:60;
+    min-width:210px;max-height:min(430px,68vh);overflow:auto;
+    background:rgba(22,22,24,.97);border:1px solid var(--line-2);
+    border-radius:13px;padding:6px;
+    box-shadow:0 30px 70px -30px #000, 0 1px 0 rgba(255,255,255,.05) inset;
+    backdrop-filter:blur(16px) saturate(120%);
+    opacity:0;transform:translateY(-6px) scale(.98);transform-origin:top right;
+    pointer-events:none;transition:opacity .22s var(--ease),transform .22s var(--ease);
+  }
+  [dir="rtl"] .lang-pop{right:auto;left:0;transform-origin:top left}
+  .lang.open .lang-pop{opacity:1;transform:none;pointer-events:auto}
+  .lang-pop::-webkit-scrollbar{width:8px}
+  .lang-pop::-webkit-scrollbar-thumb{background:rgba(255,255,255,.14);border-radius:4px}
+  .lang-pop::-webkit-scrollbar-track{background:transparent}
+  .lang-item{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    width:100%;background:none;border:0;cursor:pointer;
+    font-family:inherit;font-size:12.5px;color:var(--ink-2);
+    padding:8px 11px;border-radius:8px;text-align:start;
+    letter-spacing:.02em;transition:background .15s,color .15s;
+  }
+  .lang-item:hover{background:rgba(255,255,255,.07);color:var(--ink)}
+  .lang-item.active{color:var(--accent-2)}
+  .lang-item.active::after{content:"✓";font-size:11px;flex:none}
+  .lang-item.auto{
+    color:var(--muted);font-size:11.5px;
+    border-bottom:1px solid var(--line);border-radius:8px 8px 0 0;margin-bottom:4px;
+  }
+  .lang-item.auto:hover{color:var(--ink-2)}
+  .lang-item.auto.active{color:var(--accent-2)}
+
+  /* ---------- layout ---------- */
+  .wrap{
+    position:relative;z-index:1;flex:1;
+    width:100%;max-width:1080px;margin:0 auto;
+    padding:clamp(20px,5vh,64px) 40px 40px;
+    display:grid;grid-template-columns:minmax(0,1fr) 496px;
+    gap:clamp(40px,6vw,84px);align-items:start;align-content:center;
+  }
+  .intro{padding-top:6px}
+  .overline{
+    font-size:10px;letter-spacing:.3em;text-transform:uppercase;
+    color:var(--accent);opacity:.85;margin-bottom:22px;
+  }
+  h1{
+    font-size:clamp(34px,4.4vw,50px);
+    line-height:1.18;font-weight:300;letter-spacing:-.02em;
+    color:var(--ink);
+  }
+  h1 em{font-style:normal;color:var(--accent-2)}
+  .lede{
+    margin-top:22px;max-width:34em;
+    font-size:14px;line-height:1.85;color:var(--muted);
+  }
+  .specs{margin-top:44px;max-width:390px}
+  .specs>div{
+    display:flex;align-items:baseline;justify-content:space-between;gap:16px;
+    padding:13px 0;border-top:1px solid var(--line);
+  }
+  .specs>div:last-child{border-bottom:1px solid var(--line)}
+  .specs dt{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted-2);white-space:nowrap}
+  .specs dd{font-family:var(--mono);font-size:12px;color:var(--ink-2);letter-spacing:.01em;text-align:right}
+  .colophon{margin-top:36px;font-size:11px;color:var(--muted-2);letter-spacing:.05em}
+  .colophon a{color:var(--muted);text-decoration:none;border-bottom:1px solid rgba(255,255,255,.12);padding-bottom:1px}
+  .colophon a:hover{color:var(--accent)}
+
+  /* ---------- panel ---------- */
+  .panel{
+    position:relative;
+    background:linear-gradient(180deg, rgba(255,255,255,.042), rgba(255,255,255,.018));
+    border:1px solid var(--line);border-radius:22px;
+    padding:18px;
+    box-shadow:0 40px 90px -50px #000, 0 1px 0 rgba(255,255,255,.05) inset;
+    backdrop-filter:blur(14px) saturate(120%);
+  }
+  .panel::before{
+    content:"";position:absolute;left:18%;right:18%;top:-1px;height:1px;
+    background:linear-gradient(90deg,transparent,rgba(217,180,122,.5),transparent);
+  }
+
+  .seg{
+    position:relative;display:grid;grid-template-columns:repeat(3,1fr);
+    background:rgba(0,0,0,.28);border:1px solid var(--line);
+    border-radius:12px;padding:3px;margin-bottom:16px;
+  }
+  .seg-thumb{
+    position:absolute;top:3px;left:3px;bottom:3px;width:calc((100% - 6px)/3);
+    border-radius:9px;background:rgba(255,255,255,.075);
+    border:1px solid rgba(255,255,255,.09);
+    transform:translateX(calc(var(--i,0) * 100%));
+    transition:transform .38s var(--ease);
+    box-shadow:0 2px 10px -4px #000;
+  }
+  [dir="rtl"] .seg-thumb{left:auto;right:3px;transform:translateX(calc(var(--i,0) * -100%))}
+  .seg button{
+    position:relative;z-index:1;background:none;border:0;cursor:pointer;
+    font-family:inherit;font-size:12.5px;color:var(--muted);
+    padding:9px 0;border-radius:9px;transition:color .25s;
+  }
+  .seg button:hover{color:var(--ink-2)}
+  .seg button[aria-selected="true"]{color:var(--ink);font-weight:500}
+
+  .drop{
+    position:relative;display:flex;flex-direction:column;align-items:center;gap:10px;
+    padding:30px 20px;border:1px dashed rgba(255,255,255,.15);border-radius:16px;
+    background:rgba(255,255,255,.014);
+    cursor:pointer;transition:border-color .3s,background .3s,transform .3s var(--ease),padding .35s var(--ease);
+    outline:none;
+  }
+  .drop:hover,.drop:focus-visible{border-color:rgba(217,180,122,.5);background:rgba(217,180,122,.045)}
+  .drop.over{border-color:var(--accent);background:rgba(217,180,122,.09);transform:scale(.995)}
+  .drop.over .drop-icon{transform:translateY(-2px);border-color:var(--accent);color:var(--accent-2)}
+  .drop.compact{flex-direction:row;padding:13px 16px;gap:12px;justify-content:center}
+  .drop.compact .drop-sub{display:none}
+  .drop.compact .drop-icon{width:26px;height:26px;border-radius:8px}
+  .drop.compact .drop-icon svg{width:13px;height:13px}
+  .drop-icon{
+    width:44px;height:44px;border-radius:14px;display:grid;place-items:center;
+    border:1px solid var(--line-2);background:rgba(255,255,255,.03);
+    color:var(--ink-2);transition:all .3s var(--ease);
+  }
+  .drop-main{font-size:13px;color:var(--ink-2);letter-spacing:.01em}
+  .drop-sub{font-size:11px;color:var(--muted-2);letter-spacing:.04em}
+
+  .filelist{list-style:none;display:grid;gap:7px;margin-top:11px}
+  .filelist:empty{display:none}
+  .file-row{
+    display:grid;grid-template-columns:28px minmax(0,1fr) auto auto;
+    align-items:center;gap:11px;
+    padding:9px 10px 9px 11px;
+    border:1px solid var(--line);border-radius:12px;
+    background:rgba(255,255,255,.022);
+    animation:rowIn .35s var(--ease) both;
+  }
+  @keyframes rowIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+  .file-row:hover{border-color:rgba(255,255,255,.13)}
+  .file-row.error{border-color:rgba(228,120,108,.3);background:rgba(228,120,108,.05)}
+  .file-row.done{background:rgba(131,201,168,.045);border-color:rgba(131,201,168,.2)}
+  .row-icon{
+    width:28px;height:28px;border-radius:8px;display:grid;place-items:center;
+    background:rgba(255,255,255,.05);color:var(--muted);
+  }
+  .file-row.done .row-icon{background:rgba(131,201,168,.12);color:var(--ok)}
+  .file-row.error .row-icon{background:rgba(228,120,108,.12);color:var(--danger)}
+  .row-meta{min-width:0;display:flex;flex-direction:column;gap:1px}
+  .row-name{font-size:12.5px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .row-sub{font-size:10.5px;color:var(--muted-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.02em}
+  .file-row.error .row-sub{color:var(--danger)}
+  .file-row.done .row-sub{color:rgba(131,201,168,.85)}
+  .tag{
+    font-size:9.5px;letter-spacing:.12em;padding:3px 6px;border-radius:5px;
+    border:1px solid var(--line-2);color:var(--muted);white-space:nowrap;
+  }
+  .row-actions{display:flex;align-items:center;gap:2px}
+  .icon-btn{
+    width:24px;height:24px;display:grid;place-items:center;
+    background:none;border:0;border-radius:7px;cursor:pointer;color:var(--muted-2);
+    transition:all .2s;padding:0;
+  }
+  .icon-btn:hover{background:rgba(255,255,255,.07);color:var(--ink)}
+  .row-dl{color:var(--ok)}
+  .row-dl:hover{background:rgba(131,201,168,.14);color:#a8e0c4}
+  .spinner{
+    width:12px;height:12px;border-radius:50%;
+    border:1.5px solid rgba(255,255,255,.16);border-top-color:var(--accent);
+    animation:spin .7s linear infinite;display:block;
+  }
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .field{margin-top:16px}
+  .field-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:7px}
+  .field-head label{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .hint{font-size:10.5px;color:var(--muted-2);letter-spacing:.02em}
+  .inputwrap{
+    display:flex;align-items:center;gap:0;
+    border:1px solid var(--line);border-radius:12px;
+    background:rgba(0,0,0,.26);
+    transition:border-color .25s,box-shadow .25s,background .25s;
+    padding:0 4px 0 12px;
+  }
+  [dir="rtl"] .inputwrap{padding:0 12px 0 4px}
+  .inputwrap:focus-within{border-color:rgba(217,180,122,.55);box-shadow:0 0 0 3px var(--accent-soft);background:rgba(0,0,0,.34)}
+  .inputwrap.bad{border-color:rgba(228,120,108,.55);box-shadow:0 0 0 3px rgba(228,120,108,.1)}
+  .inputwrap svg{color:var(--muted-2);flex:none}
+  .inputwrap input{
+    flex:1;min-width:0;background:none;border:0;outline:none;
+    font-family:inherit;font-size:13.5px;color:var(--ink);
+    padding:12px 10px;letter-spacing:.02em;
+  }
+  .inputwrap input::placeholder{color:#5A5954;letter-spacing:.01em}
+  .eye{
+    width:32px;height:32px;flex:none;display:grid;place-items:center;
+    background:none;border:0;border-radius:8px;cursor:pointer;color:var(--muted-2);transition:color .2s,background .2s;
+  }
+  .eye:hover{color:var(--ink-2);background:rgba(255,255,255,.05)}
+
+  .strength{display:flex;gap:4px;margin-top:8px;height:2px}
+  .strength i{flex:1;background:rgba(255,255,255,.08);border-radius:2px;transition:background .35s}
+  .strength[data-s="1"] i:nth-child(1){background:var(--danger)}
+  .strength[data-s="2"] i:nth-child(-n+2){background:#D9A05F}
+  .strength[data-s="3"] i:nth-child(-n+3){background:var(--accent)}
+  .strength[data-s="4"] i{background:var(--ok)}
+
+  .confirm{overflow:hidden;transition:max-height .4s var(--ease),opacity .3s,margin .4s var(--ease);max-height:120px;opacity:1}
+  .confirm.hide{max-height:0;opacity:0;margin-top:0!important;pointer-events:none}
+
+  .primary{
+    position:relative;overflow:hidden;width:100%;height:50px;margin-top:20px;
+    border:1px solid rgba(217,180,122,.55);border-radius:13px;cursor:pointer;
+    background:linear-gradient(180deg,#E3C08A,#CDA467);
+    color:#191410;font-family:inherit;font-size:13.5px;font-weight:600;letter-spacing:.03em;
+    transition:transform .2s var(--ease),box-shadow .3s,filter .25s,opacity .25s;
+    box-shadow:0 1px 0 rgba(255,255,255,.4) inset, 0 14px 30px -18px rgba(217,180,122,.9);
+  }
+  .primary:hover{filter:brightness(1.06);transform:translateY(-1px);box-shadow:0 1px 0 rgba(255,255,255,.45) inset,0 16px 34px -16px rgba(217,180,122,.95)}
+  .primary:active{transform:translateY(0);filter:brightness(.98)}
+  .primary:disabled{cursor:default;transform:none;filter:grayscale(.15) brightness(.9);opacity:.75}
+  .primary.ghost{background:rgba(255,255,255,.03);border-color:var(--line-2);color:var(--ink-2);box-shadow:none}
+  .primary.ghost:hover{background:rgba(255,255,255,.06);filter:none;box-shadow:none}
+  .btn-label{position:relative;z-index:2;display:inline-flex;align-items:center;gap:8px;justify-content:center}
+  .btn-fill{
+    position:absolute;inset:0;width:0;
+    background:linear-gradient(90deg, rgba(255,255,255,.32), rgba(255,255,255,.14));
+    transition:width .35s var(--ease);z-index:1;
+  }
+  .primary.busy{color:#12100B}
+  .primary.busy .btn-fill{opacity:.55}
+
+  .notice{
+    margin-top:12px;font-size:11.5px;line-height:1.6;letter-spacing:.02em;
+    min-height:17px;color:var(--muted-2);
+    display:flex;align-items:flex-start;gap:6px;transition:color .25s;
+  }
+  .notice.error{color:var(--danger)}
+  .notice.ok{color:var(--ok)}
+  .notice svg{flex:none;margin-top:2px}
+
+  .panel-foot{
+    display:flex;align-items:center;justify-content:center;gap:7px;
+    margin-top:16px;padding-top:14px;border-top:1px solid var(--line);
+    font-size:10.5px;letter-spacing:.06em;color:var(--muted-2);
+  }
+  .panel-foot svg{color:var(--ok);opacity:.75}
+
+  .toast{
+    position:fixed;left:50%;bottom:34px;transform:translate(-50%,14px);
+    background:rgba(20,20,22,.94);border:1px solid var(--line-2);
+    color:var(--ink-2);font-size:12px;letter-spacing:.02em;
+    padding:11px 18px;border-radius:11px;
+    box-shadow:0 22px 50px -24px #000;backdrop-filter:blur(10px);
+    opacity:0;pointer-events:none;transition:all .35s var(--ease);z-index:50;
+    max-width:min(86vw,420px);text-align:center;
+  }
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+
+  .nosupport{
+    display:none;margin-bottom:14px;padding:11px 13px;border-radius:11px;
+    border:1px solid rgba(228,120,108,.35);background:rgba(228,120,108,.08);
+    color:#F0B0A6;font-size:11.5px;line-height:1.6;
+  }
+  body.unsupported .nosupport{display:block}
+  body.unsupported .primary{opacity:.4;pointer-events:none}
+  .nojs{
+    position:fixed;left:50%;top:22px;transform:translateX(-50%);z-index:99;
+    padding:11px 18px;border-radius:11px;max-width:min(92vw,560px);text-align:center;
+    background:rgba(228,120,108,.12);border:1px solid rgba(228,120,108,.4);
+    color:#F0B0A6;font-size:12px;line-height:1.6;letter-spacing:.02em;
+  }
+
+  @media (max-width:940px){
+    .wrap{grid-template-columns:1fr;gap:36px;padding:24px 22px 44px;max-width:560px}
+    .topbar{padding:20px 22px}
+    .intro{padding-top:0}
+    h1{font-size:clamp(30px,8vw,38px)}
+    .specs{margin-top:30px;max-width:none}
+    .colophon{margin-top:24px}
+    .panel{padding:15px;border-radius:19px}
+    .drop{padding:24px 16px}
+  }
+  @media (max-width:420px){
+    .specs>div{flex-direction:column;align-items:flex-start;gap:4px}
+    .specs dd{text-align:left}
+    .pill{display:none}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{animation-duration:.01ms!important;transition-duration:.01ms!important}
+  }
+</style>
+</head>
+<body>
+
+<noscript><div class="nojs">本工具需要 JavaScript 才能加解密文件 · This tool requires JavaScript to encrypt or decrypt files.</div></noscript>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="mark">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="4.5" y="10.5" width="15" height="10" rx="2.6"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/><circle cx="12" cy="15.4" r="1.15" fill="currentColor" stroke="none"/>
+      </svg>
+    </span>
+    <div><b data-i18n="brandName">鉴业</b><span>File Encryptor</span></div>
+  </div>
+  <div class="top-actions">
+    <div class="pill"><span class="dot"></span><span data-i18n="pill">本地计算 · 文件不上传</span></div>
+    <div class="lang" id="langBox">
+      <button type="button" id="langBtn" class="lang-btn" aria-haspopup="listbox" aria-expanded="false">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.8 2.6 4.2 5.6 4.2 9s-1.4 6.4-4.2 9c-2.8-2.6-4.2-5.6-4.2-9S9.2 5.6 12 3z"/>
+        </svg>
+        <span id="langBtnLabel">简体中文</span>
+        <svg class="chev" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="lang-pop" id="langPop" role="listbox" aria-label="Language"></div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <section class="intro">
+    <div class="overline">Jianye · Web Edition</div>
+    <h1 data-i18n-html="h1">为文件上锁，<br>只带走<em>密码</em>。</h1>
+    <p class="lede" data-i18n-html="lede">在浏览器里完成 AES-256 加密与解密，文件始终留在这台设备上。生成的 {jye} 与桌面版完全互通。</p>
+
+    <dl class="specs">
+      <div><dt data-i18n="spec1">加密算法</dt><dd>AES-256-CBC</dd></div>
+      <div><dt data-i18n="spec2">密钥派生</dt><dd>PBKDF2-SHA256 · 100,000</dd></div>
+      <div><dt data-i18n="spec3">文件格式</dt><dd data-i18n="specFmtVal">.jye / 桌面版互通</dd></div>
+      <div><dt data-i18n="spec4">运行位置</dt><dd data-i18n="specLocVal">本机浏览器</dd></div>
+    </dl>
+
+    <div class="colophon">© 2026 <span data-i18n="brandName">鉴业</span> · <a href="https://jianye.pages.dev/" target="_blank" rel="noopener">jianye.pages.dev</a></div>
+  </section>
+
+  <section class="panel">
+    <div class="nosupport" data-i18n="nosupport">当前浏览器不支持 WebCrypto，请使用 https 或 localhost 打开本页（Chrome / Edge / Safari 新版均可）。</div>
+
+    <div class="seg" style="--i:0" role="tablist" aria-label="处理模式">
+      <span class="seg-thumb" aria-hidden="true"></span>
+      <button role="tab" aria-selected="true" data-mode="auto" data-i18n="tabAuto">自动识别</button>
+      <button role="tab" aria-selected="false" data-mode="encrypt" data-i18n="tabEnc">加密</button>
+      <button role="tab" aria-selected="false" data-mode="decrypt" data-i18n="tabDec">解密</button>
+    </div>
+
+    <div class="drop" id="drop" tabindex="0" role="button" aria-label="选择文件">
+      <span class="drop-icon">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="4" y="10" width="16" height="10.5" rx="2.6"/><path d="M7.8 10V6.8a4.2 4.2 0 0 1 8.4 0V10"/>
+        </svg>
+      </span>
+      <span class="drop-main" id="dropMain" data-i18n="dropMain">拖入文件，或点击选择</span>
+      <span class="drop-sub" id="dropSub" data-i18n="dropSub">支持批量 · 自动判断加密或解密</span>
+      <input type="file" id="picker" multiple hidden>
+    </div>
+
+    <ul class="filelist" id="list"></ul>
+
+    <div class="field">
+      <div class="field-head">
+        <label for="pw" id="pwLabel">密码</label>
+        <span class="hint" id="pwHint">加密后请妥善保存</span>
+      </div>
+      <div class="inputwrap" id="pwWrap">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+          <rect x="4.5" y="10.5" width="15" height="10" rx="2.4"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/>
+        </svg>
+        <input id="pw" type="password" placeholder="设置一个强密码" autocomplete="new-password" spellcheck="false">
+        <button class="eye" id="eye" type="button" aria-label="显示密码">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2.6 12S6.2 6.6 12 6.6 21.4 12 21.4 12 17.8 17.4 12 17.4 2.6 12 2.6 12z"/><circle cx="12" cy="12" r="2.7"/>
+          </svg>
+        </button>
+      </div>
+      <div class="strength" id="strength" data-s="0"><i></i><i></i><i></i><i></i></div>
+    </div>
+
+    <div class="field confirm hide" id="cfField">
+      <div class="field-head"><label for="cf" data-i18n="cfLabel">确认密码</label></div>
+      <div class="inputwrap" id="cfWrap">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 6.5L9.5 17 4 11.5"/>
+        </svg>
+        <input id="cf" type="password" data-i18n-ph="cfPh" placeholder="再输入一次" autocomplete="new-password" spellcheck="false">
+      </div>
+    </div>
+
+    <button class="primary" id="go">
+      <span class="btn-fill" id="fill"></span>
+      <span class="btn-label" id="goLabel">选择文件</span>
+    </button>
+
+    <div class="notice" id="notice" role="status" aria-live="polite"></div>
+
+    <div class="panel-foot">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 3l7.5 3v6c0 4.4-3.1 7.9-7.5 9-4.4-1.1-7.5-4.6-7.5-9V6L12 3z"/><path d="M9 12l2 2 4-4"/>
+      </svg>
+      <span data-i18n="foot">无网络请求 · 关闭页面即清空</span>
+    </div>
+  </section>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   Jianye File Encryptor — WebCrypto core
+   Binary layout (identical to the desktop app):
+     [0,16)   salt        PBKDF2 salt
+     [16,32)  iv          AES-CBC IV
+     [32,36)  nameLen     uint32 little-endian
+     [36,36+n) name       original filename, UTF-8
+     [..]     ciphertext  AES-256-CBC, PKCS#7
+   Key = PBKDF2-HMAC-SHA256(password, salt, 100000, 32 bytes)
+   ============================================================ */
+const JYE = (() => {
+  const SALT_SIZE = 16, IV_SIZE = 16, LEN_SIZE = 4, KEY_SIZE = 32;
+  const ITERATIONS = 100000;
+  const MIN_SIZE = SALT_SIZE + IV_SIZE + LEN_SIZE + 1;
+
+  const te = new TextEncoder();
+  const tdFatal = new TextDecoder('utf-8', { fatal: true });
+
+  class WrongPasswordError extends Error {
+    constructor() { super('WRONG_PASSWORD'); this.name = 'WrongPasswordError'; }
+  }
+  class FormatError extends Error {
+    constructor() { super('INVALID_FORMAT'); this.name = 'FormatError'; }
+  }
+
+  async function deriveKey(password, salt) {
+    const base = await crypto.subtle.importKey('raw', te.encode(password), 'PBKDF2', false, ['deriveKey']);
+    return crypto.subtle.deriveKey(
+      { name: 'PBKDF2', salt, iterations: ITERATIONS, hash: 'SHA-256' },
+      base, { name: 'AES-CBC', length: KEY_SIZE * 8 }, false, ['encrypt', 'decrypt']
+    );
+  }
+
+  function parseHeader(bytes) {
+    if (!bytes || bytes.length < MIN_SIZE) return null;
+    const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    const nameLen = dv.getUint32(SALT_SIZE + IV_SIZE, true);
+    if (nameLen <= 0) return null;
+    const headerSize = SALT_SIZE + IV_SIZE + LEN_SIZE + nameLen;
+    if (headerSize + 1 > bytes.length) return null;
+    let name;
+    try { name = tdFatal.decode(bytes.subarray(SALT_SIZE + IV_SIZE + LEN_SIZE, headerSize)); }
+    catch { return null; }
+    if (!name.trim()) return null;
+    return { salt: bytes.subarray(0, SALT_SIZE), iv: bytes.subarray(SALT_SIZE, SALT_SIZE + IV_SIZE), name, headerSize };
+  }
+
+  /* ---------- chunked streaming, byte-identical to whole-file AES-CBC ----------
+     Encrypt: each chunk is CBC-encrypted with the previous chunk's last
+     ciphertext block as IV; the padding block WebCrypto appends to every call
+     is stripped from all non-final chunks, so the concatenated output equals
+     E_CBC(entire plaintext).
+     Decrypt: CBC decryption is block-parallel, so a non-final chunk is fed with
+     one manufactured trailing block whose plaintext is a full 0x10 padding
+     block — Z = E(0x10*16 XOR C_n), computed with WebCrypto itself. The unpad
+     step then removes only that synthetic block, leaving the chunk's own
+     plaintext untouched.
+     ------------------------------------------------------------------------- */
+  const CHUNK_SIZE = 4 * 1024 * 1024;
+  const ZERO_IV = new Uint8Array(16);
+
+  function buildHeader(nameBytes, salt, iv) {
+    const out = new Uint8Array(SALT_SIZE + IV_SIZE + LEN_SIZE + nameBytes.length);
+    out.set(salt, 0);
+    out.set(iv, SALT_SIZE);
+    new DataView(out.buffer).setUint32(SALT_SIZE + IV_SIZE, nameBytes.length, true);
+    out.set(nameBytes, SALT_SIZE + IV_SIZE + LEN_SIZE);
+    return out;
+  }
+
+  async function encryptStream(file, displayName, password, write, onProgress) {
+    const salt = crypto.getRandomValues(new Uint8Array(SALT_SIZE));
+    const iv = crypto.getRandomValues(new Uint8Array(IV_SIZE));
+    const key = await deriveKey(password, salt);
+    const header = buildHeader(te.encode(displayName), salt, iv);
+    await write(header);
+
+    let prevIv = iv;
+    const total = file.size;
+    if (total === 0) {
+      const ct = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-CBC', iv: prevIv }, key, new Uint8Array(0)));
+      await write(ct);
+      if (onProgress) onProgress(1);
+      return;
+    }
+    for (let off = 0; off < total; off += CHUNK_SIZE) {
+      const end = Math.min(off + CHUNK_SIZE, total);
+      const chunk = new Uint8Array(await file.slice(off, end).arrayBuffer());
+      const full = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-CBC', iv: prevIv }, key, chunk));
+      const isLast = end >= total;
+      const out = isLast ? full : full.subarray(0, full.length - 16);
+      await write(out);
+      if (!isLast) prevIv = out.slice(out.length - 16);
+      if (onProgress) onProgress(end / total);
+    }
+  }
+
+  async function decryptStream(file, password, write, onProgress) {
+    if (!file || file.size < MIN_SIZE) throw new FormatError();
+    const head36 = new Uint8Array(await file.slice(0, SALT_SIZE + IV_SIZE + LEN_SIZE).arrayBuffer());
+    if (head36.length < SALT_SIZE + IV_SIZE + LEN_SIZE) throw new FormatError();
+    const nameLen = new DataView(head36.buffer).getUint32(SALT_SIZE + IV_SIZE, true);
+    const headerSize = SALT_SIZE + IV_SIZE + LEN_SIZE + nameLen;
+    if (nameLen <= 0 || headerSize + 1 > file.size) throw new FormatError();
+
+    const headerBytes = new Uint8Array(await file.slice(0, headerSize + 16).arrayBuffer());
+    const header = parseHeader(headerBytes);
+    if (!header || header.headerSize !== headerSize) throw new FormatError();
+
+    const ctLen = file.size - headerSize;
+    if (ctLen === 0 || ctLen % 16 !== 0) throw new FormatError();
+
+    const key = await deriveKey(password, header.salt);
+
+    /* validate the password up-front with the file's real final block, so a
+       wrong password fails instantly instead of after writing garbage */
+    const tailLen = ctLen >= 32 ? 32 : 16;
+    const tail = new Uint8Array(await file.slice(file.size - tailLen, file.size).arrayBuffer());
+    try {
+      await crypto.subtle.decrypt(
+        { name: 'AES-CBC', iv: tailLen === 32 ? tail.subarray(0, 16) : header.iv },
+        key, tailLen === 32 ? tail.subarray(16) : tail
+      );
+    } catch { throw new WrongPasswordError(); }
+
+    let prevIv = header.iv;
+    for (let off = 0; off < ctLen; off += CHUNK_SIZE) {
+      const end = Math.min(off + CHUNK_SIZE, ctLen);
+      const ct = new Uint8Array(await file.slice(headerSize + off, headerSize + end).arrayBuffer());
+      const isLast = end >= ctLen;
+      let pt;
+      if (isLast) {
+        try { pt = new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-CBC', iv: prevIv }, key, ct)); }
+        catch { throw new WrongPasswordError(); }
+      } else {
+        const lastBlock = ct.subarray(ct.length - 16);
+        const target = new Uint8Array(16);
+        for (let i = 0; i < 16; i++) target[i] = lastBlock[i] ^ 0x10;
+        const zFull = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-CBC', iv: ZERO_IV }, key, target));
+        const input = new Uint8Array(ct.length + 16);
+        input.set(ct, 0);
+        input.set(zFull.subarray(0, 16), ct.length);
+        try { pt = new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-CBC', iv: prevIv }, key, input)); }
+        catch { throw new WrongPasswordError(); }
+        prevIv = ct.slice(ct.length - 16);
+      }
+      await write(pt);
+      if (onProgress) onProgress(end / ctLen);
+    }
+    return { filename: header.name, size: ctLen };
+  }
+
+  const isEncryptedName = name => /\.jye$/i.test(name || '');
+
+  function encryptedNameFor(name) {
+    if (isEncryptedName(name)) return name;
+    const i = name.lastIndexOf('.');
+    return (i > 0 ? name.slice(0, i) : name) + '.jye';
+  }
+
+  function safeBaseName(name) {
+    const cleaned = String(name || '').split(/[\\/]/).pop()
+      .replace(/[\u0000-\u001f<>:"|?*]/g, '_').trim();
+    return (cleaned && cleaned !== '.' && cleaned !== '..') ? cleaned : 'decrypted-file';
+  }
+
+  return { MIN_SIZE, CHUNK_SIZE, WrongPasswordError, FormatError, parseHeader, isEncryptedName, encryptStream, decryptStream, encryptedNameFor, safeBaseName };
+})();
+
+/* ============================== i18n — 20 languages ============================== */
+const LANGS = [
+  { code: 'zh-CN', name: '简体中文' },
+  { code: 'zh-TW', name: '繁體中文' },
+  { code: 'en',    name: 'English' },
+  { code: 'ja',    name: '日本語' },
+  { code: 'ko',    name: '한국어' },
+  { code: 'es',    name: 'Español' },
+  { code: 'fr',    name: 'Français' },
+  { code: 'de',    name: 'Deutsch' },
+  { code: 'pt',    name: 'Português' },
+  { code: 'ru',    name: 'Русский' },
+  { code: 'it',    name: 'Italiano' },
+  { code: 'ar',    name: 'العربية', rtl: true },
+  { code: 'tr',    name: 'Türkçe' },
+  { code: 'vi',    name: 'Tiếng Việt' },
+  { code: 'th',    name: 'ไทย' },
+  { code: 'id',    name: 'Bahasa Indonesia' },
+  { code: 'nl',    name: 'Nederlands' },
+  { code: 'pl',    name: 'Polski' },
+  { code: 'hi',    name: 'हिन्दी' },
+  { code: 'uk',    name: 'Українська' }
+];
+
+const I18N = {
+'zh-CN': {
+  docTitle: "鉴业文件加密 · Jianye File Encryptor", brandName: "鉴业",
+  pill: "本地计算 · 文件不上传",
+  h1: "为文件上锁，<br>只带走<em>密码</em>。",
+  lede: "在浏览器里完成 AES-256 加密与解密，文件始终留在这台设备上。生成的 {jye} 与桌面版完全互通。",
+  spec1: "加密算法", spec2: "密钥派生", spec3: "文件格式", spec4: "运行位置",
+  specFmtVal: ".jye / 桌面版互通", specLocVal: "本机浏览器",
+  nosupport: "当前浏览器不支持 WebCrypto，请使用 https 或 localhost 打开本页（Chrome / Edge / Safari 新版均可）。",
+  segAria: "处理模式", tabAuto: "自动识别", tabEnc: "加密", tabDec: "解密",
+  dropAria: "选择文件", dropMain: "拖入文件，或点击选择", dropSub: "支持批量 · 自动判断加密或解密", dropMore: "继续添加文件",
+  pwLabel: "密码", pwLabelSet: "设置密码", pwLabelDec: "解密密码",
+  pwHintSave: "加密后请妥善保存", pwHintWarn: "遗忘后无法恢复", pwHintMatch: "与加密时一致",
+  phSet: "设置一个强密码", phUse: "本次操作使用的密码", phDec: "输入解密密码",
+  cfLabel: "确认密码", cfPh: "再输入一次",
+  eyeShow: "显示密码", eyeHide: "隐藏密码",
+  btnPick: "选择文件", foot: "无网络请求 · 关闭页面即清空",
+  empty: "「{name}」是空文件，无法处理", tooBig: "「{name}」超过 {limit}，请使用桌面版处理",
+  added: "已添加 {n} 个文件，输入密码后开始处理",
+  runningEnc: "正在加密 · {size}", runningDec: "正在解密 · {size}",
+  doneSub: "已生成 {name} · {size}",
+  tagEnc: "加密", tagDec: "解密",
+  btnClear: "清空列表 · 重新开始",
+  btnEnc1: "加密并下载", btnEncN: "加密 {n} 个文件",
+  btnDec1: "解密并下载", btnDecN: "解密 {n} 个文件", btnMix: "处理 {n} 个文件",
+  progEnc: "加密中", progDec: "解密中", progDone: "完成",
+  errNoPw: "请输入密码", errPwShort: "密码至少 6 位，建议 12 位以上", errPwMismatch: "两次输入的密码不一致",
+  errWrongPw: "密码错误，无法解密", errFormat: "不是有效的 .jye 文件", errQuota: "内存不足，文件过大", errGeneric: "处理失败，请重试",
+  noticeStopped: "密码不正确，其余文件已暂停处理", toastDecFail: "解密失败：密码错误",
+  noticeDone: "已完成 {n} 个文件 · 加密请牢记密码",
+  toastDoneN: "已处理 {n} 个文件", toastDone1: "处理完成",
+  noticePartial: "{a} 个成功 · {b} 个失败", toastCleared: "已清空",
+  ariaDl: "下载", ariaRemove: "移除", dlTitle: "下载 {name}"
+},
+'zh-TW': {
+  docTitle: "鑒業檔案加密 · Jianye File Encryptor", brandName: "鑒業",
+  pill: "本機運算 · 檔案不上傳",
+  h1: "為檔案上鎖，<br>只帶走<em>密碼</em>。",
+  lede: "在瀏覽器裡完成 AES-256 加密與解密，檔案始終留在這台裝置上。生成的 {jye} 與桌面版完全互通。",
+  spec1: "加密演算法", spec2: "金鑰派生", spec3: "檔案格式", spec4: "執行位置",
+  specFmtVal: ".jye / 桌面版互通", specLocVal: "本機瀏覽器",
+  nosupport: "目前瀏覽器不支援 WebCrypto，請以 https 或 localhost 開啟本頁（新版 Chrome / Edge / Safari 皆可）。",
+  segAria: "處理模式", tabAuto: "自動識別", tabEnc: "加密", tabDec: "解密",
+  dropAria: "選擇檔案", dropMain: "拖入檔案，或點擊選擇", dropSub: "支援批次 · 自動判斷加密或解密", dropMore: "繼續新增檔案",
+  pwLabel: "密碼", pwLabelSet: "設定密碼", pwLabelDec: "解密密碼",
+  pwHintSave: "加密後請妥善保存", pwHintWarn: "忘記後無法復原", pwHintMatch: "與加密時一致",
+  phSet: "設定一個強密碼", phUse: "本次操作使用的密碼", phDec: "輸入解密密碼",
+  cfLabel: "確認密碼", cfPh: "再輸入一次",
+  eyeShow: "顯示密碼", eyeHide: "隱藏密碼",
+  btnPick: "選擇檔案", foot: "無網路請求 · 關閉頁面即清空",
+  empty: "「{name}」是空檔案，無法處理", tooBig: "「{name}」超過 {limit}，請使用桌面版處理",
+  added: "已新增 {n} 個檔案，輸入密碼後開始處理",
+  runningEnc: "正在加密 · {size}", runningDec: "正在解密 · {size}",
+  doneSub: "已產生 {name} · {size}",
+  tagEnc: "加密", tagDec: "解密",
+  btnClear: "清空清單 · 重新開始",
+  btnEnc1: "加密並下載", btnEncN: "加密 {n} 個檔案",
+  btnDec1: "解密並下載", btnDecN: "解密 {n} 個檔案", btnMix: "處理 {n} 個檔案",
+  progEnc: "加密中", progDec: "解密中", progDone: "完成",
+  errNoPw: "請輸入密碼", errPwShort: "密碼至少 6 位，建議 12 位以上", errPwMismatch: "兩次輸入的密碼不一致",
+  errWrongPw: "密碼錯誤，無法解密", errFormat: "不是有效的 .jye 檔案", errQuota: "記憶體不足，檔案過大", errGeneric: "處理失敗，請重試",
+  noticeStopped: "密碼不正確，其餘檔案已暫停處理", toastDecFail: "解密失敗：密碼錯誤",
+  noticeDone: "已完成 {n} 個檔案 · 加密請牢記密碼",
+  toastDoneN: "已處理 {n} 個檔案", toastDone1: "處理完成",
+  noticePartial: "{a} 個成功 · {b} 個失敗", toastCleared: "已清空",
+  ariaDl: "下載", ariaRemove: "移除", dlTitle: "下載 {name}"
+},
+'en': {
+  docTitle: "Jianye File Encryptor", brandName: "Jianye",
+  pill: "Local processing · Files never uploaded",
+  h1: "Lock your files,<br>take only the <em>password</em>.",
+  lede: "Encrypt and decrypt AES-256 files right in the browser — files never leave this device. The resulting {jye} is fully compatible with the desktop app.",
+  spec1: "Cipher", spec2: "Key derivation", spec3: "File format", spec4: "Where it runs",
+  specFmtVal: ".jye / desktop-compatible", specLocVal: "Your browser",
+  nosupport: "This browser does not support WebCrypto. Please open this page via HTTPS or localhost (a recent Chrome / Edge / Safari works).",
+  segAria: "Mode", tabAuto: "Auto", tabEnc: "Encrypt", tabDec: "Decrypt",
+  dropAria: "Choose files", dropMain: "Drop files here, or click to browse", dropSub: "Batch supported · encrypt/decrypt auto-detected", dropMore: "Add more files",
+  pwLabel: "Password", pwLabelSet: "Set password", pwLabelDec: "Decryption password",
+  pwHintSave: "Keep it safe once encrypted", pwHintWarn: "Lost means unrecoverable", pwHintMatch: "Same as when encrypting",
+  phSet: "Set a strong password", phUse: "Password for this operation", phDec: "Enter decryption password",
+  cfLabel: "Confirm password", cfPh: "Type it again",
+  eyeShow: "Show password", eyeHide: "Hide password",
+  btnPick: "Choose files", foot: "No network requests · Cleared when the page closes",
+  empty: "“{name}” is empty and cannot be processed", tooBig: "“{name}” exceeds {limit} — use the desktop app",
+  added: "Added {n} file(s). Enter a password to start.",
+  runningEnc: "Encrypting · {size}", runningDec: "Decrypting · {size}",
+  doneSub: "Created {name} · {size}",
+  tagEnc: "Encrypt", tagDec: "Decrypt",
+  btnClear: "Clear list · Start over",
+  btnEnc1: "Encrypt & download", btnEncN: "Encrypt {n} files",
+  btnDec1: "Decrypt & download", btnDecN: "Decrypt {n} files", btnMix: "Process {n} files",
+  progEnc: "Encrypting", progDec: "Decrypting", progDone: "Done",
+  errNoPw: "Please enter a password", errPwShort: "At least 6 characters; 12+ recommended", errPwMismatch: "Passwords do not match",
+  errWrongPw: "Wrong password — cannot decrypt", errFormat: "Not a valid .jye file", errQuota: "Not enough memory — file too large", errGeneric: "Processing failed, please retry",
+  noticeStopped: "Password incorrect — remaining files were paused", toastDecFail: "Decryption failed: wrong password",
+  noticeDone: "{n} file(s) done · Keep the password safe",
+  toastDoneN: "{n} files processed", toastDone1: "All done",
+  noticePartial: "{a} succeeded · {b} failed", toastCleared: "Cleared",
+  ariaDl: "Download", ariaRemove: "Remove", dlTitle: "Download {name}"
+},
+'ja': {
+  docTitle: "鑑業ファイル暗号化 · Jianye File Encryptor", brandName: "鑑業",
+  pill: "ローカル処理 · ファイルはアップロードされません",
+  h1: "ファイルに鍵をかけ、<br>持ち帰るのは<em>パスワード</em>だけ。",
+  lede: "ブラウザ上で AES-256 の暗号化・復号を行います。ファイルはこの端末から出ません。生成された {jye} はデスクトップ版と完全互換です。",
+  spec1: "暗号方式", spec2: "鍵導出", spec3: "ファイル形式", spec4: "実行場所",
+  specFmtVal: ".jye / デスクトップ版と互換", specLocVal: "お使いのブラウザ",
+  nosupport: "このブラウザは WebCrypto に対応していません。HTTPS または localhost で開いてください（最新の Chrome / Edge / Safari で動作します）。",
+  segAria: "処理モード", tabAuto: "自動判別", tabEnc: "暗号化", tabDec: "復号",
+  dropAria: "ファイルを選択", dropMain: "ファイルをドロップ、またはクリックして選択", dropSub: "複数対応 · 暗号化/復号を自動判別", dropMore: "ファイルを追加",
+  pwLabel: "パスワード", pwLabelSet: "パスワード設定", pwLabelDec: "復号パスワード",
+  pwHintSave: "暗号化後は大切に保管してください", pwHintWarn: "忘れると復元できません", pwHintMatch: "暗号化時と同じパスワード",
+  phSet: "強いパスワードを設定", phUse: "この操作で使うパスワード", phDec: "復号パスワードを入力",
+  cfLabel: "パスワード確認", cfPh: "もう一度入力",
+  eyeShow: "パスワードを表示", eyeHide: "パスワードを隠す",
+  btnPick: "ファイルを選択", foot: "ネットワーク通信なし · ページを閉じると消去",
+  empty: "「{name}」は空ファイルのため処理できません", tooBig: "「{name}」は {limit} を超えています。デスクトップ版をご利用ください",
+  added: "{n} 個のファイルを追加しました。パスワードを入力して開始します。",
+  runningEnc: "暗号化中 · {size}", runningDec: "復号中 · {size}",
+  doneSub: "{name} を生成 · {size}",
+  tagEnc: "暗号化", tagDec: "復号",
+  btnClear: "リストをクリア · 最初から",
+  btnEnc1: "暗号化してダウンロード", btnEncN: "{n} 個のファイルを暗号化",
+  btnDec1: "復号してダウンロード", btnDecN: "{n} 個のファイルを復号", btnMix: "{n} 個のファイルを処理",
+  progEnc: "暗号化中", progDec: "復号中", progDone: "完了",
+  errNoPw: "パスワードを入力してください", errPwShort: "パスワードは 6 文字以上（12 文字以上推奨）", errPwMismatch: "パスワードが一致しません",
+  errWrongPw: "パスワードが違います。復号できません", errFormat: "有効な .jye ファイルではありません", errQuota: "メモリ不足です。ファイルが大きすぎます", errGeneric: "処理に失敗しました。再試行してください",
+  noticeStopped: "パスワードが正しくないため、残りのファイルを停止しました", toastDecFail: "復号失敗：パスワードが違います",
+  noticeDone: "{n} 個のファイルが完了 · パスワードは大切に保管してください",
+  toastDoneN: "{n} 個のファイルを処理しました", toastDone1: "処理完了",
+  noticePartial: "{a} 件成功 · {b} 件失敗", toastCleared: "クリアしました",
+  ariaDl: "ダウンロード", ariaRemove: "削除", dlTitle: "{name} をダウンロード"
+},
+'ko': {
+  docTitle: "Jianye 파일 암호화 · File Encryptor", brandName: "Jianye",
+  pill: "로컬 처리 · 파일은 업로드되지 않습니다",
+  h1: "파일에 잠금을 걸고,<br><em>비밀번호</em>만 가져가세요.",
+  lede: "브라우저에서 AES-256 암호화·복호화를 수행합니다. 파일은 이 기기를 벗어나지 않습니다. 생성된 {jye}는 데스크톱 버전과 완전히 호환됩니다.",
+  spec1: "암호화 알고리즘", spec2: "키 도출", spec3: "파일 형식", spec4: "실행 위치",
+  specFmtVal: ".jye / 데스크톱 호환", specLocVal: "로컬 브라우저",
+  nosupport: "이 브라우저는 WebCrypto를 지원하지 않습니다. HTTPS 또는 localhost로 페이지를 열어주세요(최신 Chrome / Edge / Safari 가능).",
+  segAria: "처리 모드", tabAuto: "자동 인식", tabEnc: "암호화", tabDec: "복호화",
+  dropAria: "파일 선택", dropMain: "파일을 끌어다 놓거나 클릭해서 선택", dropSub: "다중 지원 · 암호화/복호화 자동 판별", dropMore: "파일 추가",
+  pwLabel: "비밀번호", pwLabelSet: "비밀번호 설정", pwLabelDec: "복호화 비밀번호",
+  pwHintSave: "암호화 후 안전하게 보관하세요", pwHintWarn: "잊어버리면 복구할 수 없습니다", pwHintMatch: "암호화 때와 동일해야 합니다",
+  phSet: "강한 비밀번호를 설정하세요", phUse: "이 작업에 사용할 비밀번호", phDec: "복호화 비밀번호 입력",
+  cfLabel: "비밀번호 확인", cfPh: "다시 한 번 입력",
+  eyeShow: "비밀번호 표시", eyeHide: "비밀번호 숨기기",
+  btnPick: "파일 선택", foot: "네트워크 요청 없음 · 페이지를 닫으면 초기화",
+  empty: "'{name}'은(는) 빈 파일이라 처리할 수 없습니다", tooBig: "'{name}'이(가) {limit}를 초과합니다. 데스크톱 버전을 사용하세요",
+  added: "파일 {n}개가 추가되었습니다. 비밀번호를 입력하고 시작하세요.",
+  runningEnc: "암호화 중 · {size}", runningDec: "복호화 중 · {size}",
+  doneSub: "{name} 생성됨 · {size}",
+  tagEnc: "암호화", tagDec: "복호화",
+  btnClear: "목록 비우기 · 처음부터",
+  btnEnc1: "암호화 후 다운로드", btnEncN: "파일 {n}개 암호화",
+  btnDec1: "복호화 후 다운로드", btnDecN: "파일 {n}개 복호화", btnMix: "파일 {n}개 처리",
+  progEnc: "암호화 중", progDec: "복호화 중", progDone: "완료",
+  errNoPw: "비밀번호를 입력하세요", errPwShort: "비밀번호는 6자 이상(12자 이상 권장)", errPwMismatch: "비밀번호가 일치하지 않습니다",
+  errWrongPw: "비밀번호가 틀려 복호화할 수 없습니다", errFormat: "유효한 .jye 파일이 아닙니다", errQuota: "메모리가 부족합니다. 파일이 너무 큽니다", errGeneric: "처리에 실패했습니다. 다시 시도하세요",
+  noticeStopped: "비밀번호가 올바르지 않아 나머지 파일 처리를 중지했습니다", toastDecFail: "복호화 실패: 비밀번호 오류",
+  noticeDone: "파일 {n}개 완료 · 비밀번호를 꼭 기억해 두세요",
+  toastDoneN: "파일 {n}개 처리됨", toastDone1: "처리 완료",
+  noticePartial: "{a}개 성공 · {b}개 실패", toastCleared: "비웠습니다",
+  ariaDl: "다운로드", ariaRemove: "제거", dlTitle: "{name} 다운로드"
+},
+'es': {
+  docTitle: "Cifrador de archivos Jianye", brandName: "Jianye",
+  pill: "Procesamiento local · Los archivos nunca se suben",
+  h1: "Bloquea tus archivos,<br>llévate solo la <em>contraseña</em>.",
+  lede: "Cifra y descifra archivos AES-256 en tu navegador: los archivos nunca salen de este dispositivo. El {jye} resultante es totalmente compatible con la app de escritorio.",
+  spec1: "Cifrado", spec2: "Derivación de clave", spec3: "Formato de archivo", spec4: "Dónde se ejecuta",
+  specFmtVal: ".jye / compatible con escritorio", specLocVal: "Tu navegador",
+  nosupport: "Este navegador no admite WebCrypto. Abre la página por HTTPS o localhost (sirven versiones recientes de Chrome / Edge / Safari).",
+  segAria: "Modo", tabAuto: "Auto", tabEnc: "Cifrar", tabDec: "Descifrar",
+  dropAria: "Elegir archivos", dropMain: "Arrastra archivos o haz clic para elegirlos", dropSub: "Lotes admitidos · cifra/descifra se detecta solo", dropMore: "Añadir más archivos",
+  pwLabel: "Contraseña", pwLabelSet: "Establecer contraseña", pwLabelDec: "Contraseña de descifrado",
+  pwHintSave: "Guárdala bien tras cifrar", pwHintWarn: "Si la pierdes, no hay recuperación", pwHintMatch: "Igual que al cifrar",
+  phSet: "Configura una contraseña fuerte", phUse: "Contraseña para esta operación", phDec: "Introduce la contraseña de descifrado",
+  cfLabel: "Confirmar contraseña", cfPh: "Escríbela otra vez",
+  eyeShow: "Mostrar contraseña", eyeHide: "Ocultar contraseña",
+  btnPick: "Elegir archivos", foot: "Sin peticiones de red · Se borra al cerrar la página",
+  empty: "«{name}» está vacío y no se puede procesar", tooBig: "«{name}» supera {limit} — usa la app de escritorio",
+  added: "{n} archivo(s) añadidos. Escribe la contraseña para empezar.",
+  runningEnc: "Cifrando · {size}", runningDec: "Descifrando · {size}",
+  doneSub: "Generado {name} · {size}",
+  tagEnc: "Cifrar", tagDec: "Descifrar",
+  btnClear: "Vaciar lista · Empezar de nuevo",
+  btnEnc1: "Cifrar y descargar", btnEncN: "Cifrar {n} archivos",
+  btnDec1: "Descifrar y descargar", btnDecN: "Descifrar {n} archivos", btnMix: "Procesar {n} archivos",
+  progEnc: "Cifrando", progDec: "Descifrando", progDone: "Hecho",
+  errNoPw: "Introduce una contraseña", errPwShort: "Mínimo 6 caracteres; se recomiendan 12+", errPwMismatch: "Las contraseñas no coinciden",
+  errWrongPw: "Contraseña incorrecta: no se puede descifrar", errFormat: "No es un archivo .jye válido", errQuota: "Memoria insuficiente: archivo demasiado grande", errGeneric: "Error al procesar; inténtalo de nuevo",
+  noticeStopped: "Contraseña incorrecta: los demás archivos quedaron en pausa", toastDecFail: "Descifrado fallido: contraseña incorrecta",
+  noticeDone: "{n} archivo(s) completados · Guarda bien la contraseña",
+  toastDoneN: "{n} archivos procesados", toastDone1: "Proceso completado",
+  noticePartial: "{a} con éxito · {b} con error", toastCleared: "Lista vaciada",
+  ariaDl: "Descargar", ariaRemove: "Quitar", dlTitle: "Descargar {name}"
+},
+'fr': {
+  docTitle: "Chiffreur de fichiers Jianye", brandName: "Jianye",
+  pill: "Traitement local · Aucun fichier envoyé",
+  h1: "Verrouillez vos fichiers,<br>ne repartez qu'avec le <em>mot de passe</em>.",
+  lede: "Chiffrez et déchiffrez en AES-256 dans votre navigateur — les fichiers restent sur cet appareil. Le fichier {jye} obtenu est entièrement compatible avec l'application de bureau.",
+  spec1: "Chiffrement", spec2: "Dérivation de clé", spec3: "Format de fichier", spec4: "Où ça s'exécute",
+  specFmtVal: ".jye / compatible bureau", specLocVal: "Votre navigateur",
+  nosupport: "Ce navigateur ne prend pas en charge WebCrypto. Ouvrez la page en HTTPS ou localhost (Chrome / Edge / Safari récents conviennent).",
+  segAria: "Mode", tabAuto: "Auto", tabEnc: "Chiffrer", tabDec: "Déchiffrer",
+  dropAria: "Choisir des fichiers", dropMain: "Déposez des fichiers ou cliquez pour parcourir", dropSub: "Lots pris en charge · chiffrement/déchiffrement détectés automatiquement", dropMore: "Ajouter d'autres fichiers",
+  pwLabel: "Mot de passe", pwLabelSet: "Définir le mot de passe", pwLabelDec: "Mot de passe de déchiffrement",
+  pwHintSave: "À conserver précieusement après chiffrement", pwHintWarn: "Perdu = irrécupérable", pwHintMatch: "Identique à celui du chiffrement",
+  phSet: "Définissez un mot de passe fort", phUse: "Mot de passe pour cette opération", phDec: "Saisissez le mot de passe de déchiffrement",
+  cfLabel: "Confirmer le mot de passe", cfPh: "Saisissez-le à nouveau",
+  eyeShow: "Afficher le mot de passe", eyeHide: "Masquer le mot de passe",
+  btnPick: "Choisir des fichiers", foot: "Aucune requête réseau · Effacé à la fermeture de la page",
+  empty: "« {name} » est vide et ne peut pas être traité", tooBig: "« {name} » dépasse {limit} — utilisez l'application de bureau",
+  added: "{n} fichier(s) ajouté(s). Saisissez le mot de passe pour commencer.",
+  runningEnc: "Chiffrement · {size}", runningDec: "Déchiffrement · {size}",
+  doneSub: "{name} généré · {size}",
+  tagEnc: "Chiffrer", tagDec: "Déchiffrer",
+  btnClear: "Vider la liste · Reprendre à zéro",
+  btnEnc1: "Chiffrer et télécharger", btnEncN: "Chiffrer {n} fichiers",
+  btnDec1: "Déchiffrer et télécharger", btnDecN: "Déchiffrer {n} fichiers", btnMix: "Traiter {n} fichiers",
+  progEnc: "Chiffrement", progDec: "Déchiffrement", progDone: "Terminé",
+  errNoPw: "Veuillez saisir un mot de passe", errPwShort: "Au moins 6 caractères ; 12 ou plus recommandé", errPwMismatch: "Les mots de passe ne correspondent pas",
+  errWrongPw: "Mot de passe incorrect — déchiffrement impossible", errFormat: "Fichier .jye invalide", errQuota: "Mémoire insuffisante — fichier trop volumineux", errGeneric: "Échec du traitement, veuillez réessayer",
+  noticeStopped: "Mot de passe incorrect — traitement des autres fichiers suspendu", toastDecFail: "Échec du déchiffrement : mot de passe incorrect",
+  noticeDone: "{n} fichier(s) traité(s) · Gardez le mot de passe en lieu sûr",
+  toastDoneN: "{n} fichiers traités", toastDone1: "Traitement terminé",
+  noticePartial: "{a} réussi(s) · {b} en échec", toastCleared: "Liste vidée",
+  ariaDl: "Télécharger", ariaRemove: "Retirer", dlTitle: "Télécharger {name}"
+},
+'de': {
+  docTitle: "Jianye Datei-Verschlüsselung", brandName: "Jianye",
+  pill: "Lokale Verarbeitung · Dateien werden nie hochgeladen",
+  h1: "Dateien verschlüsseln –<br>nur das <em>Passwort</em> mitnehmen.",
+  lede: "AES-256-Verschlüsselung direkt im Browser – Dateien verlassen dieses Gerät nie. Die erzeugte {jye}-Datei ist voll kompatibel mit der Desktop-App.",
+  spec1: "Verschlüsselung", spec2: "Schlüsselableitung", spec3: "Dateiformat", spec4: "Ausführungsort",
+  specFmtVal: ".jye / Desktop-kompatibel", specLocVal: "Ihr Browser",
+  nosupport: "Dieser Browser unterstützt kein WebCrypto. Bitte über HTTPS oder localhost öffnen (aktuelle Chrome-/Edge-/Safari-Versionen genügen).",
+  segAria: "Modus", tabAuto: "Auto", tabEnc: "Verschlüsseln", tabDec: "Entschlüsseln",
+  dropAria: "Dateien auswählen", dropMain: "Dateien hierher ziehen oder klicken zum Auswählen", dropSub: "Stapel möglich · Ver-/Entschlüsselung wird automatisch erkannt", dropMore: "Weitere Dateien hinzufügen",
+  pwLabel: "Passwort", pwLabelSet: "Passwort festlegen", pwLabelDec: "Entschlüsselungs-Passwort",
+  pwHintSave: "Nach dem Verschlüsseln gut aufbewahren", pwHintWarn: "Verloren = nicht wiederherstellbar", pwHintMatch: "Wie beim Verschlüsseln",
+  phSet: "Legen Sie ein starkes Passwort fest", phUse: "Passwort für diesen Vorgang", phDec: "Entschlüsselungs-Passwort eingeben",
+  cfLabel: "Passwort bestätigen", cfPh: "Erneut eingeben",
+  eyeShow: "Passwort anzeigen", eyeHide: "Passwort verbergen",
+  btnPick: "Dateien auswählen", foot: "Keine Netzwerkanfragen · Wird beim Schließen gelöscht",
+  empty: "„{name}“ ist leer und kann nicht verarbeitet werden", tooBig: "„{name}“ überschreitet {limit} – bitte Desktop-App nutzen",
+  added: "{n} Datei(en) hinzugefügt. Passwort eingeben, um zu starten.",
+  runningEnc: "Verschlüsseln · {size}", runningDec: "Entschlüsseln · {size}",
+  doneSub: "{name} erstellt · {size}",
+  tagEnc: "Verschl.", tagDec: "Entschl.",
+  btnClear: "Liste leeren · Neu beginnen",
+  btnEnc1: "Verschlüsseln & laden", btnEncN: "{n} Dateien verschlüsseln",
+  btnDec1: "Entschlüsseln & laden", btnDecN: "{n} Dateien entschlüsseln", btnMix: "{n} Dateien verarbeiten",
+  progEnc: "Verschlüsseln", progDec: "Entschlüsseln", progDone: "Fertig",
+  errNoPw: "Bitte Passwort eingeben", errPwShort: "Mindestens 6 Zeichen; 12+ empfohlen", errPwMismatch: "Passwörter stimmen nicht überein",
+  errWrongPw: "Falsches Passwort – Entschlüsselung nicht möglich", errFormat: "Keine gültige .jye-Datei", errQuota: "Nicht genug Speicher – Datei zu groß", errGeneric: "Verarbeitung fehlgeschlagen, bitte erneut versuchen",
+  noticeStopped: "Passwort falsch – übrige Dateien wurden pausiert", toastDecFail: "Entschlüsselung fehlgeschlagen: falsches Passwort",
+  noticeDone: "{n} Datei(en) fertig · Passwort gut aufbewahren",
+  toastDoneN: "{n} Dateien verarbeitet", toastDone1: "Verarbeitung abgeschlossen",
+  noticePartial: "{a} erfolgreich · {b} fehlgeschlagen", toastCleared: "Liste geleert",
+  ariaDl: "Herunterladen", ariaRemove: "Entfernen", dlTitle: "{name} herunterladen"
+},
+'pt': {
+  docTitle: "Criptografador de Arquivos Jianye", brandName: "Jianye",
+  pill: "Processamento local · Arquivos nunca enviados",
+  h1: "Trave seus arquivos,<br>leve apenas a <em>senha</em>.",
+  lede: "Criptografe e descriptografe arquivos AES-256 no navegador — eles nunca saem deste dispositivo. O {jye} gerado é totalmente compatível com o app desktop.",
+  spec1: "Criptografia", spec2: "Derivação de chave", spec3: "Formato de arquivo", spec4: "Onde roda",
+  specFmtVal: ".jye / compatível com desktop", specLocVal: "Seu navegador",
+  nosupport: "Este navegador não suporta WebCrypto. Abra a página via HTTPS ou localhost (versões recentes de Chrome / Edge / Safari servem).",
+  segAria: "Modo", tabAuto: "Auto", tabEnc: "Criptografar", tabDec: "Descriptografar",
+  dropAria: "Escolher arquivos", dropMain: "Arraste arquivos ou clique para escolher", dropSub: "Lotes suportados · cripto/descripto detectados automaticamente", dropMore: "Adicionar mais arquivos",
+  pwLabel: "Senha", pwLabelSet: "Definir senha", pwLabelDec: "Senha de descriptografia",
+  pwHintSave: "Guarde bem após criptografar", pwHintWarn: "Se perder, não há recuperação", pwHintMatch: "Igual à usada na criptografia",
+  phSet: "Defina uma senha forte", phUse: "Senha para esta operação", phDec: "Digite a senha de descriptografia",
+  cfLabel: "Confirmar senha", cfPh: "Digite novamente",
+  eyeShow: "Mostrar senha", eyeHide: "Ocultar senha",
+  btnPick: "Escolher arquivos", foot: "Sem requisições de rede · Tudo é limpo ao fechar a página",
+  empty: "“{name}” está vazio e não pode ser processado", tooBig: "“{name}” excede {limit} — use o app desktop",
+  added: "{n} arquivo(s) adicionado(s). Digite a senha para começar.",
+  runningEnc: "Criptografando · {size}", runningDec: "Descriptografando · {size}",
+  doneSub: "{name} gerado · {size}",
+  tagEnc: "Cripto", tagDec: "Descripto",
+  btnClear: "Limpar lista · Começar de novo",
+  btnEnc1: "Criptografar e baixar", btnEncN: "Criptografar {n} arquivos",
+  btnDec1: "Descriptografar e baixar", btnDecN: "Descriptografar {n} arquivos", btnMix: "Processar {n} arquivos",
+  progEnc: "Criptografando", progDec: "Descriptografando", progDone: "Concluído",
+  errNoPw: "Digite uma senha", errPwShort: "Mínimo de 6 caracteres; 12+ recomendado", errPwMismatch: "As senhas não coincidem",
+  errWrongPw: "Senha incorreta — não é possível descriptografar", errFormat: "Arquivo .jye inválido", errQuota: "Memória insuficiente — arquivo muito grande", errGeneric: "Falha no processamento, tente novamente",
+  noticeStopped: "Senha incorreta — os demais arquivos foram pausados", toastDecFail: "Falha na descriptografia: senha incorreta",
+  noticeDone: "{n} arquivo(s) concluído(s) · Guarde bem a senha",
+  toastDoneN: "{n} arquivos processados", toastDone1: "Processamento concluído",
+  noticePartial: "{a} com sucesso · {b} com falha", toastCleared: "Lista limpa",
+  ariaDl: "Baixar", ariaRemove: "Remover", dlTitle: "Baixar {name}"
+},
+'ru': {
+  docTitle: "Шифровальщик файлов Jianye", brandName: "Jianye",
+  pill: "Локальная обработка · Файлы не загружаются",
+  h1: "Заприте файлы,<br>с собой заберите только <em>пароль</em>.",
+  lede: "Шифрование AES-256 прямо в браузере — файлы не покидают это устройство. Полученный {jye} полностью совместим с десктопной версией.",
+  spec1: "Алгоритм", spec2: "Выработка ключа", spec3: "Формат файла", spec4: "Где выполняется",
+  specFmtVal: ".jye / совместим с ПК", specLocVal: "Ваш браузер",
+  nosupport: "Этот браузер не поддерживает WebCrypto. Откройте страницу по HTTPS или localhost (подойдут свежие Chrome / Edge / Safari).",
+  segAria: "Режим", tabAuto: "Авто", tabEnc: "Шифровать", tabDec: "Расшифровать",
+  dropAria: "Выбрать файлы", dropMain: "Перетащите файлы или нажмите для выбора", dropSub: "Пакетная обработка · шифрование/расшифровка определяется автоматически", dropMore: "Добавить ещё файлы",
+  pwLabel: "Пароль", pwLabelSet: "Задать пароль", pwLabelDec: "Пароль расшифровки",
+  pwHintSave: "После шифрования сохраните его надёжно", pwHintWarn: "Забытый пароль восстановить нельзя", pwHintMatch: "Как при шифровании",
+  phSet: "Задайте надёжный пароль", phUse: "Пароль для этой операции", phDec: "Введите пароль расшифровки",
+  cfLabel: "Подтвердите пароль", cfPh: "Введите ещё раз",
+  eyeShow: "Показать пароль", eyeHide: "Скрыть пароль",
+  btnPick: "Выбрать файлы", foot: "Сетевых запросов нет · Всё стирается при закрытии страницы",
+  empty: "«{name}» пуст и не может быть обработан", tooBig: "«{name}» больше {limit} — используйте десктопную версию",
+  added: "Добавлено файлов: {n}. Введите пароль, чтобы начать.",
+  runningEnc: "Шифрование · {size}", runningDec: "Расшифровка · {size}",
+  doneSub: "Создан {name} · {size}",
+  tagEnc: "Шифр.", tagDec: "Расш.",
+  btnClear: "Очистить список · Начать заново",
+  btnEnc1: "Шифровать и скачать", btnEncN: "Шифровать файлов: {n}",
+  btnDec1: "Расшифровать и скачать", btnDecN: "Расшифровать файлов: {n}", btnMix: "Обработать файлов: {n}",
+  progEnc: "Шифрование", progDec: "Расшифровка", progDone: "Готово",
+  errNoPw: "Введите пароль", errPwShort: "Минимум 6 символов; рекомендуется 12+", errPwMismatch: "Пароли не совпадают",
+  errWrongPw: "Неверный пароль — расшифровка невозможна", errFormat: "Недействительный файл .jye", errQuota: "Недостаточно памяти — файл слишком велик", errGeneric: "Сбой обработки, попробуйте снова",
+  noticeStopped: "Пароль неверный — обработка остальных файлов приостановлена", toastDecFail: "Не удалось расшифровать: неверный пароль",
+  noticeDone: "Готово файлов: {n} · Сохраните пароль в надёжном месте",
+  toastDoneN: "Обработано файлов: {n}", toastDone1: "Обработка завершена",
+  noticePartial: "{a} успешно · {b} с ошибкой", toastCleared: "Список очищен",
+  ariaDl: "Скачать", ariaRemove: "Убрать", dlTitle: "Скачать {name}"
+},
+'it': {
+  docTitle: "Cifratore di file Jianye", brandName: "Jianye",
+  pill: "Elaborazione locale · I file non vengono caricati",
+  h1: "Metti sotto chiave i tuoi file,<br>portati via solo la <em>password</em>.",
+  lede: "Cifra e decifra file AES-256 nel browser: i file restano su questo dispositivo. Il file {jye} generato è pienamente compatibile con la versione desktop.",
+  spec1: "Cifratura", spec2: "Derivazione chiave", spec3: "Formato file", spec4: "Dove gira",
+  specFmtVal: ".jye / compatibile desktop", specLocVal: "Il tuo browser",
+  nosupport: "Questo browser non supporta WebCrypto. Apri la pagina via HTTPS o localhost (bastano Chrome / Edge / Safari recenti).",
+  segAria: "Modalità", tabAuto: "Auto", tabEnc: "Cifra", tabDec: "Decifra",
+  dropAria: "Scegli file", dropMain: "Trascina i file o clicca per scegliere", dropSub: "Batch supportato · cifratura/decifratura rilevate automaticamente", dropMore: "Aggiungi altri file",
+  pwLabel: "Password", pwLabelSet: "Imposta password", pwLabelDec: "Password di decifratura",
+  pwHintSave: "Conservala bene dopo la cifratura", pwHintWarn: "Se la perdi non è recuperabile", pwHintMatch: "Uguale a quella della cifratura",
+  phSet: "Imposta una password robusta", phUse: "Password per questa operazione", phDec: "Inserisci la password di decifratura",
+  cfLabel: "Conferma password", cfPh: "Digita di nuovo",
+  eyeShow: "Mostra password", eyeHide: "Nascondi password",
+  btnPick: "Scegli file", foot: "Nessuna richiesta di rete · Tutto viene cancellato alla chiusura",
+  empty: "«{name}» è vuoto e non può essere elaborato", tooBig: "«{name}» supera {limit} — usa la versione desktop",
+  added: "{n} file aggiunti. Inserisci la password per iniziare.",
+  runningEnc: "Cifratura · {size}", runningDec: "Decifratura · {size}",
+  doneSub: "Generato {name} · {size}",
+  tagEnc: "Cifra", tagDec: "Decifra",
+  btnClear: "Svuota lista · Ricomincia",
+  btnEnc1: "Cifra e scarica", btnEncN: "Cifra {n} file",
+  btnDec1: "Decifra e scarica", btnDecN: "Decifra {n} file", btnMix: "Elabora {n} file",
+  progEnc: "Cifratura", progDec: "Decifratura", progDone: "Fatto",
+  errNoPw: "Inserisci una password", errPwShort: "Almeno 6 caratteri; consigliati 12+", errPwMismatch: "Le password non coincidono",
+  errWrongPw: "Password errata — decifratura impossibile", errFormat: "File .jye non valido", errQuota: "Memoria insufficiente — file troppo grande", errGeneric: "Elaborazione non riuscita, riprova",
+  noticeStopped: "Password errata — elaborazione degli altri file sospesa", toastDecFail: "Decifratura fallita: password errata",
+  noticeDone: "{n} file completati · Conserva bene la password",
+  toastDoneN: "{n} file elaborati", toastDone1: "Elaborazione completata",
+  noticePartial: "{a} riusciti · {b} falliti", toastCleared: "Lista svuotata",
+  ariaDl: "Scarica", ariaRemove: "Rimuovi", dlTitle: "Scarica {name}"
+},
+'ar': {
+  docTitle: "مشفّر ملفات جيانيه", brandName: "جيانيه",
+  pill: "معالجة محلية · الملفات لا تُرفع إطلاقًا",
+  h1: "أقفل ملفاتك،<br>وخذ معك <em>كلمة المرور</em> فقط.",
+  lede: "شفّر وفك تشفير ملفات AES-256 داخل المتصفح — تبقى الملفات على هذا الجهاز. ملف {jye} الناتج متوافق تمامًا مع تطبيق سطح المكتب.",
+  spec1: "خوارزمية التشفير", spec2: "اشتقاق المفتاح", spec3: "صيغة الملف", spec4: "مكان التشغيل",
+  specFmtVal: ".jye / متوافق مع سطح المكتب", specLocVal: "متصفحك",
+  nosupport: "هذا المتصفح لا يدعم WebCrypto. افتح الصفحة عبر HTTPS أو localhost (تكفي النسخ الحديثة من Chrome / Edge / Safari).",
+  segAria: "وضع المعالجة", tabAuto: "تلقائي", tabEnc: "تشفير", tabDec: "فك التشفير",
+  dropAria: "اختر الملفات", dropMain: "أسقط الملفات هنا أو انقر للاختيار", dropSub: "يدعم الدفعات · يحدد التشفير/فك التشفير تلقائيًا", dropMore: "أضف المزيد من الملفات",
+  pwLabel: "كلمة المرور", pwLabelSet: "تعيين كلمة المرور", pwLabelDec: "كلمة مرور فك التشفير",
+  pwHintSave: "احفظها جيدًا بعد التشفير", pwHintWarn: "إذا فُقدت لا يمكن استعادتها", pwHintMatch: "نفس كلمة التشفير",
+  phSet: "عيّن كلمة مرور قوية", phUse: "كلمة المرور لهذه العملية", phDec: "أدخل كلمة مرور فك التشفير",
+  cfLabel: "تأكيد كلمة المرور", cfPh: "أعد إدخالها",
+  eyeShow: "إظهار كلمة المرور", eyeHide: "إخفاء كلمة المرور",
+  btnPick: "اختيار الملفات", foot: "لا طلبات شبكة · يُمحى كل شيء عند إغلاق الصفحة",
+  empty: "«{name}» ملف فارغ ولا يمكن معالجته", tooBig: "«{name}» يتجاوز {limit} — استخدم تطبيق سطح المكتب",
+  added: "تمت إضافة {n} من الملفات. أدخل كلمة المرور للبدء.",
+  runningEnc: "جارٍ التشفير · {size}", runningDec: "جارٍ فك التشفير · {size}",
+  doneSub: "تم إنشاء {name} · {size}",
+  tagEnc: "تشفير", tagDec: "فك",
+  btnClear: "إفراغ القائمة · البدء من جديد",
+  btnEnc1: "تشفير وتنزيل", btnEncN: "تشفير {n} ملفات",
+  btnDec1: "فك التشفير والتنزيل", btnDecN: "فك تشفير {n} ملفات", btnMix: "معالجة {n} ملفات",
+  progEnc: "جارٍ التشفير", progDec: "جارٍ فك التشفير", progDone: "تم",
+  errNoPw: "الرجاء إدخال كلمة المرور", errPwShort: "6 أحرف على الأقل؛ ويُنصح بـ 12 أو أكثر", errPwMismatch: "كلمتا المرور غير متطابقتين",
+  errWrongPw: "كلمة المرور خاطئة — تعذّر فك التشفير", errFormat: "ليس ملف .jye صالحًا", errQuota: "ذاكرة غير كافية — الملف كبير جدًا", errGeneric: "فشلت المعالجة، حاول مجددًا",
+  noticeStopped: "كلمة المرور غير صحيحة — تم إيقاف معالجة بقية الملفات", toastDecFail: "فشل فك التشفير: كلمة المرور خاطئة",
+  noticeDone: "اكتمل {n} من الملفات · احفظ كلمة المرور جيدًا",
+  toastDoneN: "تمت معالجة {n} ملفات", toastDone1: "اكتملت المعالجة",
+  noticePartial: "{a} بنجاح · {b} بفشل", toastCleared: "تم الإفراغ",
+  ariaDl: "تنزيل", ariaRemove: "إزالة", dlTitle: "تنزيل {name}"
+},
+'tr': {
+  docTitle: "Jianye Dosya Şifreleyici", brandName: "Jianye",
+  pill: "Yerel işleme · Dosyalar hiçbir yere yüklenmez",
+  h1: "Dosyalarını kilitle,<br>yanında sadece <em>şifre</em>yi götür.",
+  lede: "AES-256 şifreleme ve çözme işlemleri tarayıcıda yapılır — dosyalar bu cihazdan çıkmaz. Oluşan {jye} dosyası masaüstü sürümüyle tam uyumludur.",
+  spec1: "Algoritma", spec2: "Anahtar türetme", spec3: "Dosya biçimi", spec4: "Çalışma yeri",
+  specFmtVal: ".jye / masaüstü uyumlu", specLocVal: "Tarayıcınız",
+  nosupport: "Bu tarayıcı WebCrypto desteklemiyor. Sayfayı HTTPS veya localhost ile açın (güncel Chrome / Edge / Safari yeterli).",
+  segAria: "Mod", tabAuto: "Otomatik", tabEnc: "Şifrele", tabDec: "Çöz",
+  dropAria: "Dosya seç", dropMain: "Dosyaları sürükleyin veya tıklayıp seçin", dropSub: "Toplu destek · şifreleme/çözme otomatik algılanır", dropMore: "Dosya ekle",
+  pwLabel: "Şifre", pwLabelSet: "Şifre belirle", pwLabelDec: "Çözme şifresi",
+  pwHintSave: "Şifreledikten sonra iyi saklayın", pwHintWarn: "Kaybedilirse kurtarılamaz", pwHintMatch: "Şifrelemeyle aynı olmalı",
+  phSet: "Güçlü bir şifre belirleyin", phUse: "Bu işlem için şifre", phDec: "Çözme şifresini girin",
+  cfLabel: "Şifreyi onayla", cfPh: "Yeniden girin",
+  eyeShow: "Şifreyi göster", eyeHide: "Şifreyi gizle",
+  btnPick: "Dosya seç", foot: "Ağ isteği yok · Sayfa kapanınca temizlenir",
+  empty: "“{name}” boş dosya, işlenemez", tooBig: "“{name}” {limit} sınırını aşıyor — masaüstü sürümünü kullanın",
+  added: "{n} dosya eklendi. Başlamak için şifreyi girin.",
+  runningEnc: "Şifreleniyor · {size}", runningDec: "Çözülüyor · {size}",
+  doneSub: "{name} oluşturuldu · {size}",
+  tagEnc: "Şifrele", tagDec: "Çöz",
+  btnClear: "Listeyi temizle · Baştan başla",
+  btnEnc1: "Şifrele ve indir", btnEncN: "{n} dosyayı şifrele",
+  btnDec1: "Çöz ve indir", btnDecN: "{n} dosyayı çöz", btnMix: "{n} dosyayı işle",
+  progEnc: "Şifreleniyor", progDec: "Çözülüyor", progDone: "Tamam",
+  errNoPw: "Lütfen şifre girin", errPwShort: "En az 6 karakter; 12+ önerilir", errPwMismatch: "Şifreler eşleşmiyor",
+  errWrongPw: "Şifre yanlış — çözme başarısız", errFormat: "Geçerli bir .jye dosyası değil", errQuota: "Yetersiz bellek — dosya çok büyük", errGeneric: "İşlem başarısız, tekrar deneyin",
+  noticeStopped: "Şifre hatalı — kalan dosyaların işlenmesi durduruldu", toastDecFail: "Çözme başarısız: şifre yanlış",
+  noticeDone: "{n} dosya tamamlandı · Şifreyi iyi saklayın",
+  toastDoneN: "{n} dosya işlendi", toastDone1: "İşlem tamamlandı",
+  noticePartial: "{a} başarılı · {b} başarısız", toastCleared: "Liste temizlendi",
+  ariaDl: "İndir", ariaRemove: "Kaldır", dlTitle: "{name} indir"
+},
+'vi': {
+  docTitle: "Mã hóa tệp Jianye", brandName: "Jianye",
+  pill: "Xử lý cục bộ · Tệp không bao giờ được tải lên",
+  h1: "Khóa tệp của bạn,<br>chỉ mang theo <em>mật khẩu</em>.",
+  lede: "Mã hóa và giải mã AES-256 ngay trong trình duyệt — tệp không rời thiết bị này. Tệp {jye} tạo ra tương thích hoàn toàn với bản desktop.",
+  spec1: "Thuật toán", spec2: "Dẫn xuất khóa", spec3: "Định dạng tệp", spec4: "Nơi chạy",
+  specFmtVal: ".jye / tương thích desktop", specLocVal: "Trình duyệt của bạn",
+  nosupport: "Trình duyệt này không hỗ trợ WebCrypto. Hãy mở trang qua HTTPS hoặc localhost (Chrome / Edge / Safari mới đều được).",
+  segAria: "Chế độ", tabAuto: "Tự động", tabEnc: "Mã hóa", tabDec: "Giải mã",
+  dropAria: "Chọn tệp", dropMain: "Kéo tệp vào hoặc bấm để chọn", dropSub: "Hỗ trợ hàng loạt · tự nhận biết mã hóa/giải mã", dropMore: "Thêm tệp khác",
+  pwLabel: "Mật khẩu", pwLabelSet: "Đặt mật khẩu", pwLabelDec: "Mật khẩu giải mã",
+  pwHintSave: "Hãy lưu giữ kỹ sau khi mã hóa", pwHintWarn: "Quên là không thể khôi phục", pwHintMatch: "Trùng với lúc mã hóa",
+  phSet: "Đặt một mật khẩu mạnh", phUse: "Mật khẩu cho thao tác này", phDec: "Nhập mật khẩu giải mã",
+  cfLabel: "Xác nhận mật khẩu", cfPh: "Nhập lại một lần nữa",
+  eyeShow: "Hiện mật khẩu", eyeHide: "Ẩn mật khẩu",
+  btnPick: "Chọn tệp", foot: "Không có yêu cầu mạng · Đóng trang là xóa sạch",
+  empty: "“{name}” là tệp rỗng, không thể xử lý", tooBig: "“{name}” vượt quá {limit} — hãy dùng bản desktop",
+  added: "Đã thêm {n} tệp. Nhập mật khẩu để bắt đầu.",
+  runningEnc: "Đang mã hóa · {size}", runningDec: "Đang giải mã · {size}",
+  doneSub: "Đã tạo {name} · {size}",
+  tagEnc: "Mã hóa", tagDec: "Giải mã",
+  btnClear: "Xóa danh sách · Bắt đầu lại",
+  btnEnc1: "Mã hóa và tải xuống", btnEncN: "Mã hóa {n} tệp",
+  btnDec1: "Giải mã và tải xuống", btnDecN: "Giải mã {n} tệp", btnMix: "Xử lý {n} tệp",
+  progEnc: "Đang mã hóa", progDec: "Đang giải mã", progDone: "Xong",
+  errNoPw: "Vui lòng nhập mật khẩu", errPwShort: "Tối thiểu 6 ký tự; khuyên dùng 12+", errPwMismatch: "Mật khẩu không khớp",
+  errWrongPw: "Sai mật khẩu — không thể giải mã", errFormat: "Không phải tệp .jye hợp lệ", errQuota: "Không đủ bộ nhớ — tệp quá lớn", errGeneric: "Xử lý thất bại, hãy thử lại",
+  noticeStopped: "Mật khẩu không đúng — đã tạm dừng các tệp còn lại", toastDecFail: "Giải mã thất bại: sai mật khẩu",
+  noticeDone: "Hoàn thành {n} tệp · Hãy ghi nhớ mật khẩu",
+  toastDoneN: "Đã xử lý {n} tệp", toastDone1: "Xử lý xong",
+  noticePartial: "{a} thành công · {b} thất bại", toastCleared: "Đã xóa danh sách",
+  ariaDl: "Tải xuống", ariaRemove: "Bỏ", dlTitle: "Tải {name}"
+},
+'th': {
+  docTitle: "เครื่องมือเข้ารหัสไฟล์ Jianye", brandName: "Jianye",
+  pill: "ประมวลผลในเครื่อง · ไม่มีการอัปโหลดไฟล์",
+  h1: "ล็อกไฟล์ของคุณ,<br>พกไปแค่<em>รหัสผ่าน</em>เท่านั้น",
+  lede: "เข้ารหัสและถอดรหัส AES-256 ในเบราว์เซอร์ — ไฟล์ไม่ออกจากอุปกรณ์นี้ ไฟล์ {jye} ที่ได้ใช้งานร่วมกับเวอร์ชันเดสก์ท็อปได้เต็มรูปแบบ",
+  spec1: "อัลกอริทึม", spec2: "การสร้างคีย์", spec3: "รูปแบบไฟล์", spec4: "ที่ทำงาน",
+  specFmtVal: ".jye / ร่วมกับเดสก์ท็อป", specLocVal: "เบราว์เซอร์ของคุณ",
+  nosupport: "เบราว์เซอร์นี้ไม่รองรับ WebCrypto โปรดเปิดหน้านี้ผ่าน HTTPS หรือ localhost (Chrome / Edge / Safari เวอร์ชันใหม่ใช้ได้)",
+  segAria: "โหมด", tabAuto: "อัตโนมัติ", tabEnc: "เข้ารหัส", tabDec: "ถอดรหัส",
+  dropAria: "เลือกไฟล์", dropMain: "ลากไฟล์มาวาง หรือคลิกเพื่อเลือก", dropSub: "รองรับหลายไฟล์ · ตรวจจับเข้ารหัส/ถอดรหัสอัตโนมัติ", dropMore: "เพิ่มไฟล์",
+  pwLabel: "รหัสผ่าน", pwLabelSet: "ตั้งรหัสผ่าน", pwLabelDec: "รหัสผ่านถอดรหัส",
+  pwHintSave: "เข้ารหัสแล้วเก็บรักษาไว้ให้ดี", pwHintWarn: "ลืมแล้วกู้คืนไม่ได้", pwHintMatch: "ต้องตรงกับตอนเข้ารหัส",
+  phSet: "ตั้งรหัสผ่านที่แข็งแรง", phUse: "รหัสผ่านสำหรับการทำงานนี้", phDec: "ป้อนรหัสผ่านถอดรหัส",
+  cfLabel: "ยืนยันรหัสผ่าน", cfPh: "ป้อนอีกครั้ง",
+  eyeShow: "แสดงรหัสผ่าน", eyeHide: "ซ่อนรหัสผ่าน",
+  btnPick: "เลือกไฟล์", foot: "ไม่มีคำขอเครือข่าย · ปิดหน้าแล้วล้างหมด",
+  empty: "“{name}” เป็นไฟล์ว่าง ประมวลผลไม่ได้", tooBig: "“{name}” เกิน {limit} — ใช้เวอร์ชันเดสก์ท็อป",
+  added: "เพิ่มแล้ว {n} ไฟล์ ป้อนรหัสผ่านเพื่อเริ่ม",
+  runningEnc: "กำลังเข้ารหัส · {size}", runningDec: "กำลังถอดรหัส · {size}",
+  doneSub: "สร้าง {name} แล้ว · {size}",
+  tagEnc: "เข้ารหัส", tagDec: "ถอดรหัส",
+  btnClear: "ล้างรายการ · เริ่มใหม่",
+  btnEnc1: "เข้ารหัสและดาวน์โหลด", btnEncN: "เข้ารหัส {n} ไฟล์",
+  btnDec1: "ถอดรหัสและดาวน์โหลด", btnDecN: "ถอดรหัส {n} ไฟล์", btnMix: "ประมวลผล {n} ไฟล์",
+  progEnc: "กำลังเข้ารหัส", progDec: "กำลังถอดรหัส", progDone: "เสร็จ",
+  errNoPw: "กรุณาป้อนรหัสผ่าน", errPwShort: "อย่างน้อย 6 ตัวอักษร แนะนำ 12+ ตัว", errPwMismatch: "รหัสผ่านไม่ตรงกัน",
+  errWrongPw: "รหัสผ่านไม่ถูกต้อง ถอดรหัสไม่ได้", errFormat: "ไม่ใช่ไฟล์ .jye ที่ถูกต้อง", errQuota: "หน่วยความจำไม่พอ — ไฟล์ใหญ่เกินไป", errGeneric: "ประมวลผลล้มเหลว โปรดลองอีกครั้ง",
+  noticeStopped: "รหัสผ่านไม่ถูกต้อง — หยุดประมวลผลไฟล์ที่เหลือ", toastDecFail: "ถอดรหัสล้มเหลว: รหัสผ่านผิด",
+  noticeDone: "เสร็จแล้ว {n} ไฟล์ · จดจำรหัสผ่านให้ดี",
+  toastDoneN: "ประมวลผลแล้ว {n} ไฟล์", toastDone1: "ประมวลผลเสร็จ",
+  noticePartial: "สำเร็จ {a} · ล้มเหลว {b}", toastCleared: "ล้างแล้ว",
+  ariaDl: "ดาวน์โหลด", ariaRemove: "นำออก", dlTitle: "ดาวน์โหลด {name}"
+},
+'id': {
+  docTitle: "Enkriptor File Jianye", brandName: "Jianye",
+  pill: "Diproses lokal · File tidak pernah diunggah",
+  h1: "Kunci file Anda,<br>cukup bawa <em>kata sandi</em>-nya.",
+  lede: "Enkripsi dan dekripsi AES-256 langsung di browser — file tidak pernah meninggalkan perangkat ini. File {jye} yang dihasilkan sepenuhnya kompatibel dengan versi desktop.",
+  spec1: "Algoritma", spec2: "Turunan kunci", spec3: "Format file", spec4: "Tempat berjalan",
+  specFmtVal: ".jye / kompatibel desktop", specLocVal: "Peramban Anda",
+  nosupport: "Peramban ini tidak mendukung WebCrypto. Buka halaman lewat HTTPS atau localhost (Chrome / Edge / Safari terbaru semuanya bisa).",
+  segAria: "Mode", tabAuto: "Otomatis", tabEnc: "Enkripsi", tabDec: "Dekripsi",
+  dropAria: "Pilih file", dropMain: "Tarik file ke sini atau klik untuk memilih", dropSub: "Dukung batch · enkripsi/dekripsi terdeteksi otomatis", dropMore: "Tambah file lain",
+  pwLabel: "Kata sandi", pwLabelSet: "Atur kata sandi", pwLabelDec: "Kata sandi dekripsi",
+  pwHintSave: "Simpan baik-baik setelah mengenkripsi", pwHintWarn: "Jika hilang, tak bisa dipulihkan", pwHintMatch: "Sama seperti saat mengenkripsi",
+  phSet: "Atur kata sandi yang kuat", phUse: "Kata sandi untuk operasi ini", phDec: "Masukkan kata sandi dekripsi",
+  cfLabel: "Konfirmasi kata sandi", cfPh: "Ketik sekali lagi",
+  eyeShow: "Tampilkan kata sandi", eyeHide: "Sembunyikan kata sandi",
+  btnPick: "Pilih file", foot: "Tanpa permintaan jaringan · Bersih saat halaman ditutup",
+  empty: "“{name}” kosong dan tidak dapat diproses", tooBig: "“{name}” melebihi {limit} — gunakan versi desktop",
+  added: "{n} file ditambahkan. Masukkan kata sandi untuk memulai.",
+  runningEnc: "Mengenkripsi · {size}", runningDec: "Mendekripsi · {size}",
+  doneSub: "{name} dibuat · {size}",
+  tagEnc: "Enkripsi", tagDec: "Dekripsi",
+  btnClear: "Kosongkan daftar · Mulai ulang",
+  btnEnc1: "Enkripsi & unduh", btnEncN: "Enkripsi {n} file",
+  btnDec1: "Dekripsi & unduh", btnDecN: "Dekripsi {n} file", btnMix: "Proses {n} file",
+  progEnc: "Mengenkripsi", progDec: "Mendekripsi", progDone: "Selesai",
+  errNoPw: "Masukkan kata sandi", errPwShort: "Minimal 6 karakter; disarankan 12+", errPwMismatch: "Kata sandi tidak cocok",
+  errWrongPw: "Kata sandi salah — tidak dapat didekripsi", errFormat: "Bukan file .jye yang valid", errQuota: "Memori tidak cukup — file terlalu besar", errGeneric: "Pemrosesan gagal, silakan coba lagi",
+  noticeStopped: "Kata sandi salah — pemrosesan file lainnya dijeda", toastDecFail: "Dekripsi gagal: kata sandi salah",
+  noticeDone: "{n} file selesai · Simpan kata sandi dengan aman",
+  toastDoneN: "{n} file diproses", toastDone1: "Pemrosesan selesai",
+  noticePartial: "{a} berhasil · {b} gagal", toastCleared: "Daftar dikosongkan",
+  ariaDl: "Unduh", ariaRemove: "Hapus", dlTitle: "Unduh {name}"
+},
+'nl': {
+  docTitle: "Jianye Bestandsversleuteling", brandName: "Jianye",
+  pill: "Lokale verwerking · Bestanden worden nooit geüpload",
+  h1: "Sluit je bestanden af,<br>neem alleen het <em>wachtwoord</em> mee.",
+  lede: "AES-256 versleutelen en ontsleutelen in de browser — bestanden verlaten dit apparaat niet. Het gegenereerde {jye}-bestand is volledig compatibel met de desktopversie.",
+  spec1: "Versleuteling", spec2: "Sleutelafleiding", spec3: "Bestandsformaat", spec4: "Waar het draait",
+  specFmtVal: ".jye / desktop-compatibel", specLocVal: "Je browser",
+  nosupport: "Deze browser ondersteunt geen WebCrypto. Open de pagina via HTTPS of localhost (recente Chrome / Edge / Safari volstaan).",
+  segAria: "Modus", tabAuto: "Auto", tabEnc: "Versleutelen", tabDec: "Ontsleutelen",
+  dropAria: "Bestanden kiezen", dropMain: "Sleep bestanden hierheen of klik om te kiezen", dropSub: "Batch mogelijk · versleutelen/ontsleutelen wordt automatisch gedetecteerd", dropMore: "Meer bestanden toevoegen",
+  pwLabel: "Wachtwoord", pwLabelSet: "Wachtwoord instellen", pwLabelDec: "Ontsleutel-wachtwoord",
+  pwHintSave: "Bewaar het goed na versleuteling", pwHintWarn: "Kwijt = onherstelbaar", pwHintMatch: "Gelijk aan bij versleutelen",
+  phSet: "Stel een sterk wachtwoord in", phUse: "Wachtwoord voor deze bewerking", phDec: "Voer het ontsleutel-wachtwoord in",
+  cfLabel: "Bevestig wachtwoord", cfPh: "Typ het opnieuw",
+  eyeShow: "Wachtwoord tonen", eyeHide: "Wachtwoord verbergen",
+  btnPick: "Bestanden kiezen", foot: "Geen netwerkverzoeken · Alles gewist bij sluiten",
+  empty: "“{name}” is leeg en kan niet worden verwerkt", tooBig: "“{name}” overschrijdt {limit} — gebruik de desktopversie",
+  added: "{n} bestand(en) toegevoegd. Voer het wachtwoord in om te starten.",
+  runningEnc: "Versleutelen · {size}", runningDec: "Ontsleutelen · {size}",
+  doneSub: "{name} aangemaakt · {size}",
+  tagEnc: "Versl.", tagDec: "Ontsl.",
+  btnClear: "Lijst legen · Opnieuw beginnen",
+  btnEnc1: "Versleutelen & downloaden", btnEncN: "{n} bestanden versleutelen",
+  btnDec1: "Ontsleutelen & downloaden", btnDecN: "{n} bestanden ontsleutelen", btnMix: "{n} bestanden verwerken",
+  progEnc: "Versleutelen", progDec: "Ontsleutelen", progDone: "Klaar",
+  errNoPw: "Voer een wachtwoord in", errPwShort: "Minimaal 6 tekens; 12+ aanbevolen", errPwMismatch: "Wachtwoorden komen niet overeen",
+  errWrongPw: "Verkeerd wachtwoord — ontsleutelen mislukt", errFormat: "Geen geldig .jye-bestand", errQuota: "Onvoldoende geheugen — bestand te groot", errGeneric: "Verwerking mislukt, probeer opnieuw",
+  noticeStopped: "Wachtwoord onjuist — overige bestanden gepauzeerd", toastDecFail: "Ontsleutelen mislukt: verkeerd wachtwoord",
+  noticeDone: "{n} bestand(en) klaar · Bewaar het wachtwoord goed",
+  toastDoneN: "{n} bestanden verwerkt", toastDone1: "Verwerking voltooid",
+  noticePartial: "{a} geslaagd · {b} mislukt", toastCleared: "Lijst geleegd",
+  ariaDl: "Downloaden", ariaRemove: "Verwijderen", dlTitle: "{name} downloaden"
+},
+'pl': {
+  docTitle: "Szyfrator plików Jianye", brandName: "Jianye",
+  pill: "Przetwarzanie lokalne · Pliki nigdy nie są wysyłane",
+  h1: "Zablokuj swoje pliki,<br>zabierz tylko <em>hasło</em>.",
+  lede: "Szyfrowanie i odszyfrowywanie AES-256 w przeglądarce — pliki nie opuszczają tego urządzenia. Wygenerowany plik {jye} jest w pełni zgodny z wersją desktopową.",
+  spec1: "Szyfr", spec2: "Wyprowadzanie klucza", spec3: "Format pliku", spec4: "Gdzie działa",
+  specFmtVal: ".jye / zgodne z desktopem", specLocVal: "Twoja przeglądarka",
+  nosupport: "Ta przeglądarka nie obsługuje WebCrypto. Otwórz stronę przez HTTPS lub localhost (wystarczą aktualne Chrome / Edge / Safari).",
+  segAria: "Tryb", tabAuto: "Auto", tabEnc: "Szyfruj", tabDec: "Odszyfruj",
+  dropAria: "Wybierz pliki", dropMain: "Przeciągnij pliki lub kliknij, by wybrać", dropSub: "Obsługa wsadowa · szyfrowanie/odszyfrowanie rozpoznawane automatycznie", dropMore: "Dodaj więcej plików",
+  pwLabel: "Hasło", pwLabelSet: "Ustaw hasło", pwLabelDec: "Hasło odszyfrowania",
+  pwHintSave: "Po zaszyfrowaniu przechowuj je bezpiecznie", pwHintWarn: "Zgubione = nieodwracalne", pwHintMatch: "Takie samo jak przy szyfrowaniu",
+  phSet: "Ustaw silne hasło", phUse: "Hasło do tej operacji", phDec: "Wpisz hasło odszyfrowania",
+  cfLabel: "Potwierdź hasło", cfPh: "Wpisz ponownie",
+  eyeShow: "Pokaż hasło", eyeHide: "Ukryj hasło",
+  btnPick: "Wybierz pliki", foot: "Żadnych żądań sieciowych · Wszystko znika po zamknięciu strony",
+  empty: "„{name}” jest pusty i nie można go przetworzyć", tooBig: "„{name}” przekracza {limit} — użyj wersji desktopowej",
+  added: "Dodano plików: {n}. Wpisz hasło, aby zacząć.",
+  runningEnc: "Szyfrowanie · {size}", runningDec: "Odszyfrowywanie · {size}",
+  doneSub: "Utworzono {name} · {size}",
+  tagEnc: "Szyfr.", tagDec: "Odszyf.",
+  btnClear: "Wyczyść listę · Zacznij od nowa",
+  btnEnc1: "Zaszyfruj i pobierz", btnEncN: "Zaszyfruj {n} plików",
+  btnDec1: "Odszyfruj i pobierz", btnDecN: "Odszyfruj {n} plików", btnMix: "Przetwórz {n} plików",
+  progEnc: "Szyfrowanie", progDec: "Odszyfrowywanie", progDone: "Gotowe",
+  errNoPw: "Wpisz hasło", errPwShort: "Minimum 6 znaków; zalecane 12+", errPwMismatch: "Hasła nie są identyczne",
+  errWrongPw: "Błędne hasło — nie można odszyfrować", errFormat: "Nieprawidłowy plik .jye", errQuota: "Za mało pamięci — plik zbyt duży", errGeneric: "Przetwarzanie nie powiodło się, spróbuj ponownie",
+  noticeStopped: "Hasło nieprawidłowe — wstrzymano pozostałe pliki", toastDecFail: "Odszyfrowanie nie powiodło się: błędne hasło",
+  noticeDone: "Ukończono {n} plików · Zachowaj hasło w bezpiecznym miejscu",
+  toastDoneN: "Przetworzono {n} plików", toastDone1: "Przetwarzanie zakończone",
+  noticePartial: "{a} powiodło się · {b} nie powiodło się", toastCleared: "Lista wyczyszczona",
+  ariaDl: "Pobierz", ariaRemove: "Usuń", dlTitle: "Pobierz {name}"
+},
+'hi': {
+  docTitle: "Jianye फ़ाइल एन्क्रिप्टर", brandName: "Jianye",
+  pill: "स्थानीय प्रोसेसिंग · फ़ाइलें कभी अपलोड नहीं होतीं",
+  h1: "फ़ाइलों को लॉक करें,<br>साथ ले जाएँ केवल <em>पासवर्ड</em>.",
+  lede: "ब्राउज़र में ही AES-256 एन्क्रिप्शन और डिक्रिप्शन करें — फ़ाइलें इस डिवाइस पर ही रहती हैं। बनी {jye} फ़ाइल डेस्कटॉप वर्शन से पूरी तरह संगत है।",
+  spec1: "एन्क्रिप्शन एल्गोरिथ्म", spec2: "की डेरिवेशन", spec3: "फ़ाइल प्रारूप", spec4: "कहाँ चलता है",
+  specFmtVal: ".jye / डेस्कटॉप-संगत", specLocVal: "आपका ब्राउज़र",
+  nosupport: "यह ब्राउज़र WebCrypto समर्थन नहीं करता। कृपया यह पृष्ठ HTTPS या localhost से खोलें (नए Chrome / Edge / Safari चलेंगे)।",
+  segAria: "मोड", tabAuto: "स्वतः", tabEnc: "एन्क्रिप्ट", tabDec: "डिक्रिप्ट",
+  dropAria: "फ़ाइलें चुनें", dropMain: "फ़ाइलें खींचें या चुनने के लिए क्लिक करें", dropSub: "बैच समर्थित · एन्क्रिप्ट/डिक्रिप्ट स्वतः पहचाना जाता है", dropMore: "और फ़ाइलें जोड़ें",
+  pwLabel: "पासवर्ड", pwLabelSet: "पासवर्ड सेट करें", pwLabelDec: "डिक्रिप्शन पासवर्ड",
+  pwHintSave: "एन्क्रिप्ट के बाद इसे सुरक्षित रखें", pwHintWarn: "खो गया तो पुनर्प्राप्त नहीं होगा", pwHintMatch: "एन्क्रिप्शन वाला ही हो",
+  phSet: "एक मज़बूत पासवर्ड सेट करें", phUse: "इस काम के लिए पासवर्ड", phDec: "डिक्रिप्शन पासवर्ड दर्ज करें",
+  cfLabel: "पासवर्ड की पुष्टि करें", cfPh: "फिर से दर्ज करें",
+  eyeShow: "पासवर्ड दिखाएँ", eyeHide: "पासवर्ड छिपाएँ",
+  btnPick: "फ़ाइलें चुनें", foot: "कोई नेटवर्क अनुरोध नहीं · पेज बंद करते ही साफ़",
+  empty: "“{name}” खाली फ़ाइल है, प्रोसेस नहीं हो सकती", tooBig: "“{name}” {limit} से बड़ी है — डेस्कटॉप वर्शन इस्तेमाल करें",
+  added: "{n} फ़ाइलें जोड़ी गईं। शुरू करने के लिए पासवर्ड दर्ज करें।",
+  runningEnc: "एन्क्रिप्ट हो रहा है · {size}", runningDec: "डिक्रिप्ट हो रहा है · {size}",
+  doneSub: "{name} बनी · {size}",
+  tagEnc: "एन्क्रिप्ट", tagDec: "डिक्रिप्ट",
+  btnClear: "सूची खाली करें · फिर से शुरू",
+  btnEnc1: "एन्क्रिप्ट कर डाउनलोड करें", btnEncN: "{n} फ़ाइलें एन्क्रिप्ट करें",
+  btnDec1: "डिक्रिप्ट कर डाउनलोड करें", btnDecN: "{n} फ़ाइलें डिक्रिप्ट करें", btnMix: "{n} फ़ाइलें प्रोसेस करें",
+  progEnc: "एन्क्रिप्ट हो रहा है", progDec: "डिक्रिप्ट हो रहा है", progDone: "पूर्ण",
+  errNoPw: "कृपया पासवर्ड दर्ज करें", errPwShort: "कम से कम 6 अक्षर; 12+ अनुशंसित", errPwMismatch: "पासवर्ड मेल नहीं खाते",
+  errWrongPw: "पासवर्ड ग़लत — डिक्रिप्शन संभव नहीं", errFormat: "मान्य .jye फ़ाइल नहीं", errQuota: "मेमोरी कम — फ़ाइल बहुत बड़ी है", errGeneric: "प्रोसेसिंग विफल, फिर से प्रयास करें",
+  noticeStopped: "पासवर्ड ग़लत — बाकी फ़ाइलें रोक दी गईं", toastDecFail: "डिक्रिप्शन विफल: पासवर्ड ग़लत",
+  noticeDone: "{n} फ़ाइलें पूर्ण · पासवर्ड सुरक्षित रखें",
+  toastDoneN: "{n} फ़ाइलें प्रोसेस हुईं", toastDone1: "प्रोसेसिंग पूर्ण",
+  noticePartial: "{a} सफल · {b} विफल", toastCleared: "सूची खाली की गई",
+  ariaDl: "डाउनलोड", ariaRemove: "हटाएँ", dlTitle: "{name} डाउनलोड करें"
+},
+'uk': {
+  docTitle: "Шифрувальник файлів Jianye", brandName: "Jianye",
+  pill: "Локальна обробка · Файли нікуди не завантажуються",
+  h1: "Заблокуйте файли,<br>з собою заберіть лише <em>пароль</em>.",
+  lede: "Шифрування AES-256 просто у браузері — файли не залишають цей пристрій. Створений {jye} повністю сумісний із десктопною версією.",
+  spec1: "Алгоритм", spec2: "Виведення ключа", spec3: "Формат файлу", spec4: "Де виконується",
+  specFmtVal: ".jye / сумісно з ПК", specLocVal: "Ваш браузер",
+  nosupport: "Цей браузер не підтримує WebCrypto. Відкрийте сторінку через HTTPS або localhost (підійдуть свіжі Chrome / Edge / Safari).",
+  segAria: "Режим", tabAuto: "Авто", tabEnc: "Шифрувати", tabDec: "Розшифрувати",
+  dropAria: "Вибрати файли", dropMain: "Перетягніть файли або натисніть, щоб вибрати", dropSub: "Пакетна обробка · шифрування/розшифрування визначається автоматично", dropMore: "Додати ще файли",
+  pwLabel: "Пароль", pwLabelSet: "Задати пароль", pwLabelDec: "Пароль розшифрування",
+  pwHintSave: "Після шифрування зберігайте надійно", pwHintWarn: "Загублений пароль неможливо відновити", pwHintMatch: "Як під час шифрування",
+  phSet: "Задайте надійний пароль", phUse: "Пароль для цієї операції", phDec: "Уведіть пароль розшифрування",
+  cfLabel: "Підтвердьте пароль", cfPh: "Уведіть ще раз",
+  eyeShow: "Показати пароль", eyeHide: "Приховати пароль",
+  btnPick: "Вибрати файли", foot: "Мережевих запитів немає · Усе стирається при закритті сторінки",
+  empty: "«{name}» порожній і не може бути оброблений", tooBig: "«{name}» понад {limit} — скористайтеся десктопною версією",
+  added: "Додано файлів: {n}. Уведіть пароль, щоб почати.",
+  runningEnc: "Шифрування · {size}", runningDec: "Розшифрування · {size}",
+  doneSub: "Створено {name} · {size}",
+  tagEnc: "Шифр.", tagDec: "Розшифр.",
+  btnClear: "Очистити список · Почати заново",
+  btnEnc1: "Шифрувати та завантажити", btnEncN: "Шифрувати файлів: {n}",
+  btnDec1: "Розшифрувати та завантажити", btnDecN: "Розшифрувати файлів: {n}", btnMix: "Обробити файлів: {n}",
+  progEnc: "Шифрування", progDec: "Розшифрування", progDone: "Готово",
+  errNoPw: "Уведіть пароль", errPwShort: "Щонайменше 6 символів; рекомендовано 12+", errPwMismatch: "Паролі не збігаються",
+  errWrongPw: "Неправильний пароль — розшифрування неможливе", errFormat: "Недійсний файл .jye", errQuota: "Недостатньо памʼяті — файл завеликий", errGeneric: "Обробка не вдалася, спробуйте ще раз",
+  noticeStopped: "Пароль неправильний — обробку решти файлів призупинено", toastDecFail: "Не вдалося розшифрувати: неправильний пароль",
+  noticeDone: "Готово файлів: {n} · Збережіть пароль у надійному місці",
+  toastDoneN: "Оброблено файлів: {n}", toastDone1: "Обробку завершено",
+  noticePartial: "{a} успішно · {b} з помилкою", toastCleared: "Список очищено",
+  ariaDl: "Завантажити", ariaRemove: "Прибрати", dlTitle: "Завантажити {name}"
+}
+};
+
+/* ---------- i18n runtime ---------- */
+(() => {
+  const JYE_SPAN = '<span style="font-family:var(--mono);font-size:13px;color:var(--ink-2)">.jye</span>';
+  const AUTO_LABELS = {
+    'zh-CN': '自动（跟随系统）', 'zh-TW': '自動（跟隨系統）', 'en': 'Auto (system)',
+    'ja': '自動（システムに従う）', 'ko': '자동(시스템 따르기)', 'es': 'Automático (sistema)',
+    'fr': 'Automatique (système)', 'de': 'Automatisch (System)', 'pt': 'Automático (sistema)',
+    'ru': 'Авто (как в системе)', 'it': 'Automatico (sistema)', 'ar': 'تلقائي (حسب النظام)',
+    'tr': 'Otomatik (sistem)', 'vi': 'Tự động (theo hệ thống)', 'th': 'อัตโนมัติ (ตามระบบ)',
+    'id': 'Otomatis (sistem)', 'nl': 'Automatisch (systeem)', 'pl': 'Automatycznie (system)',
+    'hi': 'स्वतः (सिस्टम के अनुसार)', 'uk': 'Авто (як у системі)'
+  };
+  const meta = code => LANGS.find(l => l.code === code);
+  let cur = 'zh-CN';        // effective UI language
+  let setting = 'auto';     // 'auto' or a language code
+
+  const savedGet = () => { try { return localStorage.getItem('jye-lang'); } catch { return null; } };
+  const savedSet = v => { try { localStorage.setItem('jye-lang', v); } catch {} };
+
+  function detectNavLang() {
+    const prefs = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language || 'en'];
+    for (const p of prefs) {
+      const l = String(p).toLowerCase();
+      const exact = LANGS.find(x => x.code.toLowerCase() === l);
+      if (exact) return exact.code;
+      const base = l.split('-')[0];
+      const m = LANGS.find(x => x.code.split('-')[0] === base);
+      if (m) return m.code;
+    }
+    return 'zh-CN';
+  }
+
+  function t(key, params) {
+    let s = (I18N[cur] && I18N[cur][key]) || I18N['en'][key] || I18N['zh-CN'][key] || key;
+    if (params) for (const k in params) s = s.split('{' + k + '}').join(params[k]);
+    return s;
+  }
+
+  const escHtml = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  function buildPop() {
+    const pop = document.getElementById('langPop');
+    if (!pop) return;
+    const autoLabel = AUTO_LABELS[cur] || 'Auto';
+    pop.innerHTML =
+      `<button type="button" class="lang-item auto${setting === 'auto' ? ' active' : ''}" data-code="auto" role="option" aria-selected="${setting === 'auto'}">${escHtml(autoLabel)}</button>` +
+      LANGS.map(l =>
+        `<button type="button" class="lang-item${setting === l.code ? ' active' : ''}" data-code="${l.code}" role="option" aria-selected="${setting === l.code}">${escHtml(l.name)}</button>`
+      ).join('');
+    pop.querySelectorAll('.lang-item').forEach(it => {
+      it.addEventListener('click', () => {
+        applyLang(it.dataset.code);
+        closePop();
+      });
+    });
+  }
+
+  function openPop() {
+    const box = document.getElementById('langBox'), btn = document.getElementById('langBtn');
+    const pop = document.getElementById('langPop');
+    if (!box || !btn) return;
+    box.classList.add('open');
+    btn.setAttribute('aria-expanded', 'true');
+    const active = pop && pop.querySelector('.lang-item.active');
+    if (active) setTimeout(() => { try { active.focus({ preventScroll: false }); } catch {} }, 40);
+  }
+  function closePop() {
+    const box = document.getElementById('langBox'), btn = document.getElementById('langBtn');
+    if (!box || !btn) return;
+    box.classList.remove('open');
+    btn.setAttribute('aria-expanded', 'false');
+  }
+
+  function initLangUI() {
+    const box = document.getElementById('langBox'), btn = document.getElementById('langBtn');
+    const pop = document.getElementById('langPop');
+    if (box && btn) {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        box.classList.contains('open') ? closePop() : openPop();
+      });
+      btn.addEventListener('keydown', e => {
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); openPop(); }
+      });
+      document.addEventListener('click', e => { if (!box.contains(e.target)) closePop(); });
+      document.addEventListener('keydown', e => { if (e.key === 'Escape') closePop(); });
+    }
+    if (pop) {
+      pop.addEventListener('keydown', e => {
+        const nodes = Array.from(pop.querySelectorAll('.lang-item'));
+        const i = nodes.indexOf(document.activeElement);
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+          e.preventDefault();
+          const d = e.key === 'ArrowDown' ? 1 : -1;
+          const next = nodes[Math.min(nodes.length - 1, Math.max(0, (i < 0 ? 0 : i + d)))];
+          if (next) next.focus();
+        } else if (e.key === 'Home') { e.preventDefault(); if (nodes[0]) nodes[0].focus(); }
+        else if (e.key === 'End') { e.preventDefault(); if (nodes.length) nodes[nodes.length - 1].focus(); }
+        else if (e.key === 'Tab') { closePop(); }
+      });
+    }
+    const saved = savedGet();
+    applyLang(saved && (saved === 'auto' || meta(saved)) ? saved : 'auto');
+  }
+
+  function applyLang(code) {
+    setting = (code === 'auto' || !meta(code)) ? 'auto' : code;
+    savedSet(setting);
+    cur = setting === 'auto' ? detectNavLang() : setting;
+    const m = meta(cur);
+    document.documentElement.lang = cur;
+    document.documentElement.dir = (m && m.rtl) ? 'rtl' : 'ltr';
+    document.title = t('docTitle');
+    document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+    document.querySelectorAll('[data-i18n-html]').forEach(el => { el.innerHTML = t(el.dataset.i18nHtml).split('{jye}').join(JYE_SPAN); });
+    document.querySelectorAll('[data-i18n-ph]').forEach(el => { el.placeholder = t(el.dataset.i18nPh); });
+    const seg = document.querySelector('.seg');
+    if (seg) seg.setAttribute('aria-label', t('segAria'));
+    const drop = document.getElementById('drop');
+    if (drop) drop.setAttribute('aria-label', t('dropAria'));
+    const eye = document.getElementById('eye');
+    const pwEl = document.getElementById('pw');
+    if (eye && pwEl) eye.setAttribute('aria-label', pwEl.type === 'password' ? t('eyeShow') : t('eyeHide'));
+    const btnLabel = document.getElementById('langBtnLabel');
+    if (btnLabel) btnLabel.textContent = setting === 'auto' ? `${AUTO_LABELS[cur] || 'Auto'} · ${m.name}` : m.name;
+    buildPop();
+    if (typeof renderApp === 'function') renderApp();
+  }
+
+  window.__jyeI18n = { t, applyLang, initLangUI, get current() { return cur; }, get setting() { return setting; } };
+})();
+
+const t = (key, params) => window.__jyeI18n.t(key, params);
+
+/* ============================== app ============================== */
+(() => {
+  const $ = s => document.querySelector(s);
+  const drop = $('#drop'), picker = $('#picker'), list = $('#list');
+  const pw = $('#pw'), cf = $('#cf'), eye = $('#eye');
+  const go = $('#go'), goLabel = $('#goLabel'), fill = $('#fill');
+  const notice = $('#notice'), strength = $('#strength'), toastEl = $('#toast');
+  const cfField = $('#cfField'), pwHint = $('#pwHint'), pwLabel = $('#pwLabel');
+  const pwWrap = $('#pwWrap'), cfWrap = $('#cfWrap');
+
+  const MAX_SIZE = 16 * 1024 * 1024 * 1024;        // chunked pipeline: no whole-file buffering
+  const STREAM_TO_DISK_MIN = 256 * 1024 * 1024;    // above this, Chromium streams straight to disk
+  let mode = 'auto';
+  let items = [];
+  let busy = false;
+  let uid = 0;
+  let toastTimer = 0;
+
+  if (!(window.crypto && window.crypto.subtle)) document.body.classList.add('unsupported');
+
+  /* ---------- helpers ---------- */
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  function fmtSize(n) {
+    if (n < 1024) return n + ' B';
+    const u = ['KB', 'MB', 'GB', 'TB'];
+    let i = -1, v = n;
+    do { v /= 1024; i++; } while (v >= 1024 && i < u.length - 1);
+    return (v < 10 ? v.toFixed(1) : Math.round(v)) + ' ' + u[i];
+  }
+  function toast(msg) {
+    clearTimeout(toastTimer);
+    toastEl.textContent = msg;
+    toastEl.classList.add('show');
+    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 3200);
+  }
+  function setNotice(msg, kind) {
+    notice.className = 'notice' + (kind ? ' ' + kind : '');
+    notice.innerHTML = msg
+      ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4.5"/><path d="M12 16h.01"/></svg><span>${esc(msg)}</span>`
+      : '';
+    if (kind !== 'error') { pwWrap.classList.remove('bad'); cfWrap.classList.remove('bad'); }
+  }
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const ICON = {
+    lock: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="10.5" width="15" height="10" rx="2.4"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/></svg>',
+    unlock: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="10.5" width="15" height="10" rx="2.4"/><path d="M8 10.5V7a4 4 0 0 1 7.4-1.9"/></svg>',
+    dl: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v10.5"/><path d="M7.6 10.6L12 15l4.4-4.4"/><path d="M4.5 19.5h15"/></svg>',
+    x: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>'
+  };
+
+  /* ---------- direction detection ---------- */
+  async function peekHeader(file) {
+    if (file.size < JYE.MIN_SIZE) return null;
+    try {
+      const head = new Uint8Array(await file.slice(0, Math.min(file.size, 4096)).arrayBuffer());
+      return JYE.parseHeader(head);
+    } catch { return null; }
+  }
+  async function resolveDir(item) {
+    if (mode === 'encrypt') return 'encrypt';
+    if (mode === 'decrypt') return 'decrypt';
+    if (JYE.isEncryptedName(item.file.name)) return 'decrypt';
+    const h = await peekHeader(item.file);
+    return h ? 'decrypt' : 'encrypt';
+  }
+  async function refreshTargets() {
+    for (const it of items) {
+      if (it.status === 'done' || it.status === 'running') continue;
+      it.dir = await resolveDir(it);
+      if (it.status === 'error') { it.status = 'pending'; it.msg = ''; }
+      if (it.dir === 'decrypt') {
+        const h = await peekHeader(it.file);
+        it.target = JYE.safeBaseName(h ? h.name : it.file.name.replace(/\.jye$/i, ''));
+      } else {
+        it.target = JYE.encryptedNameFor(it.file.name);
+      }
+    }
+  }
+
+  /* ---------- render ---------- */
+  function rowSub(it) {
+    if (it.status === 'running') return t(it.dir === 'encrypt' ? 'runningEnc' : 'runningDec', { size: fmtSize(it.file.size) });
+    if (it.status === 'error') return it.msg;
+    if (it.status === 'done') return t('doneSub', { name: it.target, size: fmtSize(it.outSize || 0) });
+    return `${fmtSize(it.file.size)} · → ${it.target || '—'}`;
+  }
+  function render() {
+    list.innerHTML = items.map(it => {
+      const dirLabel = t(it.dir === 'encrypt' ? 'tagEnc' : 'tagDec');
+      const action =
+        it.status === 'running' ? '<span class="spinner"></span>'
+          : (it.status === 'done' && it.url)
+            ? `<a class="icon-btn row-dl" href="${it.url}" download="${esc(it.target)}" title="${esc(t('dlTitle', { name: it.target }))}" aria-label="${esc(t('ariaDl'))}">${ICON.dl}</a>`
+            : '';
+      return `<li class="file-row ${it.status}" data-id="${it.id}">
+        <span class="row-icon">${it.dir === 'encrypt' ? ICON.lock : ICON.unlock}</span>
+        <span class="row-meta">
+          <span class="row-name" title="${esc(it.file.name)}">${esc(it.file.name)}</span>
+          <span class="row-sub" title="${esc(rowSub(it))}">${esc(rowSub(it))}</span>
+        </span>
+        <span class="tag">${esc(dirLabel)}</span>
+        <span class="row-actions">${action}${it.status === 'running' ? '' : `<button class="icon-btn" data-act="remove" aria-label="${esc(t('ariaRemove'))}">${ICON.x}</button>`}</span>
+      </li>`;
+    }).join('');
+    drop.classList.toggle('compact', items.length > 0);
+    $('#dropMain').textContent = items.length ? t('dropMore') : t('dropMain');
+    updateButton();
+    updateFields();
+  }
+  window.renderApp = render;
+
+  function pendingCount() { return items.filter(i => i.status !== 'done').length; }
+  function encryptNeeded() { return items.some(i => i.status !== 'done' && i.dir === 'encrypt'); }
+
+  function updateButton() {
+    if (busy) return;
+    go.classList.remove('busy');
+    go.disabled = false;
+    if (!items.length) {
+      go.classList.add('ghost');
+      goLabel.textContent = t('btnPick');
+      return;
+    }
+    go.classList.remove('ghost');
+    const todo = items.filter(i => i.status !== 'done');
+    if (!todo.length) {
+      goLabel.textContent = t('btnClear');
+      go.classList.add('ghost');
+      return;
+    }
+    const enc = todo.filter(i => i.dir === 'encrypt').length;
+    const dec = todo.length - enc;
+    if (dec === 0) goLabel.textContent = todo.length === 1 ? t('btnEnc1') : t('btnEncN', { n: enc });
+    else if (enc === 0) goLabel.textContent = todo.length === 1 ? t('btnDec1') : t('btnDecN', { n: dec });
+    else goLabel.textContent = t('btnMix', { n: todo.length });
+  }
+
+  function updateFields() {
+    const needEnc = mode === 'encrypt' || encryptNeeded();
+    const needDec = !needEnc && items.some(i => i.status !== 'done' && i.dir === 'decrypt');
+    const hasPending = items.some(i => i.status !== 'done');
+    pwLabel.textContent = !hasPending ? t('pwLabel') : needEnc && !needDec ? t('pwLabelSet') : needEnc ? t('pwLabel') : t('pwLabelDec');
+    pw.placeholder = !hasPending || (needEnc && !needDec) ? t('phSet') : needEnc ? t('phUse') : t('phDec');
+    pwHint.textContent = !hasPending ? t('pwHintSave') : needEnc ? t('pwHintWarn') : needDec ? t('pwHintMatch') : '';
+    pw.setAttribute('autocomplete', needEnc ? 'new-password' : 'current-password');
+    strength.style.display = needEnc ? '' : 'none';
+    cfField.classList.toggle('hide', !needEnc);
+  }
+
+  /* ---------- password UI ---------- */
+  function scorePw(v) {
+    if (!v) return 0;
+    let s = 0;
+    if (v.length >= 8) s++;
+    if (v.length >= 12) s++;
+    if (v.length >= 18) s++;
+    if (/[a-z]/.test(v) && /[A-Z]/.test(v)) s++;
+    if (/\d/.test(v)) s++;
+    if (/[^A-Za-z0-9]/.test(v)) s++;
+    return Math.min(4, Math.max(1, Math.round(s * 0.72)));
+  }
+  pw.addEventListener('input', () => {
+    strength.dataset.s = scorePw(pw.value);
+    if (notice.classList.contains('error')) setNotice('', '');
+    if (pw.value && cf.value === pw.value) cfWrap.classList.remove('bad');
+  });
+  cf.addEventListener('input', () => {
+    if (cf.value === pw.value) { cfWrap.classList.remove('bad'); if (notice.classList.contains('error')) setNotice('', ''); }
+  });
+  eye.addEventListener('click', () => {
+    const show = pw.type === 'password';
+    pw.type = show ? 'text' : 'password';
+    eye.innerHTML = show
+      ? '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 6.7A9.7 9.7 0 0 1 12 6.6c5.8 0 9.4 5.4 9.4 5.4a17.6 17.6 0 0 1-3.5 3.9"/><path d="M6.2 7.9A17.3 17.3 0 0 0 2.6 12S6.2 17.4 12 17.4c1.2 0 2.3-.2 3.3-.7"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>'
+      : '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2.6 12S6.2 6.6 12 6.6 21.4 12 21.4 12 17.8 17.4 12 17.4 2.6 12 2.6 12z"/><circle cx="12" cy="12" r="2.7"/></svg>';
+    eye.setAttribute('aria-label', show ? t('eyeHide') : t('eyeShow'));
+  });
+
+  /* ---------- mode switch ---------- */
+  document.querySelectorAll('.seg button').forEach((btn, i) => {
+    btn.addEventListener('click', async () => {
+      if (busy) return;
+      if (btn.dataset.mode === mode) return;
+      mode = btn.dataset.mode;
+      document.querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-selected', String(b === btn)));
+      document.querySelector('.seg').style.setProperty('--i', i);
+      setNotice('', '');
+      await refreshTargets();
+      render();
+    });
+  });
+
+  /* ---------- file intake ---------- */
+  drop.addEventListener('click', () => { if (!busy) picker.click(); });
+  drop.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!busy) picker.click(); }
+  });
+  picker.addEventListener('change', () => { addFiles(picker.files); picker.value = ''; });
+
+  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(evt => {
+    window.addEventListener(evt, e => e.preventDefault());
+  });
+  drop.addEventListener('dragenter', e => {
+    e.preventDefault();
+    if (!busy) drop.classList.add('over');
+  });
+  drop.addEventListener('dragover', e => { e.preventDefault(); if (!busy) e.dataTransfer.dropEffect = 'copy'; });
+  drop.addEventListener('dragleave', e => {
+    if (!drop.contains(e.relatedTarget)) drop.classList.remove('over');
+  });
+  drop.addEventListener('drop', e => {
+    e.preventDefault();
+    drop.classList.remove('over');
+    if (busy) return;
+    const files = e.dataTransfer && e.dataTransfer.files;
+    if (files && files.length) addFiles(files);
+  });
+
+  async function addFiles(fileList) {
+    if (busy) return;
+    const incoming = Array.from(fileList || []);
+    if (!incoming.length) return;
+    let rejected = 0;
+    for (const f of incoming) {
+      if (f.size === 0) { toast(t('empty', { name: f.name })); rejected++; continue; }
+      if (f.size > MAX_SIZE) { toast(t('tooBig', { name: f.name, limit: fmtSize(MAX_SIZE) })); rejected++; continue; }
+      if (items.some(it => it.file.name === f.name && it.file.size === f.size && it.file.lastModified === f.lastModified)) continue;
+      items.push({ id: ++uid, file: f, dir: 'encrypt', status: 'pending', msg: '', target: '', url: null, outSize: 0 });
+    }
+    if (items.length) {
+      await refreshTargets();
+      render();
+      setNotice('', '');
+    }
+    if (rejected && !items.length) render();
+    if (items.length && items.length === incoming.length - rejected) {
+      const n = items.filter(i => i.status === 'pending').length;
+      if (n) setNotice(t('added', { n }), '');
+    }
+  }
+
+  list.addEventListener('click', e => {
+    const btn = e.target.closest('[data-act="remove"]');
+    if (!btn || busy) return;
+    const id = Number(btn.closest('.file-row').dataset.id);
+    const idx = items.findIndex(i => i.id === id);
+    if (idx < 0) return;
+    if (items[idx].url) URL.revokeObjectURL(items[idx].url);
+    items.splice(idx, 1);
+    render();
+    setNotice('', '');
+  });
+
+  /* ---------- progress (real, byte-driven) ---------- */
+  let pct = 0;
+  let busyLabel = '';
+  function paintProgress() {
+    const p = Math.min(100, Math.max(0, pct));
+    fill.style.width = p + '%';
+    goLabel.textContent = `${busyLabel} ${Math.round(p)}%`;
+  }
+  function beginProgress(label) {
+    busyLabel = label;
+    go.classList.add('busy');
+    go.disabled = true;
+    pct = 0;
+    paintProgress();
+  }
+  function setProgress(value) {
+    pct = value;
+    paintProgress();
+  }
+  async function endProgress(finalPct) {
+    busyLabel = t('progDone');
+    pct = typeof finalPct === 'number' ? finalPct : 100;
+    paintProgress();
+    await sleep(360);
+    go.classList.remove('busy');
+    fill.style.width = '0%';
+  }
+
+  /* ---------- downloads ---------- */
+  function download(url, name) {
+    const a = document.createElement('a');
+    a.href = url; a.download = name; a.rel = 'noopener';
+    document.body.appendChild(a); a.click(); a.remove();
+  }
+
+  /* ---------- main ---------- */
+  go.addEventListener('click', async () => {
+    if (busy) return;
+    if (!items.length) { picker.click(); return; }
+    if (!pendingCount()) { resetAll(); return; }
+
+    const password = pw.value;
+    if (!password) { pwWrap.classList.add('bad'); setNotice(t('errNoPw'), 'error'); pw.focus(); return; }
+    const needEnc = encryptNeeded();
+    if (needEnc) {
+      if (password.length < 6) { pwWrap.classList.add('bad'); setNotice(t('errPwShort'), 'error'); pw.focus(); return; }
+      if (cf.value !== password) { cfWrap.classList.add('bad'); setNotice(t('errPwMismatch'), 'error'); cf.focus(); return; }
+    }
+    setNotice('', '');
+
+    const todo = items.filter(i => i.status !== 'done');
+    const total = todo.length;
+    let done = 0, stopped = false;
+
+    /* A single huge file on Chromium: stream straight to disk instead of
+       holding the whole output in memory. The save picker has to open while
+       the click's user activation is still valid, hence before any await —
+       and busy is raised first so a double click can't start two runs. */
+    let diskHandle = null;
+    busy = true;
+    if (total === 1 && todo[0].file.size > STREAM_TO_DISK_MIN &&
+        typeof window.showSaveFilePicker === 'function') {
+      try {
+        diskHandle = await window.showSaveFilePicker({ suggestedName: todo[0].target || 'output' });
+      } catch { diskHandle = null; }
+    }
+
+    render();
+
+    for (const it of todo) {
+      if (stopped) break;
+      it.status = 'running'; it.msg = '';
+      render();
+      beginProgress(t(it.dir === 'encrypt' ? 'progEnc' : 'progDec'));
+      await sleep(30);
+
+      const span = 1 / total;
+      const onProg = p => setProgress((done + p) * span * 100);
+
+      try {
+        let outName;
+
+        if (diskHandle) {
+          const writable = await diskHandle.createWritable();
+          try {
+            if (it.dir === 'encrypt') {
+              outName = it.target = JYE.encryptedNameFor(it.file.name);
+              await JYE.encryptStream(it.file, it.file.name, password, c => writable.write(c), onProg);
+            } else {
+              const res = await JYE.decryptStream(it.file, password, c => writable.write(c), onProg);
+              outName = it.target = JYE.safeBaseName(res.filename);
+            }
+            await writable.close();
+          } catch (e) { try { await writable.abort(); } catch {} throw e; }
+          it.url = null;
+          it.outSize = 0;
+          try { it.outSize = (await diskHandle.getFile()).size; } catch {}
+          it.status = 'done';
+          done++;
+          setProgress(done * span * 100);
+        } else {
+          const parts = [];
+          if (it.dir === 'encrypt') {
+            outName = it.target = JYE.encryptedNameFor(it.file.name);
+            await JYE.encryptStream(it.file, it.file.name, password, c => parts.push(c), onProg);
+          } else {
+            const res = await JYE.decryptStream(it.file, password, c => parts.push(c), onProg);
+            outName = it.target = JYE.safeBaseName(res.filename);
+          }
+          const blob = new Blob(parts, { type: 'application/octet-stream' });
+          parts.length = 0;
+          it.url = URL.createObjectURL(blob);
+          it.outSize = blob.size;
+          it.status = 'done';
+          done++;
+          setProgress(done * span * 100);
+          await sleep(80);
+          download(it.url, outName);
+        }
+      } catch (err) {
+        if (err && err.name === 'WrongPasswordError') {
+          it.status = 'error'; it.msg = t('errWrongPw');
+          stopped = true;
+        } else if (err && err.name === 'FormatError') {
+          it.status = 'error'; it.msg = t('errFormat');
+        } else if (err && (err.name === 'QuotaExceededError' ||
+                   (err instanceof RangeError) ||
+                   /memory|allocat|blob.*(large|size)/i.test(String(err && err.message || '')))) {
+          it.status = 'error'; it.msg = t('errQuota');
+        } else {
+          it.status = 'error'; it.msg = t('errGeneric');
+          console.error(err);
+        }
+      }
+      render();
+    }
+    diskHandle = null;
+
+    await endProgress(stopped ? (done / total) * 100 : 100);
+    busy = false;
+    render();
+
+    if (stopped) {
+      setNotice(t('noticeStopped'), 'error');
+      pw.focus(); pw.select();
+      toast(t('toastDecFail'));
+    } else if (done === total) {
+      setNotice(t('noticeDone', { n: done }), 'ok');
+      toast(done > 1 ? t('toastDoneN', { n: done }) : t('toastDone1'));
+    } else {
+      const failed = items.filter(i => i.status === 'error').length;
+      setNotice(t('noticePartial', { a: done, b: failed }), failed ? 'error' : 'ok');
+    }
+    pw.value = ''; cf.value = '';
+    strength.dataset.s = 0;
+  });
+
+  function resetAll() {
+    items.forEach(i => { if (i.url) URL.revokeObjectURL(i.url); });
+    items = [];
+    pw.value = ''; cf.value = '';
+    strength.dataset.s = 0;
+    setNotice('', '');
+    fill.style.width = '0%';
+    render();
+    toast(t('toastCleared'));
+  }
+
+  render();
+})();
+
+/* ---------- boot i18n ---------- */
+window.__jyeI18n.initLangUI();
+</script>
+</body>
+</html>
