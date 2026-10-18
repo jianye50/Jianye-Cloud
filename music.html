@@ -460,6 +460,9 @@ html[data-theme="light"] .topbar{background:linear-gradient(to bottom,rgba(247,2
 .q-i b{display:block;font-size:12.5px;font-weight:520;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .q-i.on b{color:var(--accent)}
 .q-i span{display:block;font-size:11px;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.q-i .q-nx{display:inline-block;margin-top:3px;padding:0 6px;border-radius:999px;font-style:normal;
+  font-size:9.5px;line-height:15px;letter-spacing:.04em;font-weight:600;
+  color:var(--accent-2);background:var(--accent-soft);border:var(--hair) solid rgba(250,45,72,.34)}
 .q-empty{font-size:12px;color:var(--text-3);padding:18px 4px;line-height:1.7}
 .q-hd{display:flex;align-items:center;justify-content:space-between;padding:2px 4px 8px;
   font-size:11px;font-weight:600;letter-spacing:.06em;color:var(--text-3)}
@@ -1588,7 +1591,7 @@ function renderQueue(force){
     const i=from+k;
     return `<div class="q-i${i===cur?' on':''}" data-act="jump" data-i="${i}">
       <span class="q-art" data-cov="${esc(t.id)}">${thumbInner(t)}</span>
-      <span class="q-tx"><b>${esc(t.name)}</b><span>${esc(t.artist||'未知艺人')}</span></span>
+      <span class="q-tx"><b>${esc(t.name)}</b><span>${esc(t.artist||'未知艺人')}</span>${t.__next&&i!==cur?'<i class="q-nx">下一首</i>':''}</span>
       <button class="q-del" data-act="q-del" data-i="${i}" aria-label="从队列移除" title="从队列移除">${I.x}</button>
     </div>`;
   }).join('');
@@ -1620,7 +1623,8 @@ audio.addEventListener('loadedmetadata',()=>{
   updateProgress();
 });
 audio.addEventListener('ended',()=>{
-  if(mode==='repeat'){ try{ audio.currentTime=0; audio.play(); }catch(e){} return; }
+  /* 单曲循环时，若有「设为下一首」的曲目，也先把它放完 */
+  if(mode==='repeat'&&nextUpIndex()<0){ try{ audio.currentTime=0; audio.play(); }catch(e){} return; }
   next(true);
 });
 audio.addEventListener('error',()=>{
@@ -1637,6 +1641,7 @@ async function loadAndPlay(i,autoplay=true){
   const token=++loadToken;
   cur=i; queueRev++;
   const t=queue[i];
+  if(t.__next) t.__next=false;   // 「下一首」标记用完即清
   lyrics=[]; lyricIdx=-1; lyricNote=''; renderLyrics();
   syncUI();
   const ok=await ensurePlayable(t);
@@ -1669,8 +1674,16 @@ function togglePlay(){
   if(audio.paused) audio.play().catch(()=>toast('播放失败，再点一次'));
   else audio.pause();
 }
+/* 「设为下一首播放」的曲目：无论顺序 / 随机 / 单曲循环，都排在真正的下一首 */
+function nextUpIndex(){
+  for(let i=cur+1;i<queue.length;i++) if(queue[i]&&queue[i].__next) return i;
+  for(let i=0;i<cur;i++) if(queue[i]&&queue[i].__next) return i;   // 兜底：被循环绕到前面的
+  return -1;
+}
 function next(auto){
   if(!queue.length) return;
+  const nx=nextUpIndex();
+  if(nx>=0) return loadAndPlay(nx,true);
   if(mode==='shuffle'&&queue.length>1){
     let n=cur;
     while(n===cur) n=Math.floor(Math.random()*queue.length);
@@ -2225,16 +2238,19 @@ document.addEventListener('click',e=>{
 function playNext(t){
   if(!t){ toast('先挑一首歌'); return; }
   if(cur<0){
+    const item=Object.assign({},t,{__next:true});
     queue=queue.length?queue:[];
-    queue.splice(cur<0?0:cur+1,0,t);
+    queue.splice(0,0,item);
     cur=0; loadAndPlay(0,true);
     toast('即将播放：'+esc(t.name));
     return;
   }
-  queue.splice(cur+1,0,t);
+  /* 插到当前曲目后面，并打标记：随机播放时也保证它先播 */
+  const item=Object.assign({},t,{__next:true});
+  queue.splice(cur+1,0,item);
   queueRev++;
-  renderQueue();
-  toast('已设为下一首：'+esc(t.name));
+  renderQueue(true);
+  toast(mode==='shuffle'?'已设为下一首（随机播放也先播它）：'+esc(t.name):'已设为下一首：'+esc(t.name));
 }
 function addToQueue(t){
   if(!t){ toast('先挑一首歌'); return; }
