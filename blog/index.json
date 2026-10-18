@@ -1,13 +1,16 @@
 {
-  "generated": "2026-10-18T07:50:51.998Z",
+  "generated": "2026-10-18T07:53:33.778Z",
   "posts": [
     {
       "slug": "鉴业PE 维护系统介绍",
       "md": "blog/鉴业PE 维护系统介绍/index.md",
       "imgBase": "blog/鉴业PE 维护系统介绍/",
       "title": "Jianye PE｜颜值与实力兼备的纯净Windows PE维护系统",
-      "desc": "",
-      "tags": [],
+      "desc": "电脑蓝屏无法开机？系统需要重装？重要数据需要抢救？遇到这些问题，一套好用的PE…",
+      "tags": [
+        "PE",
+        "维护系统"
+      ],
       "date": "2026-10-18",
       "minutes": 4,
       "cover": "mmexport1786370573713.jpg",
