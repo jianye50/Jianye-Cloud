@@ -1,6 +1,24 @@
 {
-  "generated": "2026-10-17T06:01:07.626Z",
+  "generated": "2026-10-18T07:50:51.998Z",
   "posts": [
+    {
+      "slug": "鉴业PE 维护系统介绍",
+      "md": "blog/鉴业PE 维护系统介绍/index.md",
+      "imgBase": "blog/鉴业PE 维护系统介绍/",
+      "title": "Jianye PE｜颜值与实力兼备的纯净Windows PE维护系统",
+      "desc": "",
+      "tags": [],
+      "date": "2026-10-18",
+      "minutes": 4,
+      "cover": "mmexport1786370573713.jpg",
+      "bg": "mmexport1786370573713.jpg",
+      "imgs": {
+        "55b2278b-c468-4060-ae73-67cb0ff41192.png": "blog/thumbs/鉴业PE_维护系统介绍-i0.webp",
+        "mmexport1786370573713.jpg": "blog/thumbs/鉴业PE_维护系统介绍-i2.webp"
+      },
+      "coverThumb": "blog/thumbs/鉴业PE_维护系统介绍-cover.webp",
+      "bgThumb": "blog/thumbs/鉴业PE_维护系统介绍-bg.webp"
+    },
     {
       "slug": "一键重装",
       "md": "blog/一键重装/index.md",
