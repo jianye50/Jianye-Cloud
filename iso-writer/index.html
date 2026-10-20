@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Web ISO 写入工具</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --panel: #1a1d27;
+    --panel2: #222633;
+    --border: #2e3345;
+    --text: #e6e9f0;
+    --muted: #8b91a5;
+    --accent: #4f8cff;
+    --accent2: #3b6fd4;
+    --danger: #ff5c5c;
+    --ok: #34c77b;
+    --warn: #ffb340;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+    background: var(--bg); color: var(--text);
+    min-height: 100vh; padding: 24px 16px 60px;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; }
+  header { text-align: center; margin-bottom: 28px; }
+  header h1 { font-size: 26px; font-weight: 600; letter-spacing: 1px; }
+  header h1 .dot { color: var(--accent); }
+  header p { color: var(--muted); margin-top: 6px; font-size: 13px; }
+  .card {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 12px; padding: 20px 22px; margin-bottom: 18px;
+  }
+  .step-title {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+    font-size: 15px; font-weight: 600;
+  }
+  .step-num {
+    width: 24px; height: 24px; border-radius: 50%;
+    background: var(--accent); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; flex-shrink: 0;
+  }
+  .hint { color: var(--muted); font-size: 12.5px; margin-top: 8px; line-height: 1.6; }
+
+  /* 步骤1：来源 */
+  .tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+  .tab {
+    padding: 7px 16px; border-radius: 8px; cursor: pointer;
+    background: var(--panel2); border: 1px solid var(--border);
+    font-size: 13px; color: var(--muted); user-select: none;
+  }
+  .tab.active { background: var(--accent2); border-color: var(--accent); color: #fff; }
+
+  #browseBox { border: 1px solid var(--border); border-radius: 10px; background: var(--panel2); max-height: 260px; overflow-y: auto; }
+  .row {
+    padding: 9px 14px; cursor: pointer; font-size: 13.5px;
+    display: flex; justify-content: space-between; align-items: center; gap: 10px;
+    border-bottom: 1px solid rgba(255,255,255,.04);
+  }
+  .row:hover { background: rgba(79,140,255,.12); }
+  .row.selected { background: rgba(79,140,255,.22); outline: 1px solid var(--accent); }
+  .row .size { color: var(--muted); font-size: 12px; white-space: nowrap; }
+  .crumb { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 13px; }
+  .crumb .path { color: var(--muted); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; direction: rtl; text-align: left; }
+  .btn {
+    padding: 8px 18px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--panel2); color: var(--text); cursor: pointer; font-size: 13px;
+  }
+  .btn:hover { border-color: var(--accent); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  .btn.primary:disabled { opacity: .4; cursor: not-allowed; }
+  .btn.danger { background: var(--danger); border-color: var(--danger); color: #fff; font-weight: 600; }
+
+  #dropZone {
+    border: 2px dashed var(--border); border-radius: 10px;
+    padding: 40px 20px; text-align: center; color: var(--muted);
+    transition: all .2s; cursor: pointer; font-size: 14px;
+  }
+  #dropZone.dragover { border-color: var(--accent); background: rgba(79,140,255,.08); color: var(--text); }
+  #dropZone .big { font-size: 34px; margin-bottom: 8px; }
+  #dropZone input { display: none; }
+  #stagedInfo { margin-top: 10px; font-size: 13px; color: var(--ok); display: none; }
+
+  /* 步骤2：目标磁盘 */
+  .disk-item {
+    border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px;
+    margin-bottom: 10px; cursor: pointer; display: flex; align-items: center; gap: 14px;
+    background: var(--panel2); transition: border-color .15s;
+  }
+  .disk-item:hover { border-color: var(--accent); }
+  .disk-item.selected { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+  .disk-item input { accent-color: var(--accent); }
+  .disk-model { font-size: 14px; font-weight: 600; }
+  .disk-meta { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  .tag {
+    display: inline-block; padding: 1px 8px; border-radius: 20px; font-size: 11px; margin-left: 8px;
+  }
+  .tag.removable { background: rgba(52,199,123,.15); color: var(--ok); }
+  .tag.fixed { background: rgba(255,92,92,.15); color: var(--danger); }
+  .warn-fixed { color: var(--danger); font-size: 12.5px; margin-top: 8px; display: none; }
+  .admin-warn {
+    background: rgba(255,179,64,.12); border: 1px solid rgba(255,179,64,.4);
+    color: var(--warn); border-radius: 10px; padding: 10px 14px; font-size: 13px; margin-bottom: 14px;
+  }
+
+  /* 步骤3：确认与进度 */
+  .confirm-row { display: flex; align-items: flex-start; gap: 10px; margin: 12px 0 16px; font-size: 13.5px; line-height: 1.6; }
+  .confirm-row input { margin-top: 3px; accent-color: var(--danger); }
+  .progress-wrap { display: none; }
+  .bar-outer {
+    height: 14px; border-radius: 8px; background: var(--panel2);
+    border: 1px solid var(--border); overflow: hidden; margin: 8px 0;
+  }
+  .bar-inner {
+    height: 100%; width: 0%; border-radius: 8px;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+    transition: width .4s;
+  }
+  .bar-inner.verify { background: linear-gradient(90deg, #1d8f5b, var(--ok)); }
+  .bar-inner.failed { background: var(--danger); }
+  .progress-stats { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--muted); }
+  .status-line { font-size: 14px; margin-top: 4px; }
+  .status-line.ok { color: var(--ok); }
+  .status-line.err { color: var(--danger); word-break: break-all; }
+  .actions { display: flex; gap: 10px; margin-top: 14px; }
+  footer { text-align: center; color: var(--muted); font-size: 12px; margin-top: 30px; line-height: 1.8; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Web ISO 写入工具 <span class="dot">.</span></h1>
+    <p>将 ISO / IMG 镜像写入 U 盘或磁盘 —— 数据将被完全覆盖，请谨慎操作</p>
+  </header>
+
+  <div id="adminWarn" class="admin-warn" style="display:none">
+    ⚠️ 当前服务<strong>未以管理员身份运行</strong>，将无法写入磁盘。请关闭后用管理员身份重新启动。
+  </div>
+
+  <!-- 步骤 1 -->
+  <div class="card">
+    <div class="step-title"><span class="step-num">1</span> 选择镜像文件</div>
+    <div class="tabs">
+      <div class="tab active" data-tab="browse">从本机浏览</div>
+      <div class="tab" data-tab="upload">拖拽 / 点击上传</div>
+    </div>
+
+    <div id="paneBrowse">
+      <div class="crumb">
+        <button class="btn" id="btnUp" style="padding:5px 12px">⬆ 上级</button>
+        <span class="path" id="curPath">我的电脑</span>
+      </div>
+      <div id="browseBox"></div>
+      <div class="hint">已选择：<b id="pickedIsoName" style="color:var(--ok)">未选择</b></div>
+    </div>
+
+    <div id="paneUpload" style="display:none">
+      <div id="dropZone">
+        <div class="big">💾</div>
+        将 .iso / .img 文件拖到这里，或点击选择<br>
+        <span style="font-size:12px">文件将通过本机服务直接流式写入磁盘，不会产生临时副本</span>
+        <input type="file" id="fileInput" accept=".iso,.img">
+      </div>
+      <div id="stagedInfo"></div>
+    </div>
+  </div>
+
+  <!-- 步骤 2 -->
+  <div class="card">
+    <div class="step-title">
+      <span class="step-num">2</span> 选择目标磁盘
+      <button class="btn" id="btnRefreshDisks" style="margin-left:auto;padding:4px 12px;font-size:12px">🔄 刷新</button>
+    </div>
+    <div id="diskList"><div class="hint">加载中…</div></div>
+    <div class="warn-fixed" id="warnFixed">
+      ⚠️ 你选择的是<strong>固定磁盘（非可移动介质）</strong>！写入会销毁整块磁盘（含系统盘则系统崩溃），请再三确认。
+    </div>
+  </div>
+
+  <!-- 步骤 3 -->
+  <div class="card">
+    <div class="step-title"><span class="step-num">3</span> 确认并写入</div>
+    <div id="confirmPane">
+      <div class="confirm-row">
+        <input type="checkbox" id="chkConfirm">
+        <label for="chkConfirm">我清楚知道：写入将<strong style="color:var(--danger)">不可恢复地销毁</strong>目标磁盘上的<strong style="color:var(--danger)">全部数据</strong>，并且我已备份重要文件。</label>
+      </div>
+      <label class="confirm-row" style="color:var(--muted)">
+        <input type="checkbox" id="chkVerify" checked>
+        <span>写入完成后校验数据（仅"从本机浏览"方式可用）</span>
+      </label>
+      <div class="actions">
+        <button class="btn primary" id="btnStart" disabled>🚀 开始写入</button>
+      </div>
+    </div>
+
+    <div class="progress-wrap" id="progressPane">
+      <div class="status-line" id="statusLine">准备中…</div>
+      <div class="bar-outer"><div class="bar-inner" id="bar"></div></div>
+      <div class="progress-stats">
+        <span id="statPercent">0%</span>
+        <span id="statSpeed">--</span>
+        <span id="statElapsed">--</span>
+      </div>
+      <div class="actions">
+        <button class="btn danger" id="btnCancel">✖ 取消</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    本工具仅在本地运行，数据不出本机 · 写入物理磁盘需要管理员权限<br>
+    重新运行前请刷新页面
+  </footer>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const state = { mode: 'browse', browsePath: '', pickedIso: null, stagedFile: null, disk: null, disks: [], timer: null, writing: false };
+
+  function fmtSize(n) {
+    if (n == null) return '--';
+    if (n >= 1073741824) return (n / 1073741824).toFixed(2) + ' GB';
+    if (n >= 1048576) return (n / 1048576).toFixed(1) + ' MB';
+    return (n / 1024).toFixed(1) + ' KB';
+  }
+  function fmtTime(s) {
+    s = Math.round(s || 0);
+    return (s >= 3600 ? Math.floor(s/3600) + ':' + String(Math.floor(s%3600/60)).padStart(2,'0') : Math.floor(s/60)) + ':' + String(s%60).padStart(2,'0');
+  }
+
+  // ---------- 管理员检查 ----------
+  fetch('/api/disks').then(r => r.json()).then(d => {
+    if (d.isAdmin === false) $('adminWarn').style.display = 'block';
+  }).catch(() => {});
+
+  // ---------- 标签页 ----------
+  document.querySelectorAll('.tab').forEach(t => {
+    t.onclick = () => {
+      document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+      state.mode = t.dataset.tab;
+      $('paneBrowse').style.display = state.mode === 'browse' ? '' : 'none';
+      $('paneUpload').style.display = state.mode === 'upload' ? '' : 'none';
+      updateStart();
+    };
+  });
+
+  // ---------- 文件浏览 ----------
+  function loadBrowse(p) {
+    fetch('/api/browse?path=' + encodeURIComponent(p))
+      .then(r => r.json())
+      .then(d => {
+        state.browsePath = d.path;
+        $('curPath').textContent = d.path || '我的电脑';
+        $('btnUp').disabled = d.parent == null;
+        const box = $('browseBox');
+        box.innerHTML = '';
+        (d.dirs || []).forEach(item => {
+          const el = document.createElement('div');
+          el.className = 'row';
+          el.innerHTML = '<span>📁 ' + escapeHtml(item.name) + '</span>';
+          el.onclick = () => loadBrowse(d.path ? (d.path + '\\' + item.name) : item.name);
+          box.appendChild(el);
+        });
+        (d.files || []).forEach(item => {
+          const el = document.createElement('div');
+          el.className = 'row';
+          el.innerHTML = '<span>📀 ' + escapeHtml(item.name) + '</span><span class="size">' + fmtSize(item.size) + '</span>';
+          el.onclick = () => {
+            box.querySelectorAll('.row').forEach(x => x.classList.remove('selected'));
+            el.classList.add('selected');
+            state.pickedIso = d.path + '\\' + item.name;
+            state.stagedFile = null;
+            $('pickedIsoName').textContent = item.name;
+            updateStart();
+          };
+          box.appendChild(el);
+        });
+        if (!(d.dirs || []).length && !(d.files || []).length) {
+          box.innerHTML = '<div class="row" style="cursor:default;color:var(--muted)">（空目录，未找到 .iso / .img 文件）</div>';
+        }
+      });
+  }
+  $('btnUp').onclick = () => {
+    fetch('/api/browse?path=' + encodeURIComponent(state.browsePath)).then(r => r.json()).then(d => {
+      if (d.parent != null) loadBrowse(d.parent);
+    });
+  };
+  loadBrowse('');
+
+  // ---------- 上传 ----------
+  const dz = $('dropZone');
+  dz.onclick = () => $('fileInput').click();
+  dz.ondragover = (e) => { e.preventDefault(); dz.classList.add('dragover'); };
+  dz.ondragleave = () => dz.classList.remove('dragover');
+  dz.ondrop = (e) => { e.preventDefault(); dz.classList.remove('dragover'); if (e.dataTransfer.files[0]) stageFile(e.dataTransfer.files[0]); };
+  $('fileInput').onchange = () => { if ($('fileInput').files[0]) stageFile($('fileInput').files[0]); };
+
+  function stageFile(f) {
+    state.stagedFile = f;
+    state.pickedIso = null;
+    $('stagedInfo').style.display = 'block';
+    $('stagedInfo').innerHTML = '✅ 已就绪：<b>' + escapeHtml(f.name) + '</b>（' + fmtSize(f.size) + '），点击"开始写入"后将直接流式写入所选磁盘';
+    $('pickedIsoName').textContent = f.name;
+    updateStart();
+  }
+
+  // ---------- 磁盘列表 ----------
+  function loadDisks() {
+    $('diskList').innerHTML = '<div class="hint">加载中…</div>';
+    fetch('/api/disks').then(r => r.json()).then(d => {
+      state.disks = d.disks || [];
+      if (d.isAdmin === false) $('adminWarn').style.display = 'block';
+      renderDisks();
+    }).catch(() => { $('diskList').innerHTML = '<div class="hint" style="color:var(--danger)">获取磁盘列表失败</div>'; });
+  }
+  function renderDisks() {
+    const list = $('diskList');
+    list.innerHTML = '';
+    if (!state.disks.length) { list.innerHTML = '<div class="hint">未发现任何磁盘</div>'; return; }
+    state.disks.forEach(d => {
+      const el = document.createElement('div');
+      el.className = 'disk-item' + (state.disk === d.number ? ' selected' : '');
+      el.innerHTML =
+        '<input type="radio" name="disk" ' + (state.disk === d.number ? 'checked' : '') + '>' +
+        '<div style="flex:1"><div class="disk-model">' + escapeHtml(d.model) +
+        (d.removable ? '<span class="tag removable">可移动</span>' : '<span class="tag fixed">固定磁盘</span>') +
+        '</div><div class="disk-meta">磁盘 ' + d.number + ' · ' + fmtSize(d.size) +
+        (d.interface ? ' · ' + escapeHtml(d.interface) : '') + '</div></div>';
+      el.onclick = () => {
+        state.disk = d.number;
+        renderDisks();
+        $('warnFixed').style.display = d.removable ? 'none' : 'block';
+        updateStart();
+      };
+      list.appendChild(el);
+    });
+  }
+  $('btnRefreshDisks').onclick = loadDisks;
+  loadDisks();
+
+  // ---------- 开始写入 ----------
+  const btnStart = $('btnStart');
+  $('chkConfirm').onchange = updateStart;
+
+  function updateStart() {
+    const hasSource = state.mode === 'browse' ? !!state.pickedIso : !!state.stagedFile;
+    btnStart.disabled = !(hasSource && state.disk != null && $('chkConfirm').checked && !state.writing);
+  }
+
+  btnStart.onclick = () => {
+    const verify = $('chkVerify').checked && state.mode === 'browse';
+    state.writing = true;
+    updateStart();
+    $('confirmPane').style.display = 'none';
+    $('progressPane').style.display = 'block';
+    $('statusLine').className = '';
+    $('statusLine').textContent = '正在启动写入…';
+    $('bar').className = 'bar-inner';
+    $('btnCancel').disabled = false;
+
+    if (state.mode === 'upload' && state.stagedFile) {
+      startUpload(verify);
+    } else if (state.pickedIso) {
+      fetch('/api/write', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ disk: state.disk, isoPath: state.pickedIso, verify }),
+      }).then(r => r.json()).then(d => {
+        if (d.error) return finishWithError(d.error);
+        pollProgress();
+      }).catch(e => finishWithError(e.message));
+    }
+  };
+
+  function startUpload() {
+    const f = state.stagedFile;
+    $('statusLine').textContent = '正在通过本机服务流式写入（无临时副本）…';
+    const xhr = new XMLHttpRequest();
+    state.xhr = xhr;
+    xhr.open('POST', '/api/write-upload?disk=' + state.disk + '&size=' + f.size, true);
+    xhr.setRequestHeader('Content-Type', 'application/octet-stream');
+    let lastPct = -1;
+    xhr.upload.onprogress = (e) => {
+      // 上传进度即为写入进度（服务端边收边写）
+      const pct = e.total ? Math.round((e.loaded / e.total) * 100) : 0;
+      if (pct !== lastPct) { lastPct = pct; setBar(pct, e.loaded, e.total); }
+      $('statusLine').textContent = '写入中…';
+    };
+    xhr.onload = () => {
+      if (xhr.status === 200) { pollProgress(); }
+      else {
+        let msg = '写入失败';
+        try { msg = JSON.parse(xhr.responseText).error || msg; } catch (_) {}
+        finishWithError(msg);
+      }
+    };
+    xhr.onerror = () => finishWithError('网络错误，写入中断');
+    xhr.send(f);
+  }
+
+  // ---------- 进度轮询 ----------
+  function pollProgress() {
+    clearInterval(state.timer);
+    state.timer = setInterval(() => {
+      fetch('/api/progress').then(r => r.json()).then(j => {
+        const pct = j.total ? Math.min(100, Math.round((j.written / j.total) * 100)) : 0;
+        if (j.phase === 'write') {
+          $('statusLine').className = '';
+          $('statusLine').textContent = '写入中…';
+          setBar(pct, j.written, j.total, j.speed, j.elapsed, false);
+        } else if (j.phase === 'verify') {
+          $('statusLine').className = '';
+          $('statusLine').textContent = '校验中（回读比对数据）…';
+          setBar(pct, j.written, j.total, j.speed, j.elapsed, true);
+        } else if (j.phase === 'done') {
+          finishOk(j);
+        } else if (j.phase === 'failed') {
+          finishWithError(j.error || '未知错误');
+        }
+      });
+    }, 500);
+  }
+
+  function setBar(pct, written, total, speed, elapsed, verifying) {
+    $('bar').style.width = pct + '%';
+    $('bar').className = 'bar-inner' + (verifying ? ' verify' : '');
+    $('statPercent').textContent = pct + '%';
+    $('statSpeed').textContent = speed ? (speed / 1048576).toFixed(1) + ' MB/s' : '--';
+    $('statElapsed').textContent = '已用 ' + fmtTime(elapsed);
+  }
+
+  function finishOk(j) {
+    clearInterval(state.timer);
+    state.writing = false;
+    $('bar').style.width = '100%';
+    $('bar').className = 'bar-inner' + (j.phase === 'verify' || $('bar').className.includes('verify') ? ' verify' : '');
+    $('statusLine').className = 'status-line ok';
+    $('statusLine').textContent = '✅ 完成！镜像已成功写入磁盘' + ($('bar').className.includes('verify') ? '，数据校验通过' : '') + '。现在可以安全拔出设备。';
+    $('btnCancel').style.display = 'none';
+    updateStart();
+    $('confirmPane').style.display = '';
+  }
+
+  function finishWithError(msg) {
+    clearInterval(state.timer);
+    state.writing = false;
+    $('bar').className = 'bar-inner failed';
+    $('statusLine').className = 'status-line err';
+    $('statusLine').textContent = '❌ ' + msg;
+    $('btnCancel').style.display = 'none';
+    $('confirmPane').style.display = '';
+    updateStart();
+  }
+
+  $('btnCancel').onclick = () => {
+    fetch('/api/cancel', { method: 'POST' }).then(() => {
+      if (state.xhr) { try { state.xhr.abort(); } catch (_) {} }
+      $('statusLine').textContent = '正在取消…';
+    });
+  };
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+})();
+</script>
+</body>
+</html>
