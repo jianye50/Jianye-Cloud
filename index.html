@@ -3263,7 +3263,389 @@ input[type=range].mp-range::-moz-range-thumb{
     paintSub();
   })();
 })();
+
+/* =====================================================================
+ *  彩蛋：头像连点 7 下 → 弹出仿 Linux 终端
+ *  - 用事件委托监听 .avatar（关于页每次路由切换都会重新渲染）
+ *  - 必须连续点击：间隔超过 1s 自动清零；第 7 下弹出终端
+ *  - 红绿灯：红点关闭（悬停出 ×）、黄点收起、绿点放大；支持拖动、Esc / 点遮罩关闭
+ * ===================================================================== */
+(function(){
+  "use strict";
+  var NEEDED=7, GAP=1000, clicks=0, lastClick=0, opened=false;   /* 间隔超过 1s 即视为中断，重新计 */
+
+  document.addEventListener("click",function(e){
+    var av=e.target.closest(".avatar");
+    if(!av)return;
+    var now=Date.now();
+    clicks=(now-lastClick<=GAP)?clicks+1:1;
+    lastClick=now;
+    /* 弹性按压 + 涟漪反馈 */
+    av.classList.remove("egg-press"); void av.offsetWidth; av.classList.add("egg-press");
+    var s=document.createElement("span");
+    s.className="egg-ripple";
+    av.appendChild(s);
+    s.addEventListener("animationend",function(){ s.remove(); });
+    if(clicks>=NEEDED){ clicks=0; openTerm(); }
+  });
+
+  /* ---------- 终端 ---------- */
+  function openTerm(){
+    if(opened)return; opened=true;
+    /* 跟随站点语言：<html lang> 以 zh 开头 → 中文，否则英文 */
+    var zh=true;
+    try{ zh=(document.documentElement.getAttribute("lang")||"zh").toLowerCase().indexOf("zh")===0; }catch(e){}
+    var T=zh?{
+      dotR:"关闭",dotY:"收起",dotG:"放大",
+      BOOT:[
+        "[    0.000000] jianye-os 7.7.0-egg booting ...",
+        "[    0.421337] 检测到头像被连点 7 次，授权通过。",
+        "[    0.888888] 加载人格模块 ... OK",
+        "",
+        "欢迎使用 jianye-os 7.7（彩蛋版）x86_64",
+        "",
+        "上次登录：7 次点击之前，来自你的鼠标",
+        "输入 'help' 查看可用命令。"
+      ],
+      help:[
+        "可用命令：",
+        "  help          显示本帮助",
+        "  ls            列出文件",
+        "  cat <file>    查看文件内容（试试 about.txt / secret.flag / todo.txt）",
+        "  whoami        我是谁？",
+        "  neofetch      系统信息",
+        "  date          当前时间",
+        "  echo <text>   复读机",
+        "  pwd           当前目录",
+        "  uname -a      内核信息",
+        "  history       命令历史",
+        "  clear         清屏",
+        "  exit          关闭终端"
+      ],
+      FILES:{
+        "about.txt":["鉴业 (Jianye)","全栈开发者 / 业余摄影师 / 偶尔写点东西。","这个网站是我用一行行 HTML 写出来的——","你现在看到的终端就是证据之一 :)"],
+        "secret.flag":["flag{y0u_f0und_th3_7th_cl1ck}","","恭喜！你找到了这个网站的第一个彩蛋。","传闻头像连点 14 下还有第二个……（并没有）"],
+        "todo.txt":["[x] 写一个个人网站","[x] 藏一个终端彩蛋","[ ] 学 Rust","[ ] 早睡（执行失败 1024 次）"]
+      },
+      whoami:["visitor","","……准确地说，是一位连点了 7 下头像的访客。","好奇心是 root 权限，你已经拥有了。"],
+      fetch:[
+        "       .--.        visitor@jianye",
+        "      |o_o |       -----------------",
+        "      |:_/ |       OS: jianye-os 7.7 (彩蛋版)",
+        "     //   \\ \\      主机: 鉴业的个人网站",
+        "    (|     | )     内核: 7.7.0-egg",
+        "   /'\\_   _/`\\     Shell: fake-bash 1.0",
+        "   \\___)=(___/     运行时长: 自第 7 次点击起",
+        "                   成就: 🥚 彩蛋猎人"
+      ],
+      sudo:["visitor 不在 sudoers 文件里。","此事将被上报。","","（开玩笑的，这里什么都不会记录 :)）"],
+      rmNice:"nice try. 该文件系统是只读的 🙃",
+      rmDeny:"rm: 权限不够，而且别删我的网站谢谢",
+      catMissing:"cat: 缺少文件名",
+      isDir:function(d){ return "cat: "+d+": 这是一个目录（用 ls 看看里面有什么）"; },
+      notFound:function(c){ return "bash: "+c+": 未找到命令（试试 'help'）"; },
+      noFile:function(f){ return "cat: "+f+": 没有那个文件或目录"; }
+    }:{
+      dotR:"Close",dotY:"Minimize",dotG:"Zoom",
+      BOOT:[
+        "[    0.000000] jianye-os 7.7.0-egg booting ...",
+        "[    0.421337] Detected 7 consecutive avatar clicks. Access granted.",
+        "[    0.888888] Loading personality modules ... OK",
+        "",
+        "Welcome to jianye-os 7.7 (Egg Edition)  x86_64",
+        "",
+        "Last login: 7 clicks ago from your cursor",
+        "Type 'help' to see available commands."
+      ],
+      help:[
+        "Available commands:",
+        "  help          show this help",
+        "  ls            list files",
+        "  cat <file>    print a file (try about.txt / secret.flag / todo.txt)",
+        "  whoami        who am I?",
+        "  neofetch      system info",
+        "  date          current time",
+        "  echo <text>   repeat after me",
+        "  pwd           current directory",
+        "  uname -a      kernel info",
+        "  history       command history",
+        "  clear         clear the screen",
+        "  exit          close the terminal"
+      ],
+      FILES:{
+        "about.txt":["Jianye","Full-stack developer / hobbyist photographer / occasional writer.","I built this site line by line in plain HTML —","the terminal you are looking at is the proof :)"],
+        "secret.flag":["flag{y0u_f0und_th3_7th_cl1ck}","","Congrats! You have found the first easter egg on this site.","Rumor has it clicking the avatar 14 times reveals another one... (it doesn't)"],
+        "todo.txt":["[x] Build a personal website","[x] Hide a terminal easter egg","[ ] Learn Rust","[ ] Sleep early (failed 1024 times)"]
+      },
+      whoami:["visitor","","To be precise: a visitor who clicked the avatar 7 times in a row.","Curiosity is root access — and you already have it."],
+      fetch:[
+        "       .--.        visitor@jianye",
+        "      |o_o |       -----------------",
+        "      |:_/ |       OS: jianye-os 7.7 (Egg Edition)",
+        "     //   \\ \\      Host: Jianye's personal website",
+        "    (|     | )     Kernel: 7.7.0-egg",
+        "   /'\\_   _/`\\     Shell: fake-bash 1.0",
+        "   \\___)=(___/     Uptime: since your 7th click",
+        "                   Achievement: 🥚 Easter Egg Hunter"
+      ],
+      sudo:["visitor is not in the sudoers file.","This incident will be reported.","","(Just kidding — nothing is logged here :) )"],
+      rmNice:"nice try. This filesystem is read-only 🙃",
+      rmDeny:"rm: permission denied — and please don't delete my website",
+      catMissing:"cat: missing file operand",
+      isDir:function(d){ return "cat: "+d+": Is a directory (try ls)"; },
+      notFound:function(c){ return "bash: "+c+": command not found (try 'help')"; },
+      noFile:function(f){ return "cat: "+f+": No such file or directory"; }
+    };
+    var ov=document.createElement("div");
+    ov.className="egg-term-ov";
+    ov.innerHTML=
+      '<div class="egg-term">'+
+        '<div class="egg-term-bar">'+
+          '<span class="egg-dot r" title="'+T.dotR+'"></span><span class="egg-dot y" title="'+T.dotY+'"></span><span class="egg-dot g" title="'+T.dotG+'"></span>'+
+          '<span class="egg-term-title">visitor@jianye: ~</span>'+
+          '<span class="egg-bar-sp"></span>'+
+        '</div>'+
+        '<div class="egg-term-body"></div>'+
+      '</div>';
+    document.body.appendChild(ov);
+    document.body.style.overflow="hidden";
+
+    var win=ov.querySelector(".egg-term"),
+        body=ov.querySelector(".egg-term-body"),
+        bar=ov.querySelector(".egg-term-bar");
+
+    function print(text,cls){
+      var d=document.createElement("div");
+      d.className="t-line"+(cls?" "+cls:"");
+      if(text!=null&&text!=="")d.textContent=text;
+      /* 输入行固定在底部：新输出一律插到它上面 */
+      if(inputRow)body.insertBefore(d,inputRow);
+      else body.appendChild(d);
+      body.scrollTop=body.scrollHeight;
+      return d;
+    }
+    function printAll(lines,cls){ lines.forEach(function(l){ print(l,cls); }); }
+
+    /* --- 开机动画 --- */
+    var BOOT=T.BOOT;
+    var bi=0;
+    (function typeBoot(){
+      if(bi<BOOT.length){ print(BOOT[bi++],"t-dim"); setTimeout(typeBoot,90); }
+      else{ mountInput(); }
+    })();
+
+    /* --- 输入行（始终保持在最底部） --- */
+    var inputRow=null,inputEl;
+    function mountInput(){
+      inputRow=document.createElement("div");
+      inputRow.className="t-line t-input-row";
+      inputRow.innerHTML='<span class="t-prompt">visitor@jianye:~$ </span>';
+      inputEl=document.createElement("input");
+      inputEl.className="t-input";
+      inputEl.autocomplete="off"; inputEl.spellcheck=false;
+      inputRow.appendChild(inputEl);
+      body.appendChild(inputRow);
+      body.scrollTop=body.scrollHeight;
+      inputEl.focus();
+      inputEl.addEventListener("keydown",function(ev){
+        if(ev.key==="Enter"){
+          var cmd=inputEl.value.trim();
+          inputEl.value="";
+          print("visitor@jianye:~$ "+cmd,"t-cmd");
+          if(cmd)run(cmd);
+          body.scrollTop=body.scrollHeight;
+        }
+      });
+    }
+    ov.addEventListener("mouseup",function(){ if(opened&&inputEl)inputEl.focus(); });
+
+    /* --- 命令 --- */
+    var HISTORY=[];
+    function run(raw){
+      HISTORY.push(raw);
+      var parts=raw.split(/\s+/), cmd=parts[0].toLowerCase(), arg=parts.slice(1).join(" ");
+      switch(cmd){
+        case "help":
+          printAll(T.help); break;
+        case "ls":
+          print("about.txt    secret.flag    todo.txt    blog/    photos/    music/"); break;
+        case "cat":
+          if(!arg){ print(T.catMissing,"t-err"); }
+          else if(/\/$/.test(arg)||/^(blog|photos|music)$/.test(arg)){ print(T.isDir(arg),"t-err"); }
+          else if(T.FILES[arg]){ printAll(T.FILES[arg]); }
+          else{ print(T.noFile(arg),"t-err"); }
+          break;
+        case "whoami":
+          printAll(T.whoami); break;
+        case "neofetch":
+          printAll(T.fetch); break;
+        case "date":
+          print(new Date().toLocaleString(zh?"zh-CN":"en-US",{dateStyle:"full",timeStyle:"medium"})); break;
+        case "echo":
+          print(arg||""); break;
+        case "pwd":
+          print("/home/jianye"); break;
+        case "uname":
+          print(arg.indexOf("a")>=0
+            ? "Linux jianye-website 7.7.0-egg #1 SMP PREEMPT x86_64 GNU/Linux"
+            : "Linux"); break;
+        case "history":
+          HISTORY.forEach(function(h,i){ print("  "+(i+1)+"  "+h); }); break;
+        case "sudo":
+          printAll(T.sudo,"t-err"); break;
+        case "rm":
+          printAll(arg.indexOf("-rf")>=0||arg.indexOf("/")==0 ? T.rmNice : T.rmDeny,"t-err"); break;
+        case "clear":
+          body.innerHTML=""; mountInput(); break;
+        case "exit": case "quit": case "q": case "logout":
+          closeTerm(); break;
+        default:
+          print(T.notFound(cmd),"t-err");
+      }
+    }
+
+    /* --- 拖动（标题栏） --- */
+    var drag=null;
+    bar.addEventListener("pointerdown",function(ev){
+      if(ev.target.classList.contains("egg-dot"))return;   /* 点红绿灯不触发拖动 */
+      /* 窗口原本靠 flex 居中，left/top 不生效；先切到 fixed 定位并写回当前真实位置，拖动才跟手 */
+      var r=win.getBoundingClientRect();
+      win.style.position="fixed";
+      win.style.margin="0";
+      win.style.left=r.left+"px";
+      win.style.top=r.top+"px";
+      drag={x:ev.clientX,y:ev.clientY,l:r.left,t:r.top};
+      bar.setPointerCapture(ev.pointerId);
+    });
+    bar.addEventListener("pointermove",function(ev){
+      if(!drag)return;
+      var nl=drag.l+ev.clientX-drag.x,
+          nt=drag.t+ev.clientY-drag.y;
+      /* 边界钳制：至少留 60px 标题栏在可视区内，防止拖丢 */
+      nl=Math.min(Math.max(nl,60-win.offsetWidth),window.innerWidth-60);
+      nt=Math.min(Math.max(nt,0),window.innerHeight-40);
+      win.style.left=nl+"px";
+      win.style.top=nt+"px";
+    });
+    bar.addEventListener("pointerup",function(){ drag=null; });
+    bar.addEventListener("pointercancel",function(){ drag=null; });
+
+    /* --- 关闭 --- */
+    function closeTerm(){
+      if(!opened)return; opened=false;
+      ov.remove(); document.body.style.overflow="";
+      document.removeEventListener("keydown",onKey);
+    }
+    function onKey(ev){ if(ev.key==="Escape")closeTerm(); }
+    document.addEventListener("keydown",onKey);
+    /* macOS 语义：红点关闭、黄点收起成标题栏、绿点放大 */
+    /* 尺寸状态机：收起(mini) 优先于放大(big)，统一用内联样式写入，避免样式表优先级打架 */
+    function applySize(){
+      var mini=win.classList.contains("egg-term-mini"),
+          big=win.classList.contains("egg-term-big");
+      win.style.width  = (big&&!mini) ? "min(900px,96vw)" : "";
+      win.style.height = mini ? "39px" : (big ? "min(88vh,760px)" : "");
+      if(!mini)body.scrollTop=body.scrollHeight;
+    }
+    ov.querySelector(".egg-dot.r").addEventListener("click",closeTerm);
+    ov.querySelector(".egg-dot.y").addEventListener("click",function(){
+      win.classList.toggle("egg-term-mini"); applySize();
+    });
+    ov.querySelector(".egg-dot.g").addEventListener("click",function(){
+      win.classList.toggle("egg-term-big"); applySize();
+    });
+    ov.addEventListener("click",function(ev){ if(ev.target===ov)closeTerm(); });
+  }
+})();
 </script>
+
+<style>
+/* ---------- 彩蛋终端样式 ---------- */
+.egg-term-ov{
+  position:fixed;inset:0;z-index:2147483000;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(2,6,12,.66);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  animation:egg-fade .18s ease;
+}
+@keyframes egg-fade{from{opacity:0}to{opacity:1}}
+@keyframes egg-rise{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}
+/* ---------- 头像点击反馈：弹性按压 + 涟漪 ---------- */
+@keyframes egg-press{
+  0%{transform:scale(1)}
+  30%{transform:scale(.88)}
+  70%{transform:scale(1.045)}
+  100%{transform:scale(1)}
+}
+.avatar.egg-press{animation:egg-press .5s cubic-bezier(.22,1,.36,1)}
+.egg-ripple{
+  position:absolute;inset:0;border-radius:50%;pointer-events:none;
+  border:2px solid rgba(255,255,255,.85);
+  box-shadow:0 0 18px rgba(122,59,255,.55),inset 0 0 12px rgba(255,255,255,.35);
+  animation:egg-rip .6s cubic-bezier(.2,.6,.35,1) forwards;
+}
+@keyframes egg-rip{
+  from{transform:scale(.72);opacity:.95}
+  to{transform:scale(1.85);opacity:0}
+}
+.egg-term{
+  width:min(720px,92vw);height:min(480px,78vh);
+  display:flex;flex-direction:column;
+  background:#0d1117;border:1px solid #30363d;border-radius:12px;
+  box-shadow:0 24px 70px rgba(0,0,0,.55);
+  overflow:hidden;position:relative;
+  font-family:"Cascadia Code","JetBrains Mono",Consolas,"Courier New",monospace;
+  animation:egg-rise .22s ease;
+}
+.egg-term-bar{
+  flex:none;display:flex;align-items:center;gap:8px;
+  padding:10px 14px;background:#161b22;border-bottom:1px solid #30363d;
+  cursor:grab;user-select:none;-webkit-user-select:none;touch-action:none;
+}
+.egg-term-bar:active{cursor:grabbing}
+.egg-dot{width:12px;height:12px;border-radius:50%;flex:none;cursor:pointer;position:relative;
+  transition:filter .15s,transform .15s}
+.egg-dot:hover{filter:brightness(1.25)}
+.egg-dot:active{transform:scale(.86)}
+.egg-dot.r{background:#ff5f57}.egg-dot.y{background:#febc2e}.egg-dot.g{background:#28c840}
+/* 悬停标题栏时圆点浮现符号：红 × 关闭 / 黄 − 最小化 / 绿 + 放大 */
+.egg-dot::before{
+  content:"×";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  color:rgba(0,0,0,.55);font-size:11px;font-weight:800;line-height:1;opacity:0;transition:opacity .12s;
+}
+.egg-dot.y::before{content:"−"}
+.egg-dot.g::before{content:"+"}
+.egg-dot.r::before{color:#5a0400}
+.egg-term-bar:hover .egg-dot::before{opacity:1}
+.egg-bar-sp{flex:none;width:52px}   /* 与左侧三个圆点等宽，让标题保持视觉居中 */
+.egg-term-title{
+  flex:1;text-align:center;font-size:12.5px;color:#8b949e;letter-spacing:.03em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+/* 黄点：收起成一条标题栏；绿点：放大（mini 规则放在 big 之后，两者同时存在时收起优先） */
+.egg-term{transition:width .28s cubic-bezier(.3,1,.4,1),height .28s cubic-bezier(.3,1,.4,1)}
+.egg-term.egg-term-big{width:min(900px,96vw);height:calc(92vh - 40px)}
+.egg-term.egg-term-mini{height:39px}
+.egg-term.egg-term-mini .egg-term-body{display:none}
+.egg-term-body{
+  flex:1;overflow-y:auto;overscroll-behavior:contain;
+  padding:14px 16px;font-size:13px;line-height:1.72;color:#c9d1d9;
+}
+.egg-term-body::-webkit-scrollbar{width:8px}
+.egg-term-body::-webkit-scrollbar-thumb{background:#30363d;border-radius:4px}
+.t-line{white-space:pre-wrap;word-break:break-all;min-height:1.72em}
+.t-dim{color:#6e7681}
+.t-cmd{color:#79c0ff}
+.t-err{color:#ff7b72}
+.t-prompt{color:#7ee787;font-weight:700}
+.t-input{
+  flex:1;min-width:60px;background:transparent;border:none;outline:none;
+  font:inherit;color:#c9d1d9;caret-color:#7ee787;padding:0;
+}
+.t-input-row{display:flex;align-items:baseline}
+@media (max-width:560px){
+  .egg-term-body{font-size:11.5px;padding:10px 12px}
+}
+</style>
 
 </body>
 </html>
