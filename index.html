@@ -3530,11 +3530,17 @@ input[type=range].mp-range::-moz-range-thumb{
     bar.addEventListener("pointerup",function(){ drag=null; });
     bar.addEventListener("pointercancel",function(){ drag=null; });
 
-    /* --- 关闭 --- */
+    /* --- 关闭（带动画：窗口缩小下沉 + 遮罩淡出，动画结束再移除 DOM） --- */
+    var closing=false;
     function closeTerm(){
-      if(!opened)return; opened=false;
-      ov.remove(); document.body.style.overflow="";
+      if(!opened||closing)return;
+      closing=true;
+      ov.classList.add("egg-closing");
       document.removeEventListener("keydown",onKey);
+      setTimeout(function(){
+        ov.remove(); document.body.style.overflow="";
+        opened=false; closing=false;
+      },210);
     }
     function onKey(ev){ if(ev.key==="Escape")closeTerm(); }
     document.addEventListener("keydown",onKey);
@@ -3568,6 +3574,11 @@ input[type=range].mp-range::-moz-range-thumb{
   animation:egg-fade .18s ease;
 }
 @keyframes egg-fade{from{opacity:0}to{opacity:1}}
+/* 关闭动画：遮罩淡出 + 窗口缩小下沉 */
+.egg-term-ov.egg-closing{animation:egg-fade-out .2s ease forwards;pointer-events:none}
+.egg-term-ov.egg-closing .egg-term{animation:egg-sink .2s cubic-bezier(.4,0,.7,1) forwards}
+@keyframes egg-fade-out{to{opacity:0}}
+@keyframes egg-sink{to{opacity:0;transform:translateY(12px) scale(.95)}}
 @keyframes egg-rise{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}
 /* ---------- 头像点击反馈：弹性按压 + 涟漪 ---------- */
 @keyframes egg-press{
