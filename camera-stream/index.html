@@ -6,6 +6,16 @@
 <title>相机投屏</title>
 <script src="https://cdn.jsdelivr.net/npm/mqtt@5.10.1/dist/mqtt.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script>
+  // jsdelivr 被浏览器跟踪防护拦截时的兜底：换 unpkg 重新加载
+  window.addEventListener('DOMContentLoaded', () => {
+    if (typeof QRCode === 'undefined') {
+      var s = document.createElement('script');
+      s.src = 'https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js';
+      document.head.appendChild(s);
+    }
+  });
+</script>
 <style>
   :root {
     --bg: #f5f5f7;
@@ -225,17 +235,41 @@ function showHostView() {
     if (client) { try { client.end(true); } catch (e) {} client = null; }
   }
 
+  function drawQR(text) {
+    qrBox.innerHTML = '';
+    function fallbackToApi(reason) {
+      console.warn('QR 本地生成失败，改用图片接口：', reason);
+      const img = document.createElement('img');
+      img.width = 220; img.height = 220;
+      img.alt = '二维码';
+      img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=0&data=' + encodeURIComponent(text);
+      img.onerror = () => {
+        qrBox.innerHTML = '<div style="font-size:12px;color:#86868b;padding:20px 0;">二维码生成失败，请检查网络后点击「刷新连接」</div>';
+      };
+      qrBox.appendChild(img);
+    }
+    try {
+      if (typeof QRCode === 'undefined' || !QRCode.toCanvas) {
+        fallbackToApi('QRCode 库未加载');
+        return;
+      }
+      QRCode.toCanvas(text, { width: 220, margin: 0, color: { dark: '#1d1d1f', light: '#ffffff' } }, (err, canvas) => {
+        if (err || !canvas) { fallbackToApi(err); return; }
+        qrBox.innerHTML = '';
+        qrBox.appendChild(canvas);
+      });
+    } catch (e) {
+      fallbackToApi(e);
+    }
+  }
+
   function init() {
     cleanup();
     setStatus(statusEl, textEl, '正在准备连接…');
     room = randomRoom();
     const url = location.origin + location.pathname + '?id=' + room;
     document.getElementById('urlText').textContent = url;
-    // 先把二维码画出来，不等信令服务器
-    QRCode.toCanvas(url, { width: 220, margin: 0, color: { dark: '#1d1d1f', light: '#ffffff' } }, (err, canvas) => {
-      qrBox.innerHTML = '';
-      if (!err) qrBox.appendChild(canvas);
-    });
+    drawQR(url);
 
     client = mqtt.connect(MQTT_URL, { clientId: 'host-' + randomRoom() });
     client.on('connect', () => {
