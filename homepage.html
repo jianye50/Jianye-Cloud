@@ -118,21 +118,29 @@
 
   #engine-btn:hover { background: rgba(128, 128, 128, .18); }
 
-  .engine-badge {
+  /* 引擎图标位：内置引擎显示官方 logo，自定义引擎显示自填图标或默认放大镜 */
+  .engine-icon {
     width: 20px;
     height: 20px;
-    border-radius: 7px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
-    font-weight: 600;
-    color: #ffffff;
-    line-height: 1;
+    flex-shrink: 0;
     user-select: none;
   }
 
-  /* 引擎选择面板 */
+  .engine-icon svg { width: 100%; height: 100%; display: block; }
+  .engine-icon img { width: 100%; height: 100%; object-fit: contain; display: block; border-radius: 5px; }
+  /* Bing 官方图标是竖长比例，放大一点免得显小 */
+  .engine-icon svg.bing-mark { width: auto; height: 110%; }
+  /* 默认放大镜图标留一点内边距，避免顶满 */
+  .engine-icon svg.default-mark { width: 88%; height: 88%; }
+
+  /* 搜索框内的图标规则会带上描边，品牌 logo 只填充不描边，这里覆盖掉 */
+  #engine-btn svg { width: 20px; height: 20px; stroke: none; }
+  #engine-btn svg.bing-mark { width: auto; height: 23px; }
+
+  /* 引擎选择面板：整体纵向布局，列表区可滚动，底部“添加”常驻可见 */
   #engine-panel {
     position: absolute;
     top: calc(100% + 8px);
@@ -144,10 +152,31 @@
     overflow: hidden;
     box-shadow: 0 10px 32px rgba(0, 0, 0, .16);
     display: none;
+    flex-direction: column;
     z-index: 12;
   }
 
-  #engine-panel.show { display: block; }
+  /* 下方空间不够时改为向上展开 */
+  #engine-panel.up { top: auto; bottom: calc(100% + 8px); }
+
+  .engine-list {
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(128, 128, 128, .5) transparent;
+    min-height: 0;
+  }
+
+  .engine-list::-webkit-scrollbar { width: 8px; }
+  .engine-list::-webkit-scrollbar-thumb {
+    background: rgba(128, 128, 128, .45);
+    border-radius: 4px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  #engine-panel.show { display: flex; }
 
   .engine-item {
     display: flex;
@@ -210,8 +239,9 @@
     }
   }
 
-  /* 面板里的“添加自定义引擎”入口 */
+  /* 面板里的“添加自定义引擎”入口（固定在面板底部，不参与列表滚动） */
   .engine-add {
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     gap: 12px;
@@ -224,6 +254,12 @@
 
   .engine-add:hover { background: var(--btn-bg); color: var(--btn-text); }
   .engine-add .plus { font-size: 16px; width: 20px; text-align: center; }
+
+  /* 列表仍需滚动时，底部入口上方出现渐隐，提示“下面还有引擎” */
+  #engine-panel.can-scroll .engine-add {
+    box-shadow: 0 -12px 14px -8px rgba(0, 0, 0, .22);
+    border-top-color: transparent;
+  }
 
   /* 自定义引擎表单（弹窗） */
   #engine-form-mask {
@@ -275,18 +311,14 @@
 
   #engine-form input[type="text"]:focus { border-color: var(--subtle); }
 
-  #engine-form input[type="color"] {
-    width: 100%;
-    height: 38px;
-    border: 1px solid var(--box-border);
-    border-radius: 10px;
-    background: var(--bg);
-    padding: 3px;
-    cursor: pointer;
+  /* 字段下方的灰色说明（图标 URL 的填写提示） */
+  .ef-hint {
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--subtle);
+    opacity: .85;
+    margin: -8px 0 -2px;
   }
-
-  .ef-row { display: flex; gap: 12px; }
-  .ef-row label { flex: 1; }
 
   #ef-msg { font-size: 12.5px; min-height: 16px; color: #e5484d; }
   #ef-msg.ok { color: #2f9e44; }
@@ -423,10 +455,8 @@
         <h3 id="engine-form-title">添加自定义搜索引擎</h3>
         <label><span class="ef-label" id="ef-label-name">名称</span><input id="ef-name" type="text" maxlength="24" placeholder="例如：知乎" required></label>
         <label><span class="ef-label" id="ef-label-url">搜索网址（用 %s 代表关键词）</span><input id="ef-url" type="text" maxlength="300" placeholder="https://www.zhihu.com/search?q=%s" required></label>
-        <div class="ef-row">
-          <label><span class="ef-label" id="ef-label-letter">图标字母</span><input id="ef-letter" type="text" maxlength="2" placeholder="知"></label>
-          <label><span class="ef-label" id="ef-label-color">图标颜色</span><input id="ef-color" type="color" value="#5A6CF3"></label>
-        </div>
+        <label><span class="ef-label" id="ef-label-icon">图标 URL（可选）</span><input id="ef-icon" type="text" maxlength="400000" placeholder="https://example.com/icon.png 或 data:image/png;base64,…"></label>
+        <p class="ef-hint" id="ef-hint-icon">支持图片链接或 base64 编码，留空将使用默认图标</p>
         <p id="ef-msg"></p>
         <div class="ef-actions">
           <button type="button" id="ef-cancel">取消</button>
@@ -481,12 +511,12 @@
       formTitle: '添加自定义搜索引擎',
       fieldName: '名称',
       fieldUrl: '搜索网址（用 %s 代表关键词）',
-      fieldLetter: '图标字母',
-      fieldColor: '图标颜色',
+      fieldIcon: '图标 URL（可选）',
+      hintIcon: '支持图片链接或 base64 编码，留空将使用默认图标',
       btnCancel: '取消',
       btnSave: '保存',
       hintExample: '例如：知乎',
-      engineNames: { bing: '必应', baidu: '百度', google: '谷歌', sogou: '搜狗', so360: '360', ddg: 'DuckDuckGo' }
+      engineNames: { bing: '必应', baidu: '百度', google: '谷歌', sogou: '搜狗', so360: '360', ddg: 'DuckDuckGo', yahoo: 'Yahoo', yandex: 'Yandex', douyin: '抖音', bilibili: 'B站' }
     },
     en: {
       htmlLang: 'en',
@@ -503,12 +533,12 @@
       formTitle: 'Add custom search engine',
       fieldName: 'Name',
       fieldUrl: 'Search URL (%s = keyword)',
-      fieldLetter: 'Icon letter',
-      fieldColor: 'Icon color',
+      fieldIcon: 'Icon URL (optional)',
+      hintIcon: 'Image link or base64 data. Leave blank to use the default icon.',
       btnCancel: 'Cancel',
       btnSave: 'Save',
       hintExample: 'e.g. Wikipedia',
-      engineNames: { bing: 'Bing', baidu: 'Baidu', google: 'Google', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo' }
+      engineNames: { bing: 'Bing', baidu: 'Baidu', google: 'Google', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo', yahoo: 'Yahoo', yandex: 'Yandex', douyin: 'Douyin', bilibili: 'Bilibili' }
     },
     ja: {
       htmlLang: 'ja',
@@ -525,12 +555,12 @@
       formTitle: 'カスタム検索エンジンを追加',
       fieldName: '名前',
       fieldUrl: '検索URL（%s がキーワード）',
-      fieldLetter: 'アイコン文字',
-      fieldColor: 'アイコンの色',
+      fieldIcon: 'アイコンURL（任意）',
+      hintIcon: '画像リンクまたは base64 を指定できます。空欄の場合は既定のアイコンを使用します。',
       btnCancel: 'キャンセル',
       btnSave: '保存',
       hintExample: '例：Wikipedia',
-      engineNames: { bing: 'Bing', baidu: '百度', google: 'Google', sogou: '搜狗', so360: '360', ddg: 'DuckDuckGo' }
+      engineNames: { bing: 'Bing', baidu: '百度', google: 'Google', sogou: '搜狗', so360: '360', ddg: 'DuckDuckGo', yahoo: 'ヤフー', yandex: 'Yandex', douyin: '抖音', bilibili: 'ビリビリ' }
     },
     ko: {
       htmlLang: 'ko',
@@ -547,12 +577,12 @@
       formTitle: '사용자 검색 엔진 추가',
       fieldName: '이름',
       fieldUrl: '검색 URL (%s = 검색어)',
-      fieldLetter: '아이콘 문자',
-      fieldColor: '아이콘 색상',
+      fieldIcon: '아이콘 URL (선택)',
+      hintIcon: '이미지 링크 또는 base64를 넣을 수 있습니다. 비워 두면 기본 아이콘이 사용됩니다.',
       btnCancel: '취소',
       btnSave: '저장',
       hintExample: '예: Wikipedia',
-      engineNames: { bing: 'Bing', baidu: '바이두', google: 'Google', sogou: '搜狗', so360: '360', ddg: 'DuckDuckGo' }
+      engineNames: { bing: 'Bing', baidu: '바이두', google: '구글', sogou: '搜狗', so360: '360', ddg: 'DuckDuckGo', yahoo: '야후', yandex: 'Yandex', douyin: '더우인', bilibili: '빌리빌리' }
     },
     fr: {
       htmlLang: 'fr',
@@ -569,12 +599,12 @@
       formTitle: 'Ajouter un moteur de recherche',
       fieldName: 'Nom',
       fieldUrl: 'URL de recherche (%s = mot-clé)',
-      fieldLetter: 'Lettre de l’icône',
-      fieldColor: 'Couleur',
+      fieldIcon: 'URL de l’icône (facultatif)',
+      hintIcon: 'Lien d’image ou base64. Laissez vide pour utiliser l’icône par défaut.',
       btnCancel: 'Annuler',
       btnSave: 'Enregistrer',
       hintExample: 'ex. : Wikipédia',
-      engineNames: { bing: 'Bing', baidu: 'Baidu', google: 'Google', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo' }
+      engineNames: { bing: 'Bing', baidu: 'Baidu', google: 'Google', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo', yahoo: 'Yahoo', yandex: 'Yandex', douyin: 'Douyin', bilibili: 'Bilibili' }
     },
     de: {
       htmlLang: 'de',
@@ -591,12 +621,12 @@
       formTitle: 'Eigene Suchmaschine hinzufügen',
       fieldName: 'Name',
       fieldUrl: 'Such-URL (%s = Suchbegriff)',
-      fieldLetter: 'Symbolbuchstabe',
-      fieldColor: 'Symbolfarbe',
+      fieldIcon: 'Symbol-URL (optional)',
+      hintIcon: 'Bildlink oder base64. Leer lassen für das Standardsymbol.',
       btnCancel: 'Abbrechen',
       btnSave: 'Speichern',
       hintExample: 'z. B. Wikipedia',
-      engineNames: { bing: 'Bing', baidu: 'Baidu', google: 'Google', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo' }
+      engineNames: { bing: 'Bing', baidu: 'Baidu', google: 'Google', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo', yahoo: 'Yahoo', yandex: 'Yandex', douyin: 'Douyin', bilibili: 'Bilibili' }
     },
     es: {
       htmlLang: 'es',
@@ -613,12 +643,12 @@
       formTitle: 'Añadir motor de búsqueda',
       fieldName: 'Nombre',
       fieldUrl: 'URL de búsqueda (%s = palabra clave)',
-      fieldLetter: 'Letra del icono',
-      fieldColor: 'Color del icono',
+      fieldIcon: 'URL del icono (opcional)',
+      hintIcon: 'Enlace de imagen o base64. Déjalo vacío para usar el icono predeterminado.',
       btnCancel: 'Cancelar',
       btnSave: 'Guardar',
       hintExample: 'p. ej. Wikipedia',
-      engineNames: { bing: 'Bing', baidu: 'Baidu', google: 'Google', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo' }
+      engineNames: { bing: 'Bing', baidu: 'Baidu', google: 'Google', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo', yahoo: 'Yahoo', yandex: 'Yandex', douyin: 'Douyin', bilibili: 'Bilibili' }
     },
     pt: {
       htmlLang: 'pt',
@@ -635,12 +665,12 @@
       formTitle: 'Adicionar mecanismo de pesquisa',
       fieldName: 'Nome',
       fieldUrl: 'URL de pesquisa (%s = palavra-chave)',
-      fieldLetter: 'Letra do ícone',
-      fieldColor: 'Cor do ícone',
+      fieldIcon: 'URL do ícone (opcional)',
+      hintIcon: 'Link de imagem ou base64. Deixe em branco para usar o ícone padrão.',
       btnCancel: 'Cancelar',
       btnSave: 'Salvar',
       hintExample: 'ex.: Wikipédia',
-      engineNames: { bing: 'Bing', baidu: 'Baidu', google: 'Google', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo' }
+      engineNames: { bing: 'Bing', baidu: 'Baidu', google: 'Google', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo', yahoo: 'Yahoo', yandex: 'Yandex', douyin: 'Douyin', bilibili: 'Bilibili' }
     },
     ru: {
       htmlLang: 'ru',
@@ -657,12 +687,12 @@
       formTitle: 'Добавить свою поисковую систему',
       fieldName: 'Название',
       fieldUrl: 'URL поиска (%s = запрос)',
-      fieldLetter: 'Буква значка',
-      fieldColor: 'Цвет значка',
+      fieldIcon: 'URL значка (необязательно)',
+      hintIcon: 'Ссылка на изображение или base64. Оставьте пустым, чтобы использовать значок по умолчанию.',
       btnCancel: 'Отмена',
       btnSave: 'Сохранить',
       hintExample: 'напр. Википедия',
-      engineNames: { bing: 'Bing', baidu: 'Baidu', google: 'Google', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo' }
+      engineNames: { bing: 'Bing', baidu: 'Байду', google: 'Google', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo', yahoo: 'Yahoo', yandex: 'Яндекс', douyin: 'Douyin', bilibili: 'Bilibili' }
     },
     it: {
       htmlLang: 'it',
@@ -679,12 +709,12 @@
       formTitle: 'Aggiungi motore di ricerca',
       fieldName: 'Nome',
       fieldUrl: 'URL di ricerca (%s = parola chiave)',
-      fieldLetter: 'Lettera icona',
-      fieldColor: 'Colore icona',
+      fieldIcon: 'URL icona (facoltativo)',
+      hintIcon: 'Link immagine o base64. Lascia vuoto per usare l’icona predefinita.',
       btnCancel: 'Annulla',
       btnSave: 'Salva',
       hintExample: 'es. Wikipedia',
-      engineNames: { bing: 'Bing', baidu: 'Baidu', google: 'Google', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo' }
+      engineNames: { bing: 'Bing', baidu: 'Baidu', google: 'Google', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo', yahoo: 'Yahoo', yandex: 'Yandex', douyin: 'Douyin', bilibili: 'Bilibili' }
     },
     ar: {
       htmlLang: 'ar',
@@ -702,12 +732,12 @@
       formTitle: 'إضافة محرك بحث مخصص',
       fieldName: 'الاسم',
       fieldUrl: 'رابط البحث (%s = الكلمة)',
-      fieldLetter: 'حرف الأيقونة',
-      fieldColor: 'لون الأيقونة',
+      fieldIcon: 'رابط الأيقونة (اختياري)',
+      hintIcon: 'رابط صورة أو base64. اتركه فارغًا لاستخدام الأيقونة الافتراضية.',
       btnCancel: 'إلغاء',
       btnSave: 'حفظ',
       hintExample: 'مثال: ويكيبيديا',
-      engineNames: { bing: 'Bing', baidu: 'Baidu', google: 'Google', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo' }
+      engineNames: { bing: 'Bing', baidu: 'بايدو', google: 'جوجل', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo', yahoo: 'ياهو', yandex: 'Yandex', douyin: 'دوين', bilibili: 'بيلي بيلي' }
     },
     nl: {
       htmlLang: 'nl',
@@ -724,12 +754,12 @@
       formTitle: 'Aangepaste zoekmachine toevoegen',
       fieldName: 'Naam',
       fieldUrl: 'Zoek-URL (%s = trefwoord)',
-      fieldLetter: 'Pictogramletter',
-      fieldColor: 'Pictogramkleur',
+      fieldIcon: 'Pictogram-URL (optioneel)',
+      hintIcon: 'Afbeeldingslink of base64. Laat leeg voor het standaardpictogram.',
       btnCancel: 'Annuleren',
       btnSave: 'Opslaan',
       hintExample: 'bv. Wikipedia',
-      engineNames: { bing: 'Bing', baidu: 'Baidu', google: 'Google', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo' }
+      engineNames: { bing: 'Bing', baidu: 'Baidu', google: 'Google', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo', yahoo: 'Yahoo', yandex: 'Yandex', douyin: 'Douyin', bilibili: 'Bilibili' }
     },
     pl: {
       htmlLang: 'pl',
@@ -746,12 +776,12 @@
       formTitle: 'Dodaj własną wyszukiwarkę',
       fieldName: 'Nazwa',
       fieldUrl: 'URL wyszukiwania (%s = słowo)',
-      fieldLetter: 'Litera ikony',
-      fieldColor: 'Kolor ikony',
+      fieldIcon: 'Adres URL ikony (opcjonalnie)',
+      hintIcon: 'Link do obrazu lub base64. Pozostaw puste, aby użyć domyślnej ikony.',
       btnCancel: 'Anuluj',
       btnSave: 'Zapisz',
       hintExample: 'np. Wikipedia',
-      engineNames: { bing: 'Bing', baidu: 'Baidu', google: 'Google', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo' }
+      engineNames: { bing: 'Bing', baidu: 'Baidu', google: 'Google', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo', yahoo: 'Yahoo', yandex: 'Yandex', douyin: 'Douyin', bilibili: 'Bilibili' }
     },
     tr: {
       htmlLang: 'tr',
@@ -768,12 +798,12 @@
       formTitle: 'Özel arama motoru ekle',
       fieldName: 'Ad',
       fieldUrl: 'Arama URL’si (%s = anahtar sözcük)',
-      fieldLetter: 'Simge harfi',
-      fieldColor: 'Simge rengi',
+      fieldIcon: 'Simge URL’si (isteğe bağlı)',
+      hintIcon: 'Resim bağlantısı veya base64. Boş bırakırsanız varsayılan simge kullanılır.',
       btnCancel: 'İptal',
       btnSave: 'Kaydet',
       hintExample: 'örn. Wikipedia',
-      engineNames: { bing: 'Bing', baidu: 'Baidu', google: 'Google', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo' }
+      engineNames: { bing: 'Bing', baidu: 'Baidu', google: 'Google', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo', yahoo: 'Yahoo', yandex: 'Yandex', douyin: 'Douyin', bilibili: 'Bilibili' }
     },
     th: {
       htmlLang: 'th',
@@ -790,12 +820,12 @@
       formTitle: 'เพิ่มเครื่องมือค้นหาที่กำหนดเอง',
       fieldName: 'ชื่อ',
       fieldUrl: 'URL ค้นหา (%s = คำค้น)',
-      fieldLetter: 'ตัวอักษรไอคอน',
-      fieldColor: 'สีไอคอน',
+      fieldIcon: 'URL ของไอคอน (ไม่บังคับ)',
+      hintIcon: 'ลิงก์รูปภาพหรือ base64 หากเว้นว่างจะใช้ไอคอนเริ่มต้น',
       btnCancel: 'ยกเลิก',
       btnSave: 'บันทึก',
       hintExample: 'เช่น Wikipedia',
-      engineNames: { bing: 'Bing', baidu: 'Baidu', google: 'Google', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo' }
+      engineNames: { bing: 'Bing', baidu: 'ไป่ตู้', google: 'กูเกิล', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo', yahoo: 'ยาฮู', yandex: 'Yandex', douyin: 'โต่วอิน', bilibili: 'บิลิบิลิ' }
     },
     vi: {
       htmlLang: 'vi',
@@ -812,12 +842,12 @@
       formTitle: 'Thêm công cụ tìm kiếm tùy chỉnh',
       fieldName: 'Tên',
       fieldUrl: 'URL tìm kiếm (%s = từ khóa)',
-      fieldLetter: 'Chữ trên biểu tượng',
-      fieldColor: 'Màu biểu tượng',
+      fieldIcon: 'URL biểu tượng (tùy chọn)',
+      hintIcon: 'Liên kết hình ảnh hoặc base64. Để trống sẽ dùng biểu tượng mặc định.',
       btnCancel: 'Hủy',
       btnSave: 'Lưu',
       hintExample: 'vd: Wikipedia',
-      engineNames: { bing: 'Bing', baidu: 'Baidu', google: 'Google', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo' }
+      engineNames: { bing: 'Bing', baidu: 'Baidu', google: 'Google', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo', yahoo: 'Yahoo', yandex: 'Yandex', douyin: 'Đậu Âm', bilibili: 'Bilibili' }
     },
     id: {
       htmlLang: 'id',
@@ -834,12 +864,12 @@
       formTitle: 'Tambah mesin pencari khusus',
       fieldName: 'Nama',
       fieldUrl: 'URL pencarian (%s = kata kunci)',
-      fieldLetter: 'Huruf ikon',
-      fieldColor: 'Warna ikon',
+      fieldIcon: 'URL ikon (opsional)',
+      hintIcon: 'Tautan gambar atau base64. Biarkan kosong untuk ikon default.',
       btnCancel: 'Batal',
       btnSave: 'Simpan',
       hintExample: 'mis. Wikipedia',
-      engineNames: { bing: 'Bing', baidu: 'Baidu', google: 'Google', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo' }
+      engineNames: { bing: 'Bing', baidu: 'Baidu', google: 'Google', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo', yahoo: 'Yahoo', yandex: 'Yandex', douyin: 'Douyin', bilibili: 'Bilibili' }
     },
     hi: {
       htmlLang: 'hi',
@@ -856,12 +886,12 @@
       formTitle: 'कस्टम सर्च इंजन जोड़ें',
       fieldName: 'नाम',
       fieldUrl: 'खोज URL (%s = कीवर्ड)',
-      fieldLetter: 'आइकन अक्षर',
-      fieldColor: 'आइकन रंग',
+      fieldIcon: 'आइकन URL (वैकल्पिक)',
+      hintIcon: 'छवि लिंक या base64। खाली छोड़ने पर डिफ़ॉल्ट आइकन उपयोग होगा।',
       btnCancel: 'रद्द करें',
       btnSave: 'सहेजें',
       hintExample: 'उदा. Wikipedia',
-      engineNames: { bing: 'Bing', baidu: 'Baidu', google: 'Google', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo' }
+      engineNames: { bing: 'Bing', baidu: 'बाइडू', google: 'गूगल', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo', yahoo: 'याहू', yandex: 'Yandex', douyin: 'डॉयिन', bilibili: 'बिलिबिली' }
     },
     sv: {
       htmlLang: 'sv',
@@ -878,12 +908,12 @@
       formTitle: 'Lägg till anpassad sökmotor',
       fieldName: 'Namn',
       fieldUrl: 'Sök-URL (%s = nyckelord)',
-      fieldLetter: 'Ikonbokstav',
-      fieldColor: 'Ikonfärg',
+      fieldIcon: 'Ikon-URL (valfritt)',
+      hintIcon: 'Bildlänk eller base64. Lämna tomt för standardikonen.',
       btnCancel: 'Avbryt',
       btnSave: 'Spara',
       hintExample: 't.ex. Wikipedia',
-      engineNames: { bing: 'Bing', baidu: 'Baidu', google: 'Google', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo' }
+      engineNames: { bing: 'Bing', baidu: 'Baidu', google: 'Google', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo', yahoo: 'Yahoo', yandex: 'Yandex', douyin: 'Douyin', bilibili: 'Bilibili' }
     },
     he: {
       htmlLang: 'he',
@@ -901,12 +931,12 @@
       formTitle: 'הוסף מנוע חיפוש מותאם',
       fieldName: 'שם',
       fieldUrl: 'כתובת חיפוש (%s = מילת חיפוש)',
-      fieldLetter: 'אות סמל',
-      fieldColor: 'צבע סמל',
+      fieldIcon: 'כתובת אייקון (אופציונלי)',
+      hintIcon: 'קישור לתמונה או base64. השאר ריק לשימוש באייקון ברירת המחדל.',
       btnCancel: 'ביטול',
       btnSave: 'שמירה',
       hintExample: 'למשל ויקיפדיה',
-      engineNames: { bing: 'Bing', baidu: 'Baidu', google: 'Google', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo' }
+      engineNames: { bing: 'Bing', baidu: 'באידו', google: 'גוגל', sogou: 'Sogou', so360: '360', ddg: 'DuckDuckGo', yahoo: 'יאהו', yandex: 'Yandex', douyin: 'דואיין', bilibili: 'ביליבילי' }
     }
   };
 
@@ -965,21 +995,52 @@
   document.getElementById('search-btn').setAttribute('title', T.searchTitle);
 
   /* ---------- 搜索引擎切换（点击搜索框左侧图标） ---------- */
-  // name 从语言包取（T.engineNames），切换语言时自动跟随
+  // 名称优先取语言包（T.engineNames），语言包没有词条时回退 zh / en
   const engines = [
-    { id: 'bing',   letter: 'B',  color: '#008373', url: 'https://www.bing.com/search?q=%s' },
-    { id: 'baidu',  letter: '百', color: '#2932E1', url: 'https://www.baidu.com/s?wd=%s' },
-    { id: 'google', letter: 'G',  color: '#4285F4', url: 'https://www.google.com/search?q=%s' },
-    { id: 'sogou',  letter: '搜', color: '#FB6022', url: 'https://www.sogou.com/web?query=%s' },
-    { id: 'so360',  letter: '3',  color: '#3DBB3D', url: 'https://www.so.com/s?q=%s' },
-    { id: 'ddg',    letter: 'D',  color: '#DE5833', url: 'https://duckduckgo.com/?q=%s' }
+    { id: 'bing',     zh: '必应',       en: 'Bing',        url: 'https://www.bing.com/search?q=%s' },
+    { id: 'baidu',    zh: '百度',       en: 'Baidu',       url: 'https://www.baidu.com/s?wd=%s' },
+    { id: 'google',   zh: '谷歌',       en: 'Google',      url: 'https://www.google.com/search?q=%s' },
+    { id: 'sogou',    zh: '搜狗',       en: 'Sogou',       url: 'https://www.sogou.com/web?query=%s' },
+    { id: 'so360',    zh: '360',        en: '360',         url: 'https://www.so.com/s?q=%s' },
+    { id: 'ddg',      zh: 'DuckDuckGo', en: 'DuckDuckGo',  url: 'https://duckduckgo.com/?q=%s' },
+    { id: 'yahoo',    zh: 'Yahoo',      en: 'Yahoo',       url: 'https://search.yahoo.com/search?p=%s' },
+    { id: 'yandex',   zh: 'Yandex',     en: 'Yandex',      url: 'https://yandex.com/search/?text=%s' },
+    { id: 'douyin',   zh: '抖音',       en: 'Douyin',      url: 'https://www.douyin.com/search/%s' },
+    { id: 'bilibili', zh: 'B站',        en: 'Bilibili',    url: 'https://search.bilibili.com/all?keyword=%s' }
   ];
 
+  /* ---------- 各引擎官方图标：官方 SVG 与应用图标，内联以免额外请求 ---------- */
+  const ENGINE_ICONS = {
+    bing: '<svg class="bing-mark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 388"><defs><radialGradient id="SVGGZQEKcDW" cx="93.717%" cy="77.818%" r="143.121%" fx="93.717%" fy="77.818%" gradientTransform="matrix(-.65486 -.5438 .75575 -.4712 .963 1.654)"><stop offset="0%" stop-color="#00cacc"/><stop offset="100%" stop-color="#048fce"/></radialGradient><radialGradient id="SVG8Pn4lbDv" cx="13.893%" cy="71.448%" r="150.086%" fx="13.893%" fy="71.448%" gradientTransform="matrix(.55155 -.39387 .23634 .91917 -.107 .112)"><stop offset="0%" stop-color="#00bbec"/><stop offset="100%" stop-color="#2756a9"/></radialGradient><linearGradient id="SVGavx67sXC" x1="50%" x2="50%" y1="0%" y2="100%"><stop offset="0%" stop-color="#00bbec"/><stop offset="100%" stop-color="#2756a9"/></linearGradient></defs><path fill="url(#SVGGZQEKcDW)" d="M129.424 122.047c-7.133.829-12.573 6.622-13.079 13.928c-.218 3.147-.15 3.36 6.986 21.722c16.233 41.774 20.166 51.828 20.827 53.243c1.603 3.427 3.856 6.65 6.672 9.544c2.16 2.22 3.585 3.414 5.994 5.024c4.236 2.829 6.337 3.61 22.818 8.49c16.053 4.754 24.824 7.913 32.381 11.664c9.791 4.86 16.623 10.387 20.944 16.946c3.1 4.706 5.846 13.145 7.04 21.64c.468 3.321.47 10.661.006 13.663c-1.008 6.516-3.021 11.976-6.101 16.545c-1.638 2.43-1.068 2.023 1.313-.939c6.74-8.379 13.605-22.7 17.108-35.687c4.24-15.718 4.817-32.596 1.66-48.57c-6.147-31.108-25.786-57.955-53.444-73.06c-1.738-.95-8.357-4.42-17.331-9.085a1633 1633 0 0 1-4.127-2.154c-.907-.477-2.764-1.447-4.126-2.154c-1.362-.708-5.282-2.75-8.711-4.539l-8.528-4.446a6021 6021 0 0 1-8.344-4.357c-8.893-4.655-12.657-6.537-13.73-6.863c-1.125-.343-3.984-.782-4.701-.723c-.152.012-.838.088-1.527.168"/><path fill="url(#SVG8Pn4lbDv)" d="M148.81 277.994c-.493.292-1.184.714-1.537.938c-.354.225-1.137.712-1.743 1.083a8315 8315 0 0 0-13.204 8.137a2848 2848 0 0 0-8.07 4.997a388 388 0 0 1-3.576 2.198c-.454.271-2.393 1.465-4.31 2.654a2652 2652 0 0 1-7.427 4.586a3958 3958 0 0 0-8.62 5.316a3011 3011 0 0 1-7.518 4.637c-1.564.959-3.008 1.885-3.21 2.058c-.3.257-14.205 8.87-21.182 13.121c-5.3 3.228-11.43 5.387-17.705 6.235c-2.921.395-8.45.396-11.363.003c-7.9-1.067-15.176-4.013-21.409-8.666c-2.444-1.826-7.047-6.425-8.806-8.8c-4.147-5.598-6.829-11.602-8.218-18.396c-.32-1.564-.622-2.884-.672-2.935c-.13-.13.105 2.231.528 5.319c.44 3.211 1.377 7.856 2.387 11.829c7.814 30.743 30.05 55.749 60.15 67.646c8.668 3.424 17.415 5.582 26.932 6.64c3.576.4 13.699.56 17.43.276c17.117-1.296 32.02-6.334 47.308-15.996c1.362-.86 3.92-2.474 5.685-3.585a877 877 0 0 0 4.952-3.14c.958-.615 2.114-1.341 2.567-1.614a91 91 0 0 0 2.018-1.268c.656-.424 3.461-2.2 6.235-3.944l11.092-7.006l3.809-2.406l.137-.086l.42-.265l.199-.126l2.804-1.771l9.69-6.121c12.348-7.759 16.03-10.483 21.766-16.102c2.392-2.342 5.997-6.34 6.176-6.848c.037-.104.678-1.092 1.424-2.197c3.036-4.492 5.06-9.995 6.064-16.484c.465-3.002.462-10.342-.005-13.663c-.903-6.42-2.955-13.702-5.167-18.339c-3.627-7.603-11.353-14.512-22.453-20.076c-3.065-1.537-6.23-2.943-6.583-2.924c-.168.009-10.497 6.322-22.954 14.03c-12.457 7.71-23.268 14.4-24.025 14.87s-2.056 1.263-2.888 1.764z"/><path fill="url(#SVGavx67sXC)" d="m.053 241.013l.054 53.689l.695 3.118c2.172 9.747 5.937 16.775 12.482 23.302c3.078 3.07 5.432 4.922 8.768 6.896c7.06 4.177 14.657 6.238 22.978 6.235c8.716-.005 16.256-2.179 24.025-6.928c1.311-.801 6.449-3.964 11.416-7.029l9.032-5.572v-127.4l-.002-58.273c-.002-37.177-.07-59.256-.188-60.988c-.74-10.885-5.293-20.892-12.948-28.461c-2.349-2.323-4.356-3.875-10.336-7.99a25160 25160 0 0 1-12.104-8.336L28.617 5.835C22.838 1.85 22.386 1.574 20.639.949C18.367.136 15.959-.163 13.67.084C6.998.804 1.657 5.622.269 12.171C.053 13.191.013 26.751.01 100.35l-.003 86.975H0z"/></svg>',
+    baidu: '<img src="data:image/png;base64,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" alt="">',
+    google: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 262"><path fill="#4285f4" d="M255.878 133.451c0-10.734-.871-18.567-2.756-26.69H130.55v48.448h71.947c-1.45 12.04-9.283 30.172-26.69 42.356l-.244 1.622l38.755 30.023l2.685.268c24.659-22.774 38.875-56.282 38.875-96.027"/><path fill="#34a853" d="M130.55 261.1c35.248 0 64.839-11.605 86.453-31.622l-41.196-31.913c-11.024 7.688-25.82 13.055-45.257 13.055c-34.523 0-63.824-22.773-74.269-54.25l-1.531.13l-40.298 31.187l-.527 1.465C35.393 231.798 79.49 261.1 130.55 261.1"/><path fill="#fbbc05" d="M56.281 156.37c-2.756-8.123-4.351-16.827-4.351-25.82c0-8.994 1.595-17.697 4.206-25.82l-.073-1.73L15.26 71.312l-1.335.635C5.077 89.644 0 109.517 0 130.55s5.077 40.905 13.925 58.602z"/><path fill="#eb4335" d="M130.55 50.479c24.514 0 41.05 10.589 50.479 19.438l36.844-35.974C195.245 12.91 165.798 0 130.55 0C79.49 0 35.393 29.301 13.925 71.947l42.211 32.783c10.59-31.477 39.891-54.251 74.414-54.251"/></svg>',
+    sogou: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="#FF6A00" d="M16.801 22.74L17.79 24c1.561-.676 2.926-1.62 4.051-2.851l-.946-1.318a10.3 10.3 0 0 1-4.08 2.909zM12 22.199c-5.775 0-10.455-4.619-10.455-10.35C1.545 6.15 6.225 1.53 12 1.53s10.456 4.65 10.456 10.35c0 2.55-.946 4.891-2.507 6.69l.945 1.261C22.801 17.729 24 14.939 24 11.88C24 5.295 18.63 0 12 0S0 5.311 0 11.85c0 6.57 5.37 11.88 12 11.88c1.71 0 3.33-.346 4.801-.99l-.961-1.26c-1.2.45-2.49.719-3.84.719m6-9.553c-2.25-1.86-5.34-2.101-7.801-3.556c-.75-.479-.148-1.395.602-1.425c2.699-.45 5.369.63 7.889 1.5l.151-2.655c-3.151-1.14-6.57-1.875-9.901-1.35c-1.2.3-2.4.675-3.254 1.56c-1.171 1.2-.961 3.36.389 4.32c2.236 1.755 5.176 2.011 7.621 3.36c.96.39.555 1.68-.391 1.77c-2.925.555-5.805-.721-8.325-2.1c-.03 1.02-.06 2.01-.06 3c3.195 1.409 6.75 2.069 10.2 1.529c1.17-.225 2.37-.6 3.225-1.454c1.229-1.2 1.111-3.511-.33-4.5H18z"/></svg>',
+    so360: '<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAABJ5JREFUWAntVmtsVEUUPmduW6ikLWxLZKuxhAYfMT7SFtBCTcBuqaUl+qdiNMZiHwmgMVFMMEY3ioL+kBjxsV2MP8RHJNTgthUDRrGxMdQlxgo0kaoBrXZpu9mSPta79x7P3XaX3Zm7D/1jYtzk7sz5znce98yZmQvw/+9frgBmik9EWPxp2xojgncjQjUBlLKRk4BmeRwBwl8Q6Sjm5X0ysfGNC5n8yfqUCViBHb1tW0wTdgPBCtnQTuYEfSIXd03Ue0/b6e0w2wQW92wvIzP8EQdebWeUATMQ8VVXo+vJQ9hsZOCCksCS7tYak+AwB1+ayTitHvE4YE5zqPHNYDpeUgJFvvYKBOrj8l+RzihbHVeiv0RbuOFcw2vhVDY5McXSnm3LdFM/kjY4gh8BTwAiNx/lAxD3BtazjTPmJ3FkvHrMmPEw9lAinjiPV6DI1/YBO92SqIzPEXo1Tds50eA5E8fmJxwEHT3t9/K4lwjKZL0lCw2bgpu83Xa6aAJF3a2VvOYD/MQTipEF4lPBJu+emJxqvOr49uKp6XAXb9M7ZA5X7bSryXWLXVMKi4yEu+yCczp7swlu+fit9vXxHIejkYOpVQK68Vj3sc0WT/6J5V+4F/Ja1ssKXuehusa6pxU8DTC27uVLGmotKSj32OEiNDVyJ6/dIlkpULxgVzKZJ8vjTW+dZOyojPPJuclN7mjFE3XCNOmGRCA6R9RhAfkUPFsAsUuhEjj2fzZypYzzi0KpDPKSXAi6OkMqnh2iaTRox9QjphJLcPMVq2QcV7HsEc3QbO01EkosTgAnVNekEFVOasQU5LDTGmgqiQlC+D2Hu/DFyV/h3Oj3cDYwCC1TY8utfW3nJBusUI9U7QudhzOjg/DV2FmoDU9GzTQBo7K9QBAnH5/6A7ZNBaDEjIDT0OGV0Hnhvji8QyZnK78bGt7ZMj0GpaYON+sz8H5wGK4zZoOP3nX1iOxDlDvNr+vDk0nXpnUcPjwZaKGDawplg0wyeStq1oYvXZPIy+MK3z8z8aMb3WYibs2Fv6pTX0RGv6zgJMpgWt8v4+lkOnC7A0x8z+5UXWZEeu1so2c/da66FcjwM0E5KPg49nCjPoIdft3OQQyjA9VlYIR5/1NFDLs84hBcW3ATrv8ychmbm83dBe0D3/HR+5KsjMoEHTz2kbeqwbr5ZA69vbaAPFU7ODi/gG3wCKB40C645SvukDyVuSx/Y+9kPiziz6w/BSR+AjT5ewDK2cU6vsYL5hnqgPgctvufZf8lbLuPI25kmwA/u7H92w/jCViWTLqe/61+WKJ6+gcIwglYWVhrvT11Vn7OiW5I8qJptUlrzus8xJmtYpJypSYZZie8A4vL66LBPZVOJbjlwzQfSErAwjiJYcjJv42nPkv+2z9E3tL4BHac2orNh/6M2ucvSNrmcZ8EkaQliCvmJ7wk6/lr5THeVo0MKckm89Hq8I/5eWauksla6qw4wn42J6AmoFaTNoEYmRMp5+a5j8u4mnfLCu4Tq0d03p7jjP/AYz/k5nfh1r6LMRt5tHYLGLPPcxLchBQATduDrQPKd4Ns99+X/wJpXqb6THKxQgAAAABJRU5ErkJggg==" alt="">',
+    ddg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 255"><defs><linearGradient id="SVGG0F7Qb6R" x1="71.005%" x2="0%" y1="100%" y2="100%"><stop offset="0%" stop-color="#394a9f"/><stop offset="100%" stop-color="#6176b9"/></linearGradient></defs><path fill="#de5833" d="M128.145 18.841c60.002 0 108.643 48.641 108.643 108.643c0 60.001-48.641 108.642-108.643 108.642c-60.001 0-108.642-48.641-108.642-108.642c0-60.002 48.641-108.643 108.642-108.643"/><path fill="#de5833" d="M128.143 254.922c70.383 0 127.44-57.057 127.44-127.44S198.526.042 128.143.042S.703 57.099.703 127.482s57.057 127.44 127.44 127.44m0-10.62c-64.518 0-116.82-52.302-116.82-116.82s52.302-116.82 116.82-116.82s116.82 52.302 116.82 116.82s-52.302 116.82-116.82 116.82"/><path fill="#d5d7d8" d="M75.219 54.13c-.021-1.827 1.306-2.85 3.069-3.567c-.807.132-1.58.334-2.276.646c-1.838.833-3.212 3.987-3.199 5.48c8.923-.902 22.118-.278 31.767 2.602c.712-.1 1.424-.2 2.147-.283c-9.624-4.273-21.066-5.923-31.508-4.878m1.829-10.98c.201-.036.405-.061.607-.095c-1.925.239-2.94.927-4.385 1.164c1.569.139 7.514 2.914 11.25 4.44c.524-.199.996-.42 1.381-.681c-1.937-.286-6.75-4.636-8.853-4.828m9.278 21.606c-.535.206-1.043.421-1.483.652c-14.545 7.663-20.97 25.562-17.141 47.01c3.495 19.518 17.82 86.205 24.379 117.571c1.915.673 3.853 1.298 5.815 1.865c-5.841-28.24-21.784-102.24-25.504-123.023c-3.771-21.143-.102-36.314 13.934-44.075"/><path fill="#fff" d="M145.184 218.618c-.24.16-.526.31-.831.456c-.226.876-.571 1.54-1.074 1.874c-3.004 1.993-11.489 2.997-15.969 1.993c-.771-.171-1.355-.454-1.811-.843c-7.649 4.247-18.649 9.901-20.883 8.627c-3.49-2.001-3.996-28.451-3.49-34.942c.369-4.9 17.581 3.037 25.954 7.2c1.851-1.729 6.386-2.886 10.4-3.279c-6.065-14.761-10.538-31.645-7.796-43.618c-3.79-2.641-8.813-8.766-7.767-15.159c.806-4.866 13.38-14.072 22.283-14.628c8.923-.563 11.704-.436 19.138-2.216l1.209-.29c4.576-16.087-6.399-44.074-18.641-56.321c-3.991-3.991-10.127-6.503-17.041-7.829c-2.659-3.649-6.948-7.138-13.02-10.369c-11.275-5.986-25.209-8.423-38.19-6.219c-.202.034-.406.059-.607.095c2.103.192 6.916 4.542 8.853 4.828c-.385.261-.857.482-1.381.681c-1.818.692-4.289 1.112-6.232 1.904c-1.763.717-3.09 1.74-3.069 3.567c10.442-1.045 21.884.605 31.508 4.878c-.723.083-1.435.183-2.147.283c-6.825.96-13.098 2.728-17.63 5.119c-.213.111-.415.231-.624.346c-14.036 7.761-17.705 22.932-13.934 44.075C76.112 129.614 92.159 204.76 98 233c9.603 2.779 18.582 5 29.08 5c8.912 0 19.631-1.975 27.92-4c-2.911-5.613-6.656-11.82-8.964-16.271c-.308.367-.551.688-.852.889m5.873-106.561c-3.804 0-6.907-3.094-6.907-6.92c0-3.808 3.103-6.903 6.907-6.903c3.825 0 6.916 3.095 6.916 6.903a6.91 6.91 0 0 1-6.916 6.92m4.161-26.008s-4.357-2.489-7.738-2.447c-6.948.091-8.84 3.161-8.84 3.161s1.166-7.318 10.051-5.85c4.817.801 6.527 5.136 6.527 5.136m-73.255 8.997s-3.129-6.973 5.21-10.39c8.348-3.418 12.413 1.945 12.413 1.945s-6.062-2.742-11.956.962c-5.884 3.7-5.667 7.483-5.667 7.483m7.29 14.862a8.04 8.04 0 0 1 8.047-8.044a8.04 8.04 0 0 1 8.04 8.044c0 4.447-3.6 8.041-8.04 8.041a8.034 8.034 0 0 1-8.047-8.041"/><path fill="#2d4f8e" d="M105.34 109.908a8.04 8.04 0 0 0-8.04-8.044a8.04 8.04 0 0 0-8.047 8.044a8.034 8.034 0 0 0 8.047 8.041c4.44 0 8.04-3.594 8.04-8.041m-4.478-.591a2.09 2.09 0 0 1-2.081-2.09a2.085 2.085 0 1 1 4.171 0a2.09 2.09 0 0 1-2.09 2.09"/><path fill="#fff" d="M100.862 105.139a2.085 2.085 0 0 0-2.081 2.088c0 1.154.939 2.093 2.081 2.09a2.09 2.09 0 0 0 2.09-2.09a2.087 2.087 0 0 0-2.09-2.088"/><path fill="#2d4f8e" d="M151.057 98.234c-3.804 0-6.907 3.095-6.907 6.903c0 3.826 3.103 6.92 6.907 6.92a6.91 6.91 0 0 0 6.916-6.92c0-3.808-3.091-6.903-6.916-6.903m3.067 6.394c-.975 0-1.78-.793-1.78-1.789c0-.983.805-1.79 1.78-1.79c1.017 0 1.797.807 1.797 1.79c0 .996-.78 1.789-1.797 1.789"/><path fill="#fff" d="M154.124 101.049c-.975 0-1.78.807-1.78 1.79c0 .996.805 1.789 1.78 1.789a1.773 1.773 0 0 0 1.797-1.789c0-.983-.78-1.79-1.797-1.79"/><path fill="url(#SVGG0F7Qb6R)" d="M33.586 44.601s-4.065-5.363-12.413-1.945c-8.339 3.417-5.21 10.39-5.21 10.39s-.217-3.783 5.667-7.483c5.894-3.704 11.956-.962 11.956-.962" transform="translate(66 42)"/><path fill="url(#SVGG0F7Qb6R)" d="M82.691 38.913c-8.885-1.468-10.051 5.85-10.051 5.85s1.892-3.07 8.84-3.161c3.381-.042 7.738 2.447 7.738 2.447s-1.71-4.335-6.527-5.136" transform="translate(66 42)"/><path fill="#fdd209" d="M144.2 126.299c-8.903.556-21.477 9.762-22.283 14.628c-1.046 6.393 3.977 12.518 7.767 15.159l.031.023c3.789 2.636 29.018 11.147 41.535 10.911c12.531-.244 33.111-7.918 30.851-14.067c-2.25-6.151-22.689 5.427-44.007 3.451c-15.788-1.467-18.575-8.54-15.079-13.706c4.397-6.493 12.406 1.232 25.616-2.721c13.23-3.942 31.732-10.998 38.597-14.84c15.873-8.849-6.642-12.519-11.96-10.064c-5.041 2.329-22.587 6.757-30.721 8.72l-1.209.29c-7.434 1.78-10.215 1.653-19.138 2.216"/><path fill="#65bc46" d="M124.316 206.97c0-.921.741-1.736 1.917-2.431c.033-.559.337-1.079.847-1.556c-8.373-4.163-25.585-12.1-25.954-7.2c-.506 6.491 0 32.941 3.49 34.942c2.234 1.274 13.234-4.38 20.883-8.627c-2.207-1.881-1.183-6.447-1.183-15.128m21.609 10.716l.111.043c6.854 2.645 20.498 7.624 23.461 6.537c3.995-1.527 2.995-33.453-1.489-34.47c-3.592-.797-17.343 8.892-22.753 12.839c.957 4.041 2.115 12.045.67 15.051"/><path fill="#43a244" d="M129.214 220.611c-4.495-.996-2.993-5.493-2.993-15.971c0-.034.01-.067.012-.101c-1.176.695-1.917 1.51-1.917 2.431c0 8.681-1.024 13.247 1.183 15.128c.456.389 1.04.672 1.811.843c4.48 1.004 12.965 0 15.969-1.993c.503-.334.848-.998 1.074-1.874c-3.516 1.684-11.024 2.473-15.139 1.537"/><path fill="#65bc46" d="M127.08 202.983c-.51.477-.814.997-.847 1.556c-.002.034-.012.067-.012.101c0 10.478-1.502 14.975 2.993 15.971c4.115.936 11.623.147 15.139-1.537c.305-.146.591-.296.831-.456c.301-.201.544-.522.741-.932c1.445-3.006.287-11.01-.67-15.051c-.211-.889-.411-1.589-.572-1.999c-.413-1.022-3.594-1.285-7.203-.932c-4.014.393-8.549 1.55-10.4 3.279"/></svg>',
+    yahoo: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="#6001D2" d="m18.86 1.56l-4.59 10.31h5.13L24 1.56h-5.14M0 6.71l5.15 11.56l-1.85 4.17h4.53l6.86-15.73h-4.5l-2.8 6.73l-2.77-6.73H0m15.62 6.16c-1.67 0-2.91 1.25-2.91 2.71c0 1.42 1.2 2.61 2.79 2.61c1.68 0 2.93-1.23 2.93-2.69c0-1.47-1.2-2.63-2.81-2.63Z"/></svg>',
+    yandex: '<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAMAAAAKE/YAAAAAUVBMVEX8Px38Syv/8/H////9b1X9h3H9h3L9n47+z8b/5+P+t6r9q5z8Vzn8b1b8Y0f+z8f+29T9k4D9e2T/29T+w7j+n479e2P9Vzn9n43//v78Px3ocyNBAAAAG3RSTlP///////////////////////////////////59MdQuAAACH0lEQVR42u2ZC07DMBQEn2NomtS0FEL53P+gHMARK9VNWEszF2A7FR5jAgAAAAAAAAAAAAAAAECRhlzzFBWS51xziI0Yc80xKiRTrpj8VGvRc2zG6SGqj7mmxGaU/ADVLxuIFpLaf+Cca86xIU95hdT8bV0i9lY9Nos+ROytekhe513Nq1BtEJaa65rqRtFl+5Y3qXoTx49dy3VYPFtehGhL1XNLUVtIqy2/W/R77MJ8t+px1/NOt7wYhkW3vD0sni2fxDdko1pfpL1Vz7uL1l/09Y7zbgnB1temqS0sli0vg/icNi3X552fah0WN9Va9EfsTMkrnL0u0jWLSEVDWCwCo8Pi03L9QuOmWou+RVirTv953ulTbDALS82gt+iwWAZGP/37tFyHxVt1EaItVPuFRf/naPELix6UU8MLjUNg9Hln1HIdFj/VSnQKR9XyIu2kun4CWUzOO93oySwsNX8ERr7Q+LVcP/27tVycd56qRVg8VRc/0foad5IXadfAfK4QAp+Wa8xfm1D9cNXhziQON0uuq4ERmLbcnBHV/6l6tlctnkA8mWm5wd/lfal+D3vVPZ56t1yz9HhtGlKPgbn22PJj9Kg69aj6Fu6c1l5A3CmiL90EJvX4q3jucfShx9Fjj6PnHkcvPY6+9Dh6YvROo4ceR2dGM5rRjGY0oxnNaEYzmtGMZjSjGb0lX981AQAAAAAAAAAAAAAO/BjxC8MfQGWVu9gFAAAAAElFTkSuQmCC" alt="">',
+    douyin: '<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAACdUlEQVR42s2XMWgTYRTH3+LSpTe4dIkHLi5C6VKEgufi4hKXDhXbmwQpYnByUHKrQ2nETdpeFmkHy5UgOEi5waXgENDNoYc4Wa2f1mprLsnr977krvflkkvurpf0wSOQ5N7/973ve/8vAWiFytPmyXjiENJqa/riwxIOJvMgrFSFar/kfPo4zvPU9ZQr4aJWs4ZOs9FK8y1aMB2nC+kB7KaLfrBDZMpsnBpnDECxXEENLo4QgIddfDFaAIqiuYpwKTc6AAo6oOr3r1HTkS2AF1Wz0ms6zhjA+dadwNxGhHxCAGUc4foMwvwcwoP78r52AhjryPSlMEgiABKmvdv7IoSU2m+cdA8wP7+IkzDeE8CGGdQhh472CPHhakucXmMB0Co/fxQCmvtHFtGfowlTkQBeHfKDElwV71XhxoAAAfHlxnF4P2MAJPOBKPHMAe7OiaJ6/Z/k72hsICp3xD7Sa3YAr1+JonSz+aE9EcJUOA8TqMKYyGwA+InPu4cBU/8kxP0V9/OB1AC8YKl+LBUkAH/FmQPwDpT3904Lliq9C9K0dAIUVlICfHiP5cZ/6QA6yu3uD5MrdgLw85IOgDuftAVtGw1tAVkz75ZaO5CnJTghiQB4W7XgIfRuM2cX1aVnLWt+98a3Zvvnj5DfL0AupRHx1lbZfgiCRtOoH6Hu/sVi40geVbp81HvowM24N2r3D7S1lzhwUOu5eILVR9+GhmH0FyefaIsbcCXJb4roLxTUa8hKm/wQ7CJj7LTd1o7vkJQFuJz0R03/v2U0AWV+sml/PUFKBrfEVdvTpAYEsOM8oMAF+S5Il1vn4s+pB2ENUdj2xE8AEXLTs55JCqoAAAAASUVORK5CYII=" alt="">',
+    bilibili: '<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAABQ0lEQVR42u2XMQ6CQBBFpzDaYavhRHgJE63FK2nnBfQGxsJCbTyBwURLLbTCWR2SQRaXUZYNicVLyDL7/2c3sAPEcQwuAZjudTSQCXJCZoiXU/cJj+aeSauhrcuZ3EdixlIYwqM5XKMvCTB4mywJoTNXDCUBmjkiaqz9hfmSNAsHMIm1S6jPBFAJQ2SFXDRCv3Ih7TC1GnThIxsLpnlsyBOSJ6/SPGGLtFSAkQPzhBHQvvDBBdL94sNjokva3GulbtzfBm2Y8xDc6waaZQHLpP3qECBAIiIoYGCqFweI2L2oQABTvTiAdItkenUIwJf0KNyCYxkBeiR0oGtTAFN9/V7DfwDrAao8jDqZLklzHM+psGxzn7Qzx3HosCEJ4dkWvdqjqs13SUvmoind8qaUt+VjZI1cLZheSXucasud/x27DvAAm/Mn32vYDaAAAAAASUVORK5CYII=" alt="">'
+  };
+
   function engineName(id) {
-    return (T.engineNames && T.engineNames[id]) || id;
+    if (T.engineNames && T.engineNames[id]) return T.engineNames[id];
+    const e = engines.find(x => x.id === id);
+    if (!e) return id;
+    return (LANG === 'zh' ? e.zh : e.en) || e.en || id;
   }
 
   /* ---------- 自定义搜索引擎（存 localStorage，与内置引擎合并） ---------- */
+  // 自定义图标只接受 http(s) 图片链接或 base64 内联图片，
+  // 其余（javascript:、data:text/html 等）一律丢弃，避免注入执行
+  function safeIconSrc(v) {
+    const s = String(v == null ? '' : v).trim();
+    if (!s) return '';
+    if (/^data:image\/[a-z0-9.+-]+;base64,[A-Za-z0-9+/=\s]+$/i.test(s)) return s.replace(/\s+/g, '');
+    if (/^(https?:\/\/|\/\/)[^\s"'<>]+$/i.test(s)) return s;
+    return '';
+  }
+
   const CUSTOM_KEY = 'homepage.customEngines';
   let customEngines = [];
   try {
@@ -994,8 +1055,7 @@
           id: String(e.id).replace(/[^A-Za-z0-9_]/g, '').slice(0, 60),
           name: String(e.name).slice(0, 40),
           url: String(e.url).slice(0, 500),
-          letter: e.letter ? String(e.letter).slice(0, 2) : '',
-          color: /^#[0-9a-fA-F]{3,8}$/.test(e.color || '') ? e.color : '#5A6CF3'
+          icon: safeIconSrc(e.icon).slice(0, 400000)
         }))
         .filter(e => e.id) // 清洗后 id 可能为空，剔除
         // 归一化后可能存在重复 id，去重
@@ -1007,8 +1067,25 @@
     try { localStorage.setItem(CUSTOM_KEY, JSON.stringify(customEngines)); } catch (err) {}
   }
 
+  // 取网址的根域名（www.douyin.com → douyin.com），用来识别“用户以前手动加过、如今已内置”的引擎
+  function rootDomain(url) {
+    try {
+      const host = new URL(String(url).replace('%s', 'x')).hostname.toLowerCase();
+      const parts = host.split('.');
+      return parts.length > 2 ? parts.slice(-2).join('.') : host;
+    } catch (err) { return ''; }
+  }
+
+  const builtinDomains = engines.map(e => rootDomain(e.url)).filter(Boolean);
+
+  // 与内置引擎同域名的自定义引擎不再重复显示（例如之前手动添加的“抖音”）
+  function dupOfBuiltin(eng) {
+    const d = rootDomain(eng.url);
+    return !!d && builtinDomains.indexOf(d) > -1;
+  }
+
   // 内置 + 自定义的完整列表
-  function allEngines() { return engines.concat(customEngines); }
+  function allEngines() { return engines.concat(customEngines.filter(e => !dupOfBuiltin(e))); }
 
   function isCustom(id) { return customEngines.some(e => e.id === id); }
 
@@ -1016,7 +1093,19 @@
   let currentEngine = engines[0].id; // 默认必应
   try {
     const saved = localStorage.getItem(ENGINE_KEY);
-    if (saved && allEngines().some(e => e.id === saved)) currentEngine = saved;
+    if (saved) {
+      if (allEngines().some(e => e.id === saved)) {
+        currentEngine = saved;
+      } else {
+        // 存的是被内置引擎取代的那条自定义项 → 平滑迁移到同域名的内置引擎
+        const old = customEngines.find(e => e.id === saved);
+        if (old) {
+          const d = rootDomain(old.url);
+          const hit = engines.find(e => rootDomain(e.url) === d);
+          if (hit) currentEngine = hit.id;
+        }
+      }
+    }
   } catch (err) { /* localStorage 不可用时忽略，用默认引擎 */ }
 
   const engineBtn = document.getElementById('engine-btn');
@@ -1032,24 +1121,33 @@
     return isCustom(eng.id) ? eng.name : engineName(eng.id);
   }
 
-  function badgeHTML(eng) {
-    // 内置引擎图标字母固定；自定义引擎可自定义字母（默认取名称首字）
-    const letter = eng.letter || (eng.name ? eng.name.trim().charAt(0).toUpperCase() : '?');
-    // 颜色做白名单校验，防止 style 注入
-    const safeColor = /^#[0-9a-fA-F]{3,8}$/.test(eng.color || '') ? eng.color : '#5A6CF3';
-    return '<span class="engine-badge" style="background:' + safeColor + '">' + esc(letter) + '</span>';
-  }
+  // 默认图标：通用放大镜（纯填充，深浅色都清晰），自定义引擎没填图标时使用
+  const DEFAULT_ICON = '<svg class="default-mark" viewBox="0 0 24 24" aria-hidden="true"><g fill="#9a9a9a"><path fill-rule="evenodd" d="M10.7 2.4a8.3 8.3 0 1 0 0 16.6 8.3 8.3 0 0 0 0-16.6Zm0 2.9a5.4 5.4 0 1 1 0 10.8 5.4 5.4 0 0 1 0-10.8Z"/><rect x="15.9" y="16.6" width="7.2" height="3" rx="1.5" transform="rotate(45 19.5 18.1)"/></g></svg>';
 
-  const MAG_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><line x1="16.5" y1="16.5" x2="21" y2="21"></line></svg>';
+  // 内置引擎用官方 logo；自定义引擎用自填的图标地址，没填就用默认图标
+  function iconHTML(eng) {
+    const src = ENGINE_ICONS[eng.id] ? '' : safeIconSrc(eng.icon);
+    const content = ENGINE_ICONS[eng.id] || (src ? '<img src="' + esc(src) + '" alt="">' : DEFAULT_ICON);
+    return '<span class="engine-icon">' + content + '</span>';
+  }
 
   function renderEngineBtn() {
     const eng = currentEngineObj();
-    // 图标固定为放大镜，当前引擎由占位文字和悬停提示说明
-    engineBtn.innerHTML = MAG_SVG;
+    // 按钮图标直接显示当前搜索引擎的 logo
+    engineBtn.innerHTML = iconHTML(eng);
     engineBtn.title = T.engineBtnTitle(currentEngineLabel());
     engineBtn.setAttribute('aria-label', T.engineBtnLabel);
     input.placeholder = T.searchWith(currentEngineLabel());
   }
+
+  // 自定义图标失效（链接 404、base64 损坏、混合内容被拦截）时退回默认图标
+  // img 的 error 事件不冒泡，必须用捕获阶段监听
+  document.addEventListener('error', (e) => {
+    const img = e.target;
+    if (!img || img.tagName !== 'IMG' || !img.parentNode) return;
+    if (!img.parentNode.classList || !img.parentNode.classList.contains('engine-icon')) return;
+    img.parentNode.innerHTML = DEFAULT_ICON;
+  }, true);
 
   function closeEnginePanel() {
     enginePanel.classList.remove('show');
@@ -1060,22 +1158,61 @@
       const custom = isCustom(e.id);
       const label = custom ? e.name : engineName(e.id);
       return '<div class="engine-item' + (e.id === currentEngine ? ' active' : '') + (custom ? ' custom' : '') + '" data-id="' + esc(e.id) + '">' +
-        badgeHTML(e) + '<span>' + esc(label) + '</span>' +
+        iconHTML(e) + '<span>' + esc(label) + '</span>' +
         (custom ? '<span class="del" data-del="' + esc(e.id) + '" title="' + esc(T.btnDelete || '删除') + '">&times;</span>' : '') +
         '<span class="check">✓</span></div>';
     }).join('');
-    // 底部添加入口
+    // 底部添加入口（固定在面板底部，不随列表滚动）
     const addLabel = T.addEngine || '添加自定义搜索引擎';
-    enginePanel.innerHTML = items +
+    enginePanel.innerHTML = '<div class="engine-list">' + items + '</div>' +
       '<div class="engine-add" id="engine-add"><span class="plus">+</span><span>' + esc(addLabel) + '</span></div>';
+
+    // 默认向下展开；只有当下方连 5 项都放不下、且上方明显更宽裕时才向上翻转
+    enginePanel.classList.remove('up');
+    enginePanel.style.maxHeight = '';
+    // 面板是相对搜索框（offsetParent）定位的，必须用它的底边算可用空间
+    const anchor = enginePanel.offsetParent || engineBtn.parentElement || engineBtn;
+    const ar = anchor.getBoundingClientRect();
+    const below = window.innerHeight - ar.bottom - 8 - 14;   // 面板顶部 = 锚点底边 + 8，底部留 14
+    const above = ar.top - 8 - 14;                            // 向上展开时的可用高度
+    const MIN_DOWN = 220;              // 下方至少能露出 4~5 项 + 添加入口
+    const flipUp = below < MIN_DOWN && above > below + 60;
+    if (flipUp) {
+      enginePanel.classList.add('up');
+      enginePanel.style.maxHeight = Math.max(180, Math.min(above, 560)) + 'px';
+    } else {
+      enginePanel.style.maxHeight = Math.max(140, Math.min(below, 560)) + 'px';
+    }
+
     enginePanel.classList.add('show');
+    // 列表超出可见区域时：高度吸附到整行（不切半行），并给底部入口加渐隐提示
+    const listEl = enginePanel.querySelector('.engine-list');
+    const addEl = enginePanel.querySelector('.engine-add');
+    const firstItem = listEl && listEl.firstElementChild;
+    if (listEl && addEl && firstItem && !enginePanel.classList.contains('up')) {
+      const ih = firstItem.getBoundingClientRect().height;
+      const ah = addEl.getBoundingClientRect().height;
+      const top = enginePanel.getBoundingClientRect().top;
+      const room = window.innerHeight - top - 2;             // 面板最多能占多高（留 2px）
+      const cur = parseFloat(enginePanel.style.maxHeight) || room;
+      if (ih > 0 && listEl.scrollHeight > cur - ah + 2) {
+        // 尽量把被切掉的那一行补成整行，但绝不超出可用空间
+        let rows = Math.round((cur - ah) / ih);
+        if (rows * ih + ah > room) rows = Math.floor((room - ah) / ih);
+        if (rows >= 2) enginePanel.style.maxHeight = Math.ceil(rows * ih + ah) + 'px';
+        enginePanel.classList.add('can-scroll');
+      } else {
+        enginePanel.classList.remove('can-scroll');
+      }
+    }
   }
 
   engineBtn.addEventListener('mousedown', (e) => e.preventDefault()); // 防止输入框失焦
   engineBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     if (enginePanel.classList.contains('show')) closeEnginePanel();
-    else renderEnginePanel();
+    // 打开引擎面板前先收起联想面板，避免两个下拉叠在一起
+    else { hideSuggest(); renderEnginePanel(); }
   });
 
   // 统一用一个指针入口，避免触摸设备上 pointerdown 与 mousedown 各触发一次（重复删除）
@@ -1152,8 +1289,7 @@
   const formMask = document.getElementById('engine-form-mask');
   const efName = document.getElementById('ef-name');
   const efUrl = document.getElementById('ef-url');
-  const efLetter = document.getElementById('ef-letter');
-  const efColor = document.getElementById('ef-color');
+  const efIcon = document.getElementById('ef-icon');
   const efMsg = document.getElementById('ef-msg');
 
   // 按当前语言填充表单文案（缺词条时回退英文）
@@ -1162,8 +1298,8 @@
     setText('engine-form-title', T.formTitle || 'Add custom search engine');
     setText('ef-label-name', T.fieldName || 'Name');
     setText('ef-label-url', T.fieldUrl || 'Search URL (%s = keyword)');
-    setText('ef-label-letter', T.fieldLetter || 'Icon letter');
-    setText('ef-label-color', T.fieldColor || 'Icon color');
+    setText('ef-label-icon', T.fieldIcon || 'Icon URL (optional)');
+    setText('ef-hint-icon', T.hintIcon || 'Image link or base64 data. Leave blank to use the default icon.');
     setText('ef-cancel', T.btnCancel || 'Cancel');
     setText('ef-save', T.btnSave || 'Save');
     efName.placeholder = T.hintExample || '';
@@ -1179,15 +1315,26 @@
   function closeEngineForm() {
     formMask.classList.remove('show');
     document.getElementById('engine-form').reset();
-    efColor.value = '#5A6CF3';
     efMsg.textContent = '';
     efMsg.classList.remove('ok');
   }
 
   // 校验错误提示也跟随语言（缺失时用英文兜底）
   const ERRS = {
-    zh: { name: '请填写名称', url: '网址需以 http:// 或 https:// 开头', ph: '网址里需要用 %s 表示关键词位置', dup: '已有同名引擎，请换个名称' },
-    en: { name: 'Please enter a name', url: 'URL must start with http:// or https://', ph: 'The URL must contain %s for the keyword', dup: 'An engine with this name already exists' }
+    zh: {
+      name: '请填写名称',
+      url: '网址需以 http:// 或 https:// 开头',
+      ph: '网址里需要用 %s 表示关键词位置',
+      dup: '已有同名引擎，请换个名称',
+      icon: '图标地址需是 http(s) 图片链接，或 data:image/ 开头的 base64'
+    },
+    en: {
+      name: 'Please enter a name',
+      url: 'URL must start with http:// or https://',
+      ph: 'The URL must contain %s for the keyword',
+      dup: 'An engine with this name already exists',
+      icon: 'Icon must be an http(s) image link or a data:image/ base64 string'
+    }
   };
   const E = ERRS[LANG] || ERRS.en;
 
@@ -1198,6 +1345,11 @@
     if (!name) { efMsg.textContent = E.name; return; }
     if (!/^https?:\/\//i.test(url)) { efMsg.textContent = E.url; return; }
     if (url.indexOf('%s') < 0) { efMsg.textContent = E.ph; return; }
+    // 图标可留空（用默认图标）；填了就必须是合法图片地址/base64
+    const iconRaw = efIcon.value.trim();
+    const icon = safeIconSrc(iconRaw);
+    if (iconRaw && !icon) { efMsg.textContent = E.icon; return; }
+    if (icon.length > 400000) { efMsg.textContent = E.icon; return; }
     // 名称去重：比对各语言下的所有名称（含内置引擎的多种译名）+ 已有自定义名，
     // 避免在中文界面下添加名为 "Bing" 的引擎而绕过检测
     const lower = name.toLowerCase();
@@ -1213,7 +1365,7 @@
     if (dup) { efMsg.textContent = E.dup; return; }
 
     const id = 'custom_' + Date.now().toString(36);
-    const eng = { id: id, name: name, url: url, letter: efLetter.value.trim() || name.charAt(0).toUpperCase(), color: efColor.value };
+    const eng = { id: id, name: name, url: url, icon: icon };
     customEngines.push(eng);
     saveCustom();
     currentEngine = id; // 新增后直接启用
@@ -1318,6 +1470,7 @@
   }
 
   input.addEventListener('focus', () => {
+    closeEnginePanel(); // 聚焦搜索框时收起引擎面板，两个下拉不同时出现
     // 点击搜索框时：有内容就恢复联想（优先用缓存，无缓存则重新请求）
     const q = input.value.trim();
     if (q) {
@@ -1327,6 +1480,7 @@
   });
 
   input.addEventListener('input', () => {
+    closeEnginePanel(); // 开始输入时引擎面板让位给联想词
     const q = input.value.trim();
     if (!q) {
       // 清空输入：除了隐藏面板，还要作废“迟到”的联想来源，
@@ -1370,7 +1524,18 @@
     if (!e.target.closest('.search-wrap')) {
       hideSuggest();
       closeEnginePanel();
+      return;
     }
+    // 点在搜索框之类的地方（不是引擎面板/按钮本身）时，引擎面板也要收起
+    if (!e.target.closest('#engine-panel') && !e.target.closest('#engine-btn')) closeEnginePanel();
+  });
+
+  // Esc 关闭浮层：不依赖焦点位置（焦点在按钮/面板/页面上都能关）
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    if (formMask.classList.contains('show')) { closeEngineForm(); e.stopPropagation(); return; }
+    if (enginePanel.classList.contains('show')) { closeEnginePanel(); e.stopPropagation(); return; }
+    hideSuggest();
   });
 </script>
 </body>
