@@ -1215,18 +1215,28 @@
     else { hideSuggest(); renderEnginePanel(); }
   });
 
-  // 统一用一个指针入口，避免触摸设备上 pointerdown 与 mousedown 各触发一次（重复删除）
-  // 注意：标志在一次交互结束后复位，否则会永久吞掉后续 mousedown
-  let panelPrevPointerTs = 0;
+  // 指针入口：按下只记录，抬起且没有位移才算“点选”。
+  // 旧写法在 pointerdown 就选中并关面板，手机上一滑立刻关窗，列表根本滚不动。
+  let pressInfo = null;
+  const PRESS_SLOP = 10;   // 超过 10px 视为滑动，不当作点选
+
   enginePanel.addEventListener('pointerdown', (e) => {
-    panelPrevPointerTs = Date.now();
-    onPanelPress(e);
+    pressInfo = { x: e.clientX, y: e.clientY, id: e.pointerId, target: e.target, moved: false };
   });
-  enginePanel.addEventListener('mousedown', (e) => {
-    // 与最近的 pointerdown 属同一次交互（现代浏览器会相继派发）→ 跳过，防重复
-    if (Date.now() - panelPrevPointerTs < 800) return;
-    onPanelPress(e);
+  enginePanel.addEventListener('pointermove', (e) => {
+    if (!pressInfo || e.pointerId !== pressInfo.id) return;
+    if (Math.abs(e.clientX - pressInfo.x) > PRESS_SLOP ||
+        Math.abs(e.clientY - pressInfo.y) > PRESS_SLOP) pressInfo.moved = true;
   });
+  enginePanel.addEventListener('pointerup', (e) => {
+    if (!pressInfo || e.pointerId !== pressInfo.id) return;
+    const info = pressInfo;
+    pressInfo = null;
+    if (info.moved) return;                                  // 滑动 → 不选中
+    if (longPressFired) { longPressFired = false; return; }   // 长按删除后不切换
+    onPanelPress(info.target, e.pointerType);
+  });
+  enginePanel.addEventListener('pointercancel', () => { pressInfo = null; });
 
   // 触屏长按（删除按钮不易点时）也能删除
   let longPressTimer = null;
@@ -1237,7 +1247,7 @@
     longPressFired = false;
     longPressTimer = setTimeout(() => {
       longPressTimer = null;
-      longPressFired = true;   // 标记已长按删除，抑制随后的 click 切换
+      longPressFired = true;   // 标记已长按删除，抑制随后的点选切换
       deleteEngine(item.dataset.id);
     }, 600);
   }, { passive: true });
@@ -1245,36 +1255,42 @@
     enginePanel.addEventListener(ev, () => { clearTimeout(longPressTimer); longPressTimer = null; }, { passive: true })
   );
 
-  // 长按删除后，浏览器仍会补发 click —— 拦掉它，避免刚删除又去切换引擎
-  enginePanel.addEventListener('click', (e) => {
-    if (longPressFired) { e.preventDefault(); e.stopPropagation(); longPressFired = false; }
-  }, true);
+  // 没有 Pointer Events 的老浏览器退回 click（现代浏览器不会走到这里）
+  if (!window.PointerEvent) {
+    enginePanel.addEventListener('click', (e) => {
+      if (longPressFired) { longPressFired = false; return; }
+      onPanelPress(e.target, 'mouse');
+    });
+  }
 
-  function onPanelPress(e) {
-    e.preventDefault(); // 保持输入框焦点
+  function onPanelPress(target, pointerType) {
+    if (!target || !target.closest) return;
     // 删除自定义引擎
-    const del = e.target.closest('.del');
+    const del = target.closest('.del');
     if (del) {
       deleteEngine(del.dataset.del);
       return;
     }
     // 打开添加表单
-    if (e.target.closest('#engine-add')) {
+    if (target.closest('#engine-add')) {
       closeEnginePanel();
       openEngineForm();
       return;
     }
-    const item = e.target.closest('.engine-item');
+    const item = target.closest('.engine-item');
     if (!item) return;
     currentEngine = item.dataset.id;
     try { localStorage.setItem(ENGINE_KEY, currentEngine); } catch (err) {}
     renderEngineBtn();
     closeEnginePanel();
-    input.focus();
+    // 触屏不主动聚焦输入框：否则键盘会立刻弹出（还会被随后的补发事件马上收回去，闪一下）
+    if (pointerType !== 'touch') input.focus();
   }
 
   // 删除某个自定义引擎（若正被使用则回退默认引擎）
   function deleteEngine(id) {
+    const listBefore = enginePanel.querySelector('.engine-list');
+    const keepScroll = listBefore ? listBefore.scrollTop : 0;   // 重渲染会回到顶部，先记住位置
     customEngines = customEngines.filter(x => x.id !== id);
     saveCustom();
     if (currentEngine === id) {
@@ -1283,6 +1299,8 @@
       renderEngineBtn();
     }
     renderEnginePanel();
+    const listAfter = enginePanel.querySelector('.engine-list');
+    if (listAfter && keepScroll) listAfter.scrollTop = keepScroll;
   }
 
   /* ---------- 自定义引擎表单 ---------- */
@@ -1305,10 +1323,12 @@
     efName.placeholder = T.hintExample || '';
   })();
 
+  let formOpenedAt = 0;
   function openEngineForm() {
     efMsg.textContent = '';
     efMsg.classList.remove('ok');
     formMask.classList.add('show');
+    formOpenedAt = Date.now();
     setTimeout(() => efName.focus(), 30);
   }
 
@@ -1376,7 +1396,11 @@
   });
 
   document.getElementById('ef-cancel').addEventListener('click', closeEngineForm);
-  formMask.addEventListener('mousedown', (e) => { if (e.target === formMask) closeEngineForm(); });
+  // 触摸点按后浏览器会补发一次 mousedown；若这次补发正好落在刚弹出的遮罩上，
+  // 表单会「刚打开就被关掉」——所以刚打开的头 350ms 内忽略遮罩点击。
+  formMask.addEventListener('mousedown', (e) => {
+    if (e.target === formMask && Date.now() - formOpenedAt > 350) closeEngineForm();
+  });
   // Esc 关闭表单（表单内任何位置生效）
   formMask.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.stopPropagation(); closeEngineForm(); } });
 
