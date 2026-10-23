@@ -1,6 +1,67 @@
 {
-  "generated": "2026-10-18T07:53:33.778Z",
+  "generated": "2026-10-23T19:24:17.033Z",
   "posts": [
+    {
+      "slug": "Windows11 跳过OOBE命令",
+      "md": "blog/Windows11 跳过OOBE命令/index.md",
+      "imgBase": "blog/Windows11 跳过OOBE命令/",
+      "title": "Windows11 跳过OOBE命令",
+      "desc": "按下 Shift + F10（部分笔记本需按 Shift + Fn + F10），打开命令提示符。 输入以下命令并回车： start ms-cx…",
+      "tags": [
+        "OOBE",
+        "Win11"
+      ],
+      "date": "2026-10-23",
+      "minutes": 1,
+      "cover": "未来都市绮梦.png",
+      "bg": "未来都市绮梦.png",
+      "imgs": {
+        "未来都市绮梦.png": "blog/thumbs/Windows11_跳过OOBE命令-i1.webp"
+      },
+      "coverThumb": "blog/thumbs/Windows11_跳过OOBE命令-cover.webp",
+      "bgThumb": "blog/thumbs/Windows11_跳过OOBE命令-bg.webp"
+    },
+    {
+      "slug": "如何完全删除Windows安全中心病毒和威胁防护功能",
+      "md": "blog/如何完全删除Windows安全中心病毒和威胁防护功能/index.md",
+      "imgBase": "blog/如何完全删除Windows安全中心病毒和威胁防护功能/",
+      "title": "如何完全删除Windows安全中心病毒和威胁防护功能",
+      "desc": "若想手动完全删除请以最高权限操作 删除以下文件夹 \"C:\\Program Files\\Windows Defender\" \"C:\\Program…",
+      "tags": [
+        "安全中心",
+        "Win"
+      ],
+      "date": "2026-10-23",
+      "minutes": 1,
+      "cover": "dMIq1HzJ.jpg",
+      "bg": "dMIq1HzJ.jpg",
+      "imgs": {
+        "dMIq1HzJ.jpg": "blog/thumbs/如何完全删除Windows安全中心病毒和威胁防护功能-i0.webp"
+      },
+      "coverThumb": "blog/thumbs/如何完全删除Windows安全中心病毒和威胁防护功能-cover.webp",
+      "bgThumb": "blog/thumbs/如何完全删除Windows安全中心病毒和威胁防护功能-bg.webp"
+    },
+    {
+      "slug": "系统激活命令",
+      "md": "blog/系统激活命令/index.md",
+      "imgBase": "blog/系统激活命令/",
+      "title": "系统激活命令",
+      "desc": "Windows PowerShell内执行： irm https://get.activated.win | iex",
+      "tags": [
+        "系统激活",
+        "Win"
+      ],
+      "date": "2026-10-23",
+      "minutes": 1,
+      "cover": "dTTcmJH0.jpeg",
+      "bg": "dTTcmJH0.jpeg",
+      "imgs": {
+        "ScreenShot_2026-10-24_032114_583.png": "blog/thumbs/系统激活命令-i0.webp",
+        "dTTcmJH0.jpeg": "blog/thumbs/系统激活命令-i1.webp"
+      },
+      "coverThumb": "blog/thumbs/系统激活命令-cover.webp",
+      "bgThumb": "blog/thumbs/系统激活命令-bg.webp"
+    },
     {
       "slug": "鉴业PE 维护系统介绍",
       "md": "blog/鉴业PE 维护系统介绍/index.md",
