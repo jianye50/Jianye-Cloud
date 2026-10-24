@@ -254,11 +254,36 @@ img{display:block;max-width:100%}
 }
 .btn:hover{transform:translateY(-2px)}
 .btn:active{transform:scale(.97)}
+/* Gemini 同款彩虹光晕按钮：深色底 + 流动彩虹描边 + 彩虹外发光（形状不变） */
 .btn-primary{
-  background:var(--accent);color:#fff;
-  box-shadow:0 10px 26px rgba(77,141,255,.4);
+  position:relative;z-index:0;
+  color:#fff;
+  border:1.5px solid transparent;
+  background:
+    linear-gradient(#0b0f1a,#0b0f1a) padding-box,
+    linear-gradient(115deg,#4d8dff,#b44dff,#ff5fa2,#ff8a3d,#ffd23f,#4d8dff) border-box;
+  background-size:100% 100%,300% 100%;
+  animation:rb-border 6s linear infinite;
 }
-.btn-primary:hover{box-shadow:0 14px 32px rgba(77,141,255,.55)}
+@keyframes rb-border{
+  from{background-position:0% 50%,0% 50%}
+  to{background-position:0% 50%,300% 50%}
+}
+.btn-primary::before{
+  content:"";position:absolute;inset:-3px;z-index:-1;
+  border-radius:inherit;
+  background:linear-gradient(115deg,#4d8dff,#b44dff,#ff5fa2,#ff8a3d,#ffd23f,#4d8dff);
+  background-size:300% 100%;
+  filter:blur(16px);opacity:.55;
+  animation:rb-glow 6s linear infinite;
+  transition:opacity .25s,filter .25s;
+}
+@keyframes rb-glow{
+  from{background-position:0% 50%}
+  to{background-position:300% 50%}
+}
+.btn-primary:hover{box-shadow:none}
+.btn-primary:hover::before{opacity:.85;filter:blur(20px)}
 .btn-ghost{
   background:rgba(255,255,255,.14);
   border:1px solid rgba(255,255,255,.24);
@@ -620,6 +645,7 @@ body.lb-lock{overflow:hidden}
 @media (prefers-reduced-motion:reduce){
   .skl-beam::before{animation:none}
   .rv{animation:none}
+  .btn-primary,.btn-primary::before{animation:none}
 }
 /* ---------- 博客搜索框 ---------- */
 .blog-search{display:flex;align-items:center;gap:12px;margin:0 0 18px}
