@@ -1,6 +1,27 @@
 {
-  "generated": "2026-10-23T19:24:17.033Z",
+  "generated": "2026-10-24T06:49:42.232Z",
   "posts": [
+    {
+      "slug": "Adguard推荐",
+      "md": "blog/Adguard推荐/index.md",
+      "imgBase": "blog/Adguard推荐/",
+      "title": "AdGuard",
+      "desc": "AdGuard是一款功能强大的广告拦截与隐私保护工具，适用于多种平台 公司背景：AdGuard软件有限公司成立于2009年，总部设在塞浦路斯。公…",
+      "tags": [
+        "AD",
+        "广告拦截"
+      ],
+      "date": "2026-10-24",
+      "minutes": 2,
+      "cover": "1745835951308.jpg",
+      "bg": "1745835951308.jpg",
+      "imgs": {
+        "1745835951308.jpg": "blog/thumbs/Adguard推荐-i0.webp",
+        "AdBlocker_banner_EN_728х90_2x.png": "blog/thumbs/Adguard推荐-i1.webp"
+      },
+      "coverThumb": "blog/thumbs/Adguard推荐-cover.webp",
+      "bgThumb": "blog/thumbs/Adguard推荐-bg.webp"
+    },
     {
       "slug": "Windows11 跳过OOBE命令",
       "md": "blog/Windows11 跳过OOBE命令/index.md",
