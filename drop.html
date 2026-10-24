@@ -1697,6 +1697,39 @@ function dpCanRetry(e){
   return !!(rec&&rec.conn&&rec.conn.open);
 }
 /* 一行的文字说明（方向 / 大小 / 实时速度 / 剩余时间） */
+/* ── 保存文件名 / MIME 推导 ──
+   收到的文件拼成 Blob 时必须带上正确的 MIME 类型：不带 type 的 Blob 在 Chrome 里
+   会被当成文本处理，保存时被强制加 .txt 后缀（哪怕记录里的名字是 .jpeg，
+   存下来也会变成 .jpeg.txt）。扩展名不在表里就走 application/octet-stream，
+   Chromium 对「通用二进制」不追加任何后缀。 */
+const DP_MIME={jpg:'image/jpeg',jpeg:'image/jpeg',jpe:'image/jpeg',png:'image/png',gif:'image/gif',
+  webp:'image/webp',avif:'image/avif',heic:'image/heic',heif:'image/heif',bmp:'image/bmp',
+  svg:'image/svg+xml',ico:'image/x-icon',tif:'image/tiff',tiff:'image/tiff',
+  mp4:'video/mp4',m4v:'video/mp4',mov:'video/quicktime',webm:'video/webm',mkv:'video/x-matroska',
+  avi:'video/x-msvideo',flv:'video/x-flv',mp3:'audio/mpeg',m4a:'audio/mp4',wav:'audio/wav',
+  ogg:'audio/ogg',opus:'audio/opus',flac:'audio/flac',aac:'audio/aac',amr:'audio/amr',
+  pdf:'application/pdf',zip:'application/zip',rar:'application/vnd.rar','7z':'application/x-7z-compressed',
+  gz:'application/gzip',tar:'application/x-tar',doc:'application/msword',docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  xls:'application/vnd.ms-excel',xlsx:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  ppt:'application/vnd.ms-powerpoint',pptx:'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  txt:'text/plain',md:'text/markdown',csv:'text/csv',html:'text/html',htm:'text/html',css:'text/css',
+  js:'text/javascript',json:'application/json',xml:'application/xml',
+  apk:'application/vnd.android.package-archive',exe:'application/x-msdownload',msi:'application/x-msi',
+  dmg:'application/x-apple-diskimage',iso:'application/x-iso9660-image',epub:'application/epub+zip'};
+const dpExtOf=n=>{const m=/\.([A-Za-z0-9]+)$/.exec(String(n||''));return m?m[1].toLowerCase():'';};
+const DP_MIME2EXT={};Object.keys(DP_MIME).forEach(x=>{if(!DP_MIME2EXT[DP_MIME[x]])DP_MIME2EXT[DP_MIME[x]]=x;});
+const dpMimeOf=n=>DP_MIME[dpExtOf(n)]||'application/octet-stream';
+/* 保存用文件名：清掉 Windows 非法字符；名字没带扩展名时按 Blob 的 MIME 补一个，
+   确保存到磁盘上永远是「发送时的名字 + 正确的后缀」。 */
+function dpSaveName(e){
+  let n=String((e&&e.name)||'').replace(/[\\/:*?"<>|\u0000-\u001f]/g,'_').trim();
+  if(!n)n='file';
+  if(!dpExtOf(n)){
+    const ext=DP_MIME2EXT[(e&&e.blob&&e.blob.type)||''];
+    if(ext)n+='.'+ext;
+  }
+  return n;
+}
 function dpFileMeta(e){
   const dirTxt=e.dir==='out'?dpT('to',e.peerName||'—'):dpT('from',e.peerName||'—');
   if(e.state!=='run')return `${dirTxt} · ${dpFmtSize(e.size)}`;
@@ -1753,7 +1786,7 @@ function dpRenderFiles(force){
   box.innerHTML=dpEntries.map(dpFileRow).join('');
   box.querySelectorAll('[data-dsave]').forEach(b=>b.onclick=()=>{
     const e=dpEntries[+b.dataset.dsave];if(!e||!e.url)return;
-    const a=document.createElement('a');a.href=e.url;a.download=e.name;document.body.appendChild(a);a.click();a.remove();
+    const a=document.createElement('a');a.href=e.url;a.download=dpSaveName(e);document.body.appendChild(a);a.click();a.remove();
   });
   box.querySelectorAll('[data-dretry]').forEach(b=>b.onclick=()=>dpRetryEntry(dpEntries[+b.dataset.dretry]));
   box.querySelectorAll('[data-dcancel]').forEach(b=>b.onclick=()=>dpCancelEntry(dpEntries[+b.dataset.dcancel]));
@@ -1896,7 +1929,7 @@ function dpBindDataConn(conn,rec){
         dpSaveEntries(true);dpRenderFiles();
         return;
       }
-      e.blob=new Blob(rec.in.chunks);
+      e.blob=new Blob(rec.in.chunks,{type:dpMimeOf(e.name)});
       e.url=URL.createObjectURL(e.blob);
       e.state='done';e._spd=0;e._eta=null;
       delete dpPartial[rec.in.key];rec.in=null;
