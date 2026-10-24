@@ -1,5 +1,5 @@
 {
-  "generated": "2026-10-24T07:01:31.295Z",
+  "generated": "2026-10-24T18:23:14.736Z",
   "posts": [
     {
       "slug": "3D咖啡店",
@@ -42,6 +42,26 @@
       },
       "coverThumb": "blog/thumbs/Adguard推荐-cover.webp",
       "bgThumb": "blog/thumbs/Adguard推荐-bg.webp"
+    },
+    {
+      "slug": "鉴业音乐",
+      "md": "blog/鉴业音乐/index.md",
+      "imgBase": "blog/鉴业音乐/",
+      "title": "🎧鉴业音乐｜我的自制网页音乐播放器",
+      "desc": "项目地址：https://jianye.pages.dev/music 一直想拥有一个完全属于自己的听歌页面，不受客户端广告、开屏弹窗打扰，于是…",
+      "tags": [
+        "music"
+      ],
+      "date": "2026-10-24",
+      "minutes": 4,
+      "cover": "1739621032672.jpeg",
+      "bg": "1739621032672.jpeg",
+      "imgs": {
+        "1739621032672.jpeg": "blog/thumbs/鉴业音乐-i0.webp",
+        "ScreenShot_2026-10-25_022056_497.png": "blog/thumbs/鉴业音乐-i1.webp"
+      },
+      "coverThumb": "blog/thumbs/鉴业音乐-cover.webp",
+      "bgThumb": "blog/thumbs/鉴业音乐-bg.webp"
     },
     {
       "slug": "Windows11 跳过OOBE命令",
