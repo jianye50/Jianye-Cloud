@@ -1,6 +1,27 @@
 {
-  "generated": "2026-10-24T06:49:42.232Z",
+  "generated": "2026-10-24T07:01:31.295Z",
   "posts": [
+    {
+      "slug": "3D咖啡店",
+      "md": "blog/3D咖啡店/index.md",
+      "imgBase": "blog/3D咖啡店/",
+      "title": "鉴业的咖啡店：在浏览器里，走进一间深夜亮灯的3D街角小店",
+      "desc": "项目在线地址：https://jianye.pages.dev/coffee-shop-3d 一间深夜亮着灯的咖啡小店，不用下载客户端，打开浏览…",
+      "tags": [
+        "3D",
+        "休闲"
+      ],
+      "date": "2026-10-24",
+      "minutes": 4,
+      "cover": "1738905943689.jpg",
+      "bg": "1738905943689.jpg",
+      "imgs": {
+        "1738905943689.jpg": "blog/thumbs/3D咖啡店-i0.webp",
+        "ScreenShot_2026-10-24_145824_539.png": "blog/thumbs/3D咖啡店-i1.webp"
+      },
+      "coverThumb": "blog/thumbs/3D咖啡店-cover.webp",
+      "bgThumb": "blog/thumbs/3D咖啡店-bg.webp"
+    },
     {
       "slug": "Adguard推荐",
       "md": "blog/Adguard推荐/index.md",
